@@ -1,0 +1,144 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../app/generated/prisma"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+// ====================
+// Enums
+// ====================
+
+// Groupe sanguin للمريض (اختياري)
+enum GroupeSanguin {
+  A_POS
+  A_NEG
+  B_POS
+  B_NEG
+  AB_POS
+  AB_NEG
+  O_POS
+  O_NEG
+}
+
+// ====================
+// Modèles principaux
+// ====================
+
+model Patient {
+  id             Int             @id @default(autoincrement())
+  nom            String          // اسم المريض
+  age            Int?            // العمر (اختياري)
+  telephone      String?         // رقم الهاتف
+  adresse        String?         // العنوان
+  antecedents    String?         // سوابق مرضية / تاريخ طبي
+  groupeSanguin  GroupeSanguin?  // زمرة الدم
+  consultations  Consultation[]
+  ordonnances    Ordonnance[]
+  paiements      Paiement[]
+  createdAt      DateTime        @default(now())
+}
+
+model Consultation {
+  id                   Int           @id @default(autoincrement())
+  patientId            Int
+  patient              Patient       @relation(fields: [patientId], references: [id])
+  note                 String?       // ملاحظات الاستشارة
+  taille               Float?        // الطول (سم)
+  poids                Float?        // الوزن (كغ)
+  tensionSystolique    Int?          // الضغط الانقباضي
+  tensionDiastolique   Int?          // الضغط الانبساطي
+  temperature          Float?        // الحرارة °C
+  frequenceCardiaque   Int?          // نبض القلب (نبضة/دقيقة)
+  frequenceRespiratoire Int?         // معدل التنفس (مرة/دقيقة)
+  saturationOxygene    Int?          // SpO2 %
+  tabac                String?       // التدخين (مثال: "10 سجائر/يوم" أو "غير مدخن")
+  alcool               String?       // استهلاك الكحول (مثلاً: "مناسب" أو "يومي")
+  glycemie             Float?        // نسبة السكر في الدم
+  radios               Radio[]       // صور الأشعة
+  bilans               Bilan[]       // تحاليل مخبرية
+  ordonnance           Ordonnance?   // وصفة طبية مرتبطة
+  createdAt            DateTime      @default(now())
+}
+
+model Radio {
+  id              Int           @id @default(autoincrement())
+  consultationId  Int
+  consultation    Consultation  @relation(fields: [consultationId], references: [id])
+  description     String?       // وصف الفحص
+  fichier         String?       // رابط صورة/ملف
+  createdAt       DateTime      @default(now())
+}
+
+model Bilan {
+  id              Int           @id @default(autoincrement())
+  consultationId  Int
+  consultation    Consultation  @relation(fields: [consultationId], references: [id])
+  type            String?       // نوع التحليل (مثلاً: دموي، بولي)
+  resultat        String?       // النتيجة
+  fichier         String?       // رابط ملف (PDF أو صورة)
+  createdAt       DateTime      @default(now())
+}
+
+model Ordonnance {
+  id             Int             @id @default(autoincrement())
+  patientId      Int
+  patient        Patient         @relation(fields: [patientId], references: [id])
+  consultationId   Int           @unique
+  consultation   Consultation?   @relation(fields: [consultationId], references: [id])
+  items          OrdonnanceItem[]
+  createdAt      DateTime        @default(now())
+}
+
+model OrdonnanceItem {
+  id            Int         @id @default(autoincrement())
+  ordonnanceId  Int
+  ordonnance    Ordonnance  @relation(fields: [ordonnanceId], references: [id])
+  medicamentId  Int
+  medicament    Medicament  @relation(fields: [medicamentId], references: [id])
+  dosage        String?     // "500mg"
+  frequence     String?     // "2 fois par jour"
+  duree         String?     // "7 jours"
+}
+
+model Medicament {
+  id        Int              @id @default(autoincrement())
+  nom       String           @unique   // اسم الدواء
+  items     OrdonnanceItem[]
+    recetteTypeItems RecetteTypeItem[] // <-- Add this line
+
+}
+
+model RecetteType {
+  id        Int               @id @default(autoincrement())
+  nom       String            // اسم الوصفة الشائعة (مثال: "Diabète")
+  items     RecetteTypeItem[]
+
+}
+
+model RecetteTypeItem {
+  id           Int          @id @default(autoincrement())
+  recetteId    Int
+  recette      RecetteType  @relation(fields: [recetteId], references: [id])
+  medicamentId Int 
+  medicament   Medicament   @relation(fields: [medicamentId], references: [id])
+  dosage       String?
+  frequence    String?
+  duree        String?
+}
+
+model Paiement {
+  id        Int       @id @default(autoincrement())
+  patientId Int
+  patient   Patient   @relation(fields: [patientId], references: [id])
+  montant   Float     // المبلغ المدفوع
+  date      DateTime  @default(now())
+}
