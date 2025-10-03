@@ -60,8 +60,6 @@ model Consultation {
   frequenceCardiaque   Int?          // نبض القلب (نبضة/دقيقة)
   frequenceRespiratoire Int?         // معدل التنفس (مرة/دقيقة)
   saturationOxygene    Int?          // SpO2 %
-  tabac                String?       // التدخين (مثال: "10 سجائر/يوم" أو "غير مدخن")
-  alcool               String?       // استهلاك الكحول (مثلاً: "مناسب" أو "يومي")
   glycemie             Float?        // نسبة السكر في الدم
   radios               Radio[]       // صور الأشعة
   bilans               Bilan[]       // تحاليل مخبرية

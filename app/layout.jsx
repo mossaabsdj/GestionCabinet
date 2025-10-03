@@ -16,7 +16,7 @@ export default function RootLayout({ children }) {
           <AppSidebar />
 
           {/* زر التبديل */}
-          <div className="absolute top-4 left-4 z-50">
+          <div className="absolute top-4 left-4 z-50 fixed">
             <SidebarTrigger className="p-2 rounded-lg bg-purple-600 text-white hover:bg-purple-700 transition-colors focus:outline-none focus:ring-2 focus:ring-purple-400">
               <span className="font-bold text-xl">☰</span>
             </SidebarTrigger>

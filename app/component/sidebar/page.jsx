@@ -11,6 +11,7 @@ import {
   CalendarCheck,
   FileText,
   Pill,
+  Tablet,
 } from "lucide-react";
 
 import {
@@ -28,10 +29,11 @@ import {
 
 const items = [
   { title: "Tableau de bord", url: "Accueill", icon: Home }, // Vue d’ensemble
+  { title: "Consulter", url: "Consulter", icon: Home }, // Vue d’ensemble
   { title: "Patients", url: "Patients", icon: Users }, // Gestion des patients
-  { title: "Rendez-vous", url: "Rendez-vous", icon: CalendarCheck }, // Agenda des consultations
-  { title: "Rapports", url: "Rapports", icon: FileText }, // Comptes rendus / résultats
-  { title: "Ordonnances", url: "Ordonnances", icon: Pill },
+  { title: "Rapports", url: "Rapports", icon: CalendarCheck }, // Comptes rendus / résultats
+  { title: "Ordonnances", url: "Ordonnances", icon: FileText },
+  { title: "Médicaments", url: "Medicament", icon: Pill }, // Gestion des médicaments
 ];
 
 export function AppSidebar() {
