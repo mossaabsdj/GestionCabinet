@@ -4,16 +4,20 @@ import React, { useEffect, useState } from "react";
 import {
   Save,
   AlertCircle,
-  ClipboardList,
   User,
   Activity,
   Heart,
+  FilePlus,
+  Trash2,
+  FileText,
+  Plus,
 } from "lucide-react";
-import { Card } from "@/components/ui/card"; // assuming shadcn/ui is used
+import { Card } from "@/components/ui/card"; // shadcn/ui
 
 export default function NewConsultationPage({ selectedPatient = {}, onSave }) {
   const [form, setForm] = useState({
     note: "",
+    ordonnance: "",
     taille: "",
     poids: "",
     tensionSystolique: "",
@@ -25,22 +29,28 @@ export default function NewConsultationPage({ selectedPatient = {}, onSave }) {
     glycemie: "",
   });
 
+  const [files, setFiles] = useState([]); // store multiple files
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
+  const [showOrdonnance, setShowOrdonnance] = useState(false);
 
   useEffect(() => {
-    setForm({
-      note: selectedPatient.note ?? "",
-      taille: selectedPatient.taille ?? "",
-      poids: selectedPatient.poids ?? "",
-      tensionSystolique: selectedPatient.tensionSystolique ?? "",
-      tensionDiastolique: selectedPatient.tensionDiastolique ?? "",
-      temperature: selectedPatient.temperature ?? "",
-      frequenceCardiaque: selectedPatient.frequenceCardiaque ?? "",
-      frequenceRespiratoire: selectedPatient.frequenceRespiratoire ?? "",
-      saturationOxygene: selectedPatient.saturationOxygene ?? "",
-      glycemie: selectedPatient.glycemie ?? "",
-    });
+    if (selectedPatient && Object.keys(selectedPatient).length > 0) {
+      setForm((prev) => ({
+        ...prev,
+        note: selectedPatient.note ?? "",
+        ordonnance: selectedPatient.ordonnance ?? "",
+        taille: selectedPatient.taille ?? "",
+        poids: selectedPatient.poids ?? "",
+        tensionSystolique: selectedPatient.tensionSystolique ?? "",
+        tensionDiastolique: selectedPatient.tensionDiastolique ?? "",
+        temperature: selectedPatient.temperature ?? "",
+        frequenceCardiaque: selectedPatient.frequenceCardiaque ?? "",
+        frequenceRespiratoire: selectedPatient.frequenceRespiratoire ?? "",
+        saturationOxygene: selectedPatient.saturationOxygene ?? "",
+        glycemie: selectedPatient.glycemie ?? "",
+      }));
+    }
   }, [selectedPatient]);
 
   function handleChange(e) {
@@ -48,11 +58,31 @@ export default function NewConsultationPage({ selectedPatient = {}, onSave }) {
     setForm((s) => ({ ...s, [name]: value }));
   }
 
+  // Add new file
+  function handleFileAdd(e) {
+    const file = e.target.files[0];
+    if (file) {
+      setFiles((prev) => [...prev, { file, type: "bilan" }]);
+    }
+  }
+
+  // Change type of a file
+  function handleFileTypeChange(index, value) {
+    setFiles((prev) =>
+      prev.map((f, i) => (i === index ? { ...f, type: value } : f))
+    );
+  }
+
+  // Remove a file
+  function handleFileRemove(index) {
+    setFiles((prev) => prev.filter((_, i) => i !== index));
+  }
+
   async function handleSave() {
     setError("");
     setSaving(true);
     try {
-      await Promise.resolve(onSave?.(form));
+      await Promise.resolve(onSave?.({ ...form, files }));
       setSaving(false);
     } catch (e) {
       setSaving(false);
@@ -128,7 +158,39 @@ export default function NewConsultationPage({ selectedPatient = {}, onSave }) {
           />
         </div>
 
-        {/* Medical Info Cards */}
+        {/* Bouton ordonnance */}
+        <div className="mb-6">
+          {!showOrdonnance ? (
+            <button
+              type="button"
+              onClick={() => setShowOrdonnance(true)}
+              className="flex items-center gap-2 px-4 py-2 rounded-lg bg-purple-600 
+                         text-white hover:bg-purple-700 transition"
+            >
+              <Plus className="w-4 h-4" />
+              Ajouter une ordonnance
+            </button>
+          ) : (
+            <div className="space-y-2">
+              <label className="flex items-center gap-2 text-sm font-medium text-gray-700 dark:text-gray-200">
+                <FileText className="w-4 h-4 text-purple-500" />
+                Ordonnance
+              </label>
+              <textarea
+                name="ordonnance"
+                value={form.ordonnance}
+                onChange={handleChange}
+                rows={4}
+                className="w-full rounded-lg border px-3 py-2 text-sm shadow-sm 
+                           focus:outline-none focus:ring-2 focus:ring-purple-400 
+                           bg-white dark:bg-gray-700 dark:text-gray-200"
+                placeholder="Ex: Amoxicilline 1g matin et soir pendant 7 jours..."
+              />
+            </div>
+          )}
+        </div>
+
+        {/* Infos médicales */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {medicalInfo.map((info) => (
             <Card key={info.label} className="flex items-center gap-3 p-3">
@@ -146,6 +208,58 @@ export default function NewConsultationPage({ selectedPatient = {}, onSave }) {
               </div>
             </Card>
           ))}
+        </div>
+
+        {/* Upload fichiers */}
+        <div className="mt-6">
+          <label className="block text-sm font-medium mb-2 flex items-center gap-2">
+            <FilePlus className="w-4 h-4 text-purple-500" />
+            Ajouter des fichiers
+          </label>
+
+          {/* Upload button */}
+          <label
+            className="flex items-center justify-center w-full md:w-auto px-4 py-2 
+                       bg-purple-600 text-white rounded-lg shadow-sm cursor-pointer 
+                       hover:bg-purple-700 transition-all duration-200"
+          >
+            <span className="text-sm font-medium">📂 Choisir un fichier</span>
+            <input type="file" onChange={handleFileAdd} className="hidden" />
+          </label>
+
+          {/* File list */}
+          <div className="mt-4 space-y-3">
+            {files.map((f, index) => (
+              <div
+                key={index}
+                className="flex flex-col md:flex-row items-center gap-3 p-3 bg-gray-50 dark:bg-gray-700 rounded-lg shadow-sm"
+              >
+                <p className="flex-1 text-sm text-gray-700 dark:text-gray-200">
+                  {f.file.name}
+                </p>
+
+                <select
+                  value={f.type}
+                  onChange={(e) => handleFileTypeChange(index, e.target.value)}
+                  className="text-sm px-4 py-2 rounded-lg border border-gray-300 
+                               bg-white dark:bg-gray-800 dark:text-gray-100 
+                               focus:outline-none focus:ring-2 focus:ring-purple-500 
+                               hover:border-purple-400 transition-all duration-200 shadow-sm"
+                >
+                  <option value="bilan">🧪 Bilan (labo)</option>
+                  <option value="scan">🖼️ Scan</option>
+                </select>
+
+                <button
+                  type="button"
+                  onClick={() => handleFileRemove(index)}
+                  className="flex items-center gap-1 px-3 py-1 text-sm bg-red-500 text-white rounded-md hover:bg-red-600 transition"
+                >
+                  <Trash2 className="w-4 h-4" /> Supprimer
+                </button>
+              </div>
+            ))}
+          </div>
         </div>
 
         {/* Save Button */}
