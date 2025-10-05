@@ -20,6 +20,7 @@ import {
   DialogHeader,
   DialogTitle,
   DialogFooter,
+  DialogClose,
 } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
@@ -185,13 +186,13 @@ const JUSTIF_TYPE_TEXTS = {
   autre: "",
 };
 
-export default function PrescriptionTabs() {
+export default function PrescriptionModal({ open, onOpenChange }) {
   const [query, setQuery] = useState("");
   const [suggestions, setSuggestions] = useState([]);
   const [selectedMed, setSelectedMed] = useState(null);
   const [prescriptionItems, setPrescriptionItems] = useState([]);
   const [type, setType] = useState(PRESET_TYPES[0].id);
-  const [open, setOpen] = useState(false);
+  const [openMedDialog, setOpenMedDialog] = useState(false);
 
   const [tmpStrength, setTmpStrength] = useState("");
   const [tmpDose, setTmpDose] = useState("1 cp");
@@ -257,7 +258,7 @@ export default function PrescriptionTabs() {
       const s = suggestions[highlightedMedIdx];
       setSelectedMed(s);
       setTmpStrength(s.strengths[0]);
-      setOpen(true);
+      setOpenMedDialog(true);
     }
   }
 
@@ -290,7 +291,7 @@ export default function PrescriptionTabs() {
     setPrescriptionItems([...prescriptionItems, item]);
     setSelectedMed(null);
     setQuery("");
-    setOpen(false);
+    setOpenMedDialog(false);
   }
 
   function removeItem(uid) {
@@ -461,393 +462,228 @@ export default function PrescriptionTabs() {
   }, [handlePrint, handleSave]);
 
   return (
-    <div className="max-w-4xl mx-auto p-6">
-      <Tabs defaultValue="ordonnance">
-        <TabsList className="grid grid-cols-3 bg-purple-100 text-purple-700 rounded-lg">
-          <TabsTrigger value="ordonnance">📝 Ordonnance</TabsTrigger>
-          <TabsTrigger value="labs">🧪 Bilans & Analyses</TabsTrigger>
-          <TabsTrigger value="justif">📄 Justification médicale</TabsTrigger>
-        </TabsList>
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      {/* Optional: Close button */}
 
-        {/* Ordonnance */}
-        <TabsContent value="ordonnance">
-          <Card className="mt-4 border-purple-300 shadow-md">
-            <CardHeader className="flex flex-row items-center justify-between">
-              <div className="flex items-center gap-2">
-                <CardTitle className="text-purple-700 flex items-center gap-2">
-                  <Plus size={20} className="text-purple-500" /> Rédiger une
-                  ordonnance
-                </CardTitle>
-              </div>
-              <Button
-                className="bg-purple-500 hover:bg-purple-700"
-                onClick={handlePrint}
-                size="sm"
-              >
-                🖨️ Imprimer
-              </Button>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
-                <div className="md:col-span-2 relative">
-                  <Label htmlFor="med-search">Médicament</Label>
-                  <div className="relative">
-                    <Input
-                      id="med-search"
-                      placeholder="Tapez le nom du médicament..."
-                      value={query}
-                      onChange={(e) => setQuery(e.target.value)}
-                      onKeyDown={handleMedKeyDown}
-                      className="focus:ring-2 focus:ring-purple-400"
-                      autoComplete="off"
-                    />
-                    <div className="absolute right-3 top-3 pointer-events-none text-purple-500">
-                      <Search size={16} />
-                    </div>
+      <DialogContent className="max-w-4xl p-0">
+        <div className="p-6">
+          <Tabs defaultValue="ordonnance">
+            <TabsList className="grid grid-cols-3 bg-purple-100 text-purple-700 rounded-lg">
+              <TabsTrigger value="ordonnance">📝 Ordonnance</TabsTrigger>
+              <TabsTrigger value="labs">🧪 Bilans & Analyses</TabsTrigger>
+              <TabsTrigger value="justif">
+                📄 Justification médicale
+              </TabsTrigger>
+            </TabsList>
+
+            {/* Ordonnance */}
+            <TabsContent value="ordonnance">
+              <Card className="mt-4 border-purple-300 shadow-md ">
+                <CardHeader className="flex flex-row items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <CardTitle className="text-purple-700 flex items-center gap-2">
+                      <Plus size={20} className="text-purple-500" /> Rédiger une
+                      ordonnance
+                    </CardTitle>
                   </div>
-
-                  <AnimatePresence>
-                    {query && (
-                      <motion.ul
-                        initial={{ opacity: 0, y: -6 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: -6 }}
-                        className="absolute z-50 w-full mt-1 bg-white border rounded-md shadow-lg max-h-56 overflow-auto"
-                      >
-                        {suggestions.length > 0 ? (
-                          suggestions.map((s, idx) => (
-                            <li
-                              key={s.id}
-                              className={`px-3 py-2 flex justify-between items-center cursor-pointer ${
-                                idx === highlightedMedIdx
-                                  ? "bg-purple-100"
-                                  : "hover:bg-purple-50"
-                              }`}
-                              onMouseEnter={() => setHighlightedMedIdx(idx)}
-                              onClick={() => {
-                                setSelectedMed(s);
-                                setTmpStrength(s.strengths[0]);
-                                setOpen(true);
-                              }}
-                              ref={(el) => {
-                                if (idx === highlightedMedIdx && el)
-                                  el.scrollIntoView({ block: "nearest" });
-                              }}
-                            >
-                              <div>
-                                <div className="font-medium text-purple-700">
-                                  {s.name}
-                                </div>
-                                <div className="text-sm text-gray-500">
-                                  {s.form} • {s.strengths.join(" / ")}
-                                </div>
-                              </div>
-                              <div className="text-xs text-purple-500 font-medium">
-                                sélectionner
-                              </div>
-                            </li>
-                          ))
-                        ) : (
-                          <li className="px-3 py-2 text-sm text-gray-500 text-center">
-                            Aucun médicament trouvé
-                          </li>
-                        )}
-                      </motion.ul>
-                    )}
-                  </AnimatePresence>
-                </div>
-
-                <div>
-                  <Label>Type d'ordonnance</Label>
-                  <Select onValueChange={(v) => setType(v)} defaultValue={type}>
-                    <SelectTrigger className="w-full border-purple-300">
-                      <SelectValue placeholder="Choisir" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {PRESET_TYPES.map((t) => (
-                        <SelectItem key={t.id} value={t.id}>
-                          {t.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Modal Médicament */}
-          <Dialog open={open} onOpenChange={setOpen}>
-            <DialogContent className="sm:max-w-md">
-              <DialogHeader>
-                <DialogTitle className="text-purple-700">
-                  {selectedMed?.name} {selectedMed && `(${selectedMed.form})`}
-                </DialogTitle>
-                <p className="text-sm text-gray-500">
-                  Choisissez la concentration, la posologie et la durée.
-                </p>
-              </DialogHeader>
-
-              {selectedMed && (
-                <div className="grid gap-3">
-                  <div>
-                    <Label>Concentration</Label>
-                    <select
-                      className="w-full rounded-md border px-3 py-2"
-                      value={tmpStrength}
-                      onChange={(e) => setTmpStrength(e.target.value)}
-                    >
-                      {selectedMed.strengths.map((st) => (
-                        <option key={st} value={st}>
-                          {st}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-
-                  <div>
-                    <Label>Posologie</Label>
-                    <Input
-                      value={tmpDose}
-                      onChange={(e) => setTmpDose(e.target.value)}
-                    />
-                  </div>
-
-                  <div>
-                    <Label>Durée</Label>
-                    <Input
-                      value={tmpDuration}
-                      onChange={(e) => setTmpDuration(e.target.value)}
-                    />
-                  </div>
-                </div>
-              )}
-
-              <DialogFooter className="flex justify-between">
-                <Button variant="outline" onClick={() => setOpen(false)}>
-                  Annuler
-                </Button>
-                <Button
-                  className="bg-purple-600 hover:bg-purple-700"
-                  onClick={addMedication}
-                >
-                  <Plus size={16} className="mr-2" /> Ajouter
-                </Button>
-              </DialogFooter>
-            </DialogContent>
-          </Dialog>
-
-          <Card className="mt-6 border-purple-300">
-            <CardHeader>
-              <CardTitle className="text-purple-700">
-                Ordonnance — Aperçu ({totalMeds})
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              {prescriptionItems.length === 0 ? (
-                <div className="text-gray-500">Aucun médicament ajouté.</div>
-              ) : (
-                <ul className="space-y-3">
-                  {prescriptionItems.map((it) => (
-                    <li
-                      key={it.uid}
-                      className="flex items-center justify-between border rounded p-3 hover:bg-purple-50"
-                    >
-                      <div>
-                        <div className="font-medium text-purple-700">
-                          {it.name}{" "}
-                          <span className="text-sm text-gray-500">
-                            {it.strength}
-                          </span>
-                        </div>
-                        <div className="text-sm text-gray-600">
-                          {it.dose} • {it.frequency} • {it.duration}
-                        </div>
-                      </div>
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        onClick={() => removeItem(it.uid)}
-                      >
-                        <Trash2 size={16} className="text-red-500" />
-                      </Button>
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </CardContent>
-          </Card>
-
-          {/* Print Section (hidden) */}
-          <div className="hidden" ref={printRef}>
-            <div className="ord-print-header">
-              <div className="ord-print-title">Ordonnance Médicale</div>
-              <div className="ord-print-doc">Dr DIB Amel</div>
-              <div className="ord-print-date">
-                {new Date().toLocaleDateString("fr-FR", {
-                  year: "numeric",
-                  month: "long",
-                  day: "numeric",
-                })}
-              </div>
-            </div>
-            <div className="ord-print-list">
-              {prescriptionItems.length === 0 ? (
-                <div className="text-gray-500 px-4 py-8 text-center">
-                  Aucun médicament ajouté.
-                </div>
-              ) : (
-                <ul className="space-y-3">
-                  {prescriptionItems.map((it) => (
-                    <li
-                      key={it.uid}
-                      className="flex flex-col p-3 border rounded-md hover:bg-purple-50 transition-colors"
-                    >
-                      <div className="font-medium text-purple-700">
-                        {it.name}{" "}
-                        <span className="text-gray-600 font-normal">
-                          {it.strength}
-                        </span>
-                      </div>
-                      <div className="text-sm text-gray-700 mt-1">
-                        {it.dose} • {it.frequency} • {it.duration}
-                      </div>
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </div>
-            <div className="ord-print-footer">
-              Signature : ................................
-            </div>
-          </div>
-        </TabsContent>
-
-        {/* Bilans & Analyses */}
-        <TabsContent value="labs">
-          <Card className="mt-4 border-purple-300 shadow-md">
-            <CardHeader className="flex flex-row items-center justify-between">
-              <CardTitle className="text-purple-700 flex items-center gap-2">
-                <Plus size={20} className="text-purple-500" /> Rédiger un bilan
-                ou une analyse
-              </CardTitle>
-              <Button
-                className="bg-purple-500 hover:bg-purple-700"
-                onClick={handlePrintBilan}
-                size="sm"
-              >
-                🖨️ Imprimer
-              </Button>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
-                {/* Search Exam */}
-                <div className="md:col-span-2 relative">
-                  <Label htmlFor="lab-search">Examen / Analyse</Label>
-                  <div className="relative">
-                    <Input
-                      id="lab-search"
-                      placeholder="Tapez le nom de l'examen..."
-                      value={labQuery}
-                      onChange={(e) => setLabQuery(e.target.value)}
-                      onKeyDown={handleLabKeyDown}
-                      className="focus:ring-2 focus:ring-purple-400"
-                      autoComplete="off"
-                    />
-                    <div className="absolute right-3 top-3 pointer-events-none text-purple-500">
-                      <Search size={16} />
-                    </div>
-                  </div>
-                  <AnimatePresence>
-                    {labQuery && (
-                      <motion.ul
-                        initial={{ opacity: 0, y: -6 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: -6 }}
-                        className="absolute z-50 w-full mt-1 bg-white border rounded-md shadow-lg max-h-56 overflow-auto"
-                      >
-                        {labSuggestions.length > 0 ? (
-                          labSuggestions.map((exam, idx) => (
-                            <li
-                              key={exam}
-                              className={`px-3 py-2 flex justify-between items-center cursor-pointer ${
-                                idx === highlightedLabIdx
-                                  ? "bg-purple-100"
-                                  : "hover:bg-purple-50"
-                              }`}
-                              onMouseEnter={() => setHighlightedLabIdx(idx)}
-                              onClick={() => addLab(exam)}
-                              ref={(el) => {
-                                if (idx === highlightedLabIdx && el)
-                                  el.scrollIntoView({ block: "nearest" });
-                              }}
-                            >
-                              <span className="font-medium text-purple-700">
-                                {exam}
-                              </span>
-                              <span className="text-xs text-purple-500 font-medium">
-                                ajouter
-                              </span>
-                            </li>
-                          ))
-                        ) : (
-                          <li className="px-3 py-2 text-sm text-gray-500 text-center">
-                            Aucun examen trouvé
-                          </li>
-                        )}
-                      </motion.ul>
-                    )}
-                  </AnimatePresence>
-                </div>
-                {/* Select Type */}
-                <div>
-                  <Label>Type de bilan</Label>
-                  <Select
-                    onValueChange={(v) => setBilanType(v)}
-                    defaultValue={bilanType}
+                  <Button
+                    className="bg-purple-500 hover:bg-purple-700"
+                    onClick={handlePrint}
+                    size="sm"
                   >
-                    <SelectTrigger className="w-full border-purple-300">
-                      <SelectValue placeholder="Choisir le type" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {BILAN_PRESET_TYPES.map((t) => (
-                        <SelectItem key={t.id} value={t.id}>
-                          {t.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-              {/* Preview List */}
-              <Card className="mt-6 border-purple-200">
+                    🖨️ Imprimer
+                  </Button>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
+                    <div className="md:col-span-2 relative">
+                      <Label htmlFor="med-search">Médicament</Label>
+                      <div className="relative">
+                        <Input
+                          id="med-search"
+                          placeholder="Tapez le nom du médicament..."
+                          value={query}
+                          onChange={(e) => setQuery(e.target.value)}
+                          onKeyDown={handleMedKeyDown}
+                          className="focus:ring-2 focus:ring-purple-400"
+                          autoComplete="off"
+                        />
+                        <div className="absolute right-3 top-3 pointer-events-none text-purple-500">
+                          <Search size={16} />
+                        </div>
+                      </div>
+
+                      <AnimatePresence>
+                        {query && (
+                          <motion.ul
+                            initial={{ opacity: 0, y: -6 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0, y: -6 }}
+                            className="absolute z-50 w-full mt-1 bg-white border rounded-md shadow-lg max-h-56 overflow-auto"
+                          >
+                            {suggestions.length > 0 ? (
+                              suggestions.map((s, idx) => (
+                                <li
+                                  key={s.id}
+                                  className={`px-3 py-2 flex justify-between items-center cursor-pointer ${
+                                    idx === highlightedMedIdx
+                                      ? "bg-purple-100"
+                                      : "hover:bg-purple-50"
+                                  }`}
+                                  onMouseEnter={() => setHighlightedMedIdx(idx)}
+                                  onClick={() => {
+                                    setSelectedMed(s);
+                                    setTmpStrength(s.strengths[0]);
+                                    setOpenMedDialog(true);
+                                  }}
+                                  ref={(el) => {
+                                    if (idx === highlightedMedIdx && el)
+                                      el.scrollIntoView({ block: "nearest" });
+                                  }}
+                                >
+                                  <div>
+                                    <div className="font-medium text-purple-700">
+                                      {s.name}
+                                    </div>
+                                    <div className="text-sm text-gray-500">
+                                      {s.form} • {s.strengths.join(" / ")}
+                                    </div>
+                                  </div>
+                                  <div className="text-xs text-purple-500 font-medium">
+                                    sélectionner
+                                  </div>
+                                </li>
+                              ))
+                            ) : (
+                              <li className="px-3 py-2 text-sm text-gray-500 text-center">
+                                Aucun médicament trouvé
+                              </li>
+                            )}
+                          </motion.ul>
+                        )}
+                      </AnimatePresence>
+                    </div>
+
+                    <div>
+                      <Label>Type d'ordonnance</Label>
+                      <Select
+                        onValueChange={(v) => setType(v)}
+                        defaultValue={type}
+                      >
+                        <SelectTrigger className="w-full  border-purple-300">
+                          <SelectValue placeholder="Choisir" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {PRESET_TYPES.map((t) => (
+                            <SelectItem key={t.id} value={t.id}>
+                              {t.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Modal Médicament */}
+              <Dialog open={openMedDialog} onOpenChange={setOpenMedDialog}>
+                <DialogContent className="sm:max-w-md">
+                  <DialogHeader>
+                    <DialogTitle className="text-purple-700">
+                      {selectedMed?.name}{" "}
+                      {selectedMed && `(${selectedMed.form})`}
+                    </DialogTitle>
+                    <p className="text-sm text-gray-500">
+                      Choisissez la concentration, la posologie et la durée.
+                    </p>
+                  </DialogHeader>
+
+                  {selectedMed && (
+                    <div className="grid gap-3">
+                      <div>
+                        <Label>Concentration</Label>
+                        <select
+                          className="w-full rounded-md border px-3 py-2"
+                          value={tmpStrength}
+                          onChange={(e) => setTmpStrength(e.target.value)}
+                        >
+                          {selectedMed.strengths.map((st) => (
+                            <option key={st} value={st}>
+                              {st}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+
+                      <div>
+                        <Label>Posologie</Label>
+                        <Input
+                          value={tmpDose}
+                          onChange={(e) => setTmpDose(e.target.value)}
+                        />
+                      </div>
+
+                      <div>
+                        <Label>Durée</Label>
+                        <Input
+                          value={tmpDuration}
+                          onChange={(e) => setTmpDuration(e.target.value)}
+                        />
+                      </div>
+                    </div>
+                  )}
+
+                  <DialogFooter className="flex justify-between">
+                    <Button
+                      variant="outline"
+                      onClick={() => setOpenMedDialog(false)}
+                    >
+                      Annuler
+                    </Button>
+                    <Button
+                      className="bg-purple-600 hover:bg-purple-700"
+                      onClick={addMedication}
+                    >
+                      <Plus size={16} className="mr-2" /> Ajouter
+                    </Button>
+                  </DialogFooter>
+                </DialogContent>
+              </Dialog>
+
+              <Card className="mt-2 border-purple-300">
                 <CardHeader>
                   <CardTitle className="text-purple-700">
-                    Bilans & Analyses — Aperçu ({labItems.length})
+                    Ordonnance — Aperçu ({totalMeds})
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  {labItems.length === 0 ? (
-                    <div className="text-gray-500">Aucun examen ajouté.</div>
+                  {prescriptionItems.length === 0 ? (
+                    <div className="h-88 text-gray-500">
+                      Aucun médicament ajouté.
+                    </div>
                   ) : (
-                    <ul className="space-y-3">
-                      {labItems.map((exam) => (
+                    <ul className="space-y-3 h-88 overflow-auto">
+                      {prescriptionItems.map((it) => (
                         <li
-                          key={exam}
+                          key={it.uid}
                           className="flex items-center justify-between border rounded p-3 hover:bg-purple-50"
                         >
                           <div>
                             <div className="font-medium text-purple-700">
-                              {exam}
+                              {it.name}{" "}
+                              <span className="text-sm text-gray-500">
+                                {it.strength}
+                              </span>
                             </div>
-                            <div className="text-sm text-gray-500">
-                              Type : {bilanType ? bilanType : "Non précisé"}
+                            <div className="text-sm text-gray-600">
+                              {it.dose} • {it.frequency} • {it.duration}
                             </div>
                           </div>
                           <Button
                             size="sm"
                             variant="ghost"
-                            onClick={() => removeLab(exam)}
+                            onClick={() => removeItem(it.uid)}
                           >
                             <Trash2 size={16} className="text-red-500" />
                           </Button>
@@ -857,12 +693,13 @@ export default function PrescriptionTabs() {
                   )}
                 </CardContent>
               </Card>
+
               {/* Print Section (hidden) */}
-              <div className="hidden" ref={bilanPrintRef}>
-                <div className="bilan-print-header">
-                  <div className="bilan-print-title">Bilans & Analyses</div>
-                  <div className="bilan-print-doc">Dr DIB Amel</div>
-                  <div className="bilan-print-date">
+              <div className="hidden" ref={printRef}>
+                <div className="ord-print-header">
+                  <div className="ord-print-title">Ordonnance Médicale</div>
+                  <div className="ord-print-doc">Dr DIB Amel</div>
+                  <div className="ord-print-date">
                     {new Date().toLocaleDateString("fr-FR", {
                       year: "numeric",
                       month: "long",
@@ -870,124 +707,307 @@ export default function PrescriptionTabs() {
                     })}
                   </div>
                 </div>
-                <div className="bilan-print-list">
-                  {labItems.length === 0 ? (
-                    <div className="text-gray-500 px-4 py-8">
-                      Aucun examen ajouté.
+                <div className="ord-print-list">
+                  {prescriptionItems.length === 0 ? (
+                    <div className="text-gray-500 px-4 py-8 text-center">
+                      Aucun médicament ajouté.
                     </div>
                   ) : (
-                    labItems.map((exam) => (
-                      <div key={exam} className="bilan-print-item">
-                        <div className="font-medium text-purple-700">
-                          {exam}
-                        </div>
-                        <div className="text-sm text-gray-500">
-                          Type : {bilanType ? bilanType : "Non précisé"}
-                        </div>
-                      </div>
-                    ))
+                    <ul className="space-y-3">
+                      {prescriptionItems.map((it) => (
+                        <li
+                          key={it.uid}
+                          className="flex flex-col p-3 border rounded-md hover:bg-purple-50 transition-colors"
+                        >
+                          <div className="font-medium text-purple-700">
+                            {it.name}{" "}
+                            <span className="text-gray-600 font-normal">
+                              {it.strength}
+                            </span>
+                          </div>
+                          <div className="text-sm text-gray-700 mt-1">
+                            {it.dose} • {it.frequency} • {it.duration}
+                          </div>
+                        </li>
+                      ))}
+                    </ul>
                   )}
                 </div>
-                <div className="bilan-print-footer">
+                <div className="ord-print-footer">
                   Signature : ................................
                 </div>
               </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
+            </TabsContent>
 
-        {/* Justification médicale */}
-        <TabsContent value="justif">
-          <Card className="mt-4 border-purple-300">
-            <CardHeader className="flex flex-row items-center justify-between">
-              <CardTitle className="text-purple-700">
-                📄 Justification médicale / Arrêt de travail
-              </CardTitle>
-              <Button
-                className="bg-purple-500 hover:bg-purple-700"
-                onClick={handlePrintJustif}
-                size="sm"
-              >
-                🖨️ Imprimer
-              </Button>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <Label>Type de justification</Label>
-                  <Select
-                    onValueChange={(v) => setJustifType(v)}
-                    defaultValue={justifType}
+            {/* Bilans & Analyses */}
+            <TabsContent value="labs">
+              <Card className="mt-4 border-purple-300 shadow-md">
+                <CardHeader className="flex flex-row items-center justify-between">
+                  <CardTitle className="text-purple-700 flex items-center gap-2">
+                    <Plus size={20} className="text-purple-500" /> Rédiger un
+                    bilan ou une analyse
+                  </CardTitle>
+                  <Button
+                    className="bg-purple-500 hover:bg-purple-700"
+                    onClick={handlePrintBilan}
+                    size="sm"
                   >
-                    <SelectTrigger className="w-full border-purple-300">
-                      <SelectValue placeholder="Choisir le type" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {JUSTIF_PRESET_TYPES.map((t) => (
-                        <SelectItem key={t.id} value={t.id}>
-                          {t.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div>
-                  <Label htmlFor="justif-text">Texte</Label>
-                  <textarea
-                    id="justif-text"
-                    rows={5}
-                    value={justifText}
-                    onChange={(e) => setJustifText(e.target.value)}
-                    className="w-full border rounded-lg p-3 mt-2 focus:ring-2 focus:ring-purple-400"
-                    placeholder="Ex : Arrêt de travail de 7 jours..."
-                  />
-                </div>
-              </div>
-              {/* Print Section (hidden) */}
-              <div className="hidden" ref={justifPrintRef}>
-                <div className="justif-print-header">
-                  <div className="justif-print-title">
-                    Justification médicale
+                    🖨️ Imprimer
+                  </Button>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
+                    {/* Search Exam */}
+                    <div className="md:col-span-2 relative">
+                      <Label htmlFor="lab-search">Examen / Analyse</Label>
+                      <div className="relative">
+                        <Input
+                          id="lab-search"
+                          placeholder="Tapez le nom de l'examen..."
+                          value={labQuery}
+                          onChange={(e) => setLabQuery(e.target.value)}
+                          onKeyDown={handleLabKeyDown}
+                          className="focus:ring-2 focus:ring-purple-400"
+                          autoComplete="off"
+                        />
+                        <div className="absolute right-3 top-3 pointer-events-none text-purple-500">
+                          <Search size={16} />
+                        </div>
+                      </div>
+                      <AnimatePresence>
+                        {labQuery && (
+                          <motion.ul
+                            initial={{ opacity: 0, y: -6 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0, y: -6 }}
+                            className="absolute z-50 w-full mt-1 bg-white border rounded-md shadow-lg max-h-56 overflow-auto"
+                          >
+                            {labSuggestions.length > 0 ? (
+                              labSuggestions.map((exam, idx) => (
+                                <li
+                                  key={exam}
+                                  className={`px-3 py-2 flex justify-between items-center cursor-pointer ${
+                                    idx === highlightedLabIdx
+                                      ? "bg-purple-100"
+                                      : "hover:bg-purple-50"
+                                  }`}
+                                  onMouseEnter={() => setHighlightedLabIdx(idx)}
+                                  onClick={() => addLab(exam)}
+                                  ref={(el) => {
+                                    if (idx === highlightedLabIdx && el)
+                                      el.scrollIntoView({ block: "nearest" });
+                                  }}
+                                >
+                                  <span className="font-medium text-purple-700">
+                                    {exam}
+                                  </span>
+                                  <span className="text-xs text-purple-500 font-medium">
+                                    ajouter
+                                  </span>
+                                </li>
+                              ))
+                            ) : (
+                              <li className="px-3 py-2 text-sm text-gray-500 text-center">
+                                Aucun examen trouvé
+                              </li>
+                            )}
+                          </motion.ul>
+                        )}
+                      </AnimatePresence>
+                    </div>
+                    {/* Select Type */}
+                    <div>
+                      <Label>Type de bilan</Label>
+                      <Select
+                        onValueChange={(v) => setBilanType(v)}
+                        defaultValue={bilanType}
+                      >
+                        <SelectTrigger className="w-full border-purple-300">
+                          <SelectValue placeholder="Choisir le type" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {BILAN_PRESET_TYPES.map((t) => (
+                            <SelectItem key={t.id} value={t.id}>
+                              {t.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
                   </div>
-                  <div className="justif-print-doc">Dr DIB Amel</div>
-                  <div className="justif-print-date">
-                    {new Date().toLocaleDateString("fr-FR", {
-                      year: "numeric",
-                      month: "long",
-                      day: "numeric",
-                    })}
+                  {/* Preview List */}
+                  <Card className="mt-6 border-purple-200">
+                    <CardHeader>
+                      <CardTitle className="text-purple-700">
+                        Bilans & Analyses — Aperçu ({labItems.length})
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      {labItems.length === 0 ? (
+                        <div className="text-gray-500 h-88">
+                          Aucun examen ajouté.
+                        </div>
+                      ) : (
+                        <ul className="space-y-3 h-88 overflow-auto">
+                          {labItems.map((exam) => (
+                            <li
+                              key={exam}
+                              className="flex items-center justify-between border rounded p-3 hover:bg-purple-50"
+                            >
+                              <div>
+                                <div className="font-medium text-purple-700">
+                                  {exam}
+                                </div>
+                                <div className="text-sm text-gray-500">
+                                  Type : {bilanType ? bilanType : "Non précisé"}
+                                </div>
+                              </div>
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                onClick={() => removeLab(exam)}
+                              >
+                                <Trash2 size={16} className="text-red-500" />
+                              </Button>
+                            </li>
+                          ))}
+                        </ul>
+                      )}
+                    </CardContent>
+                  </Card>
+                  {/* Print Section (hidden) */}
+                  <div className="hidden" ref={bilanPrintRef}>
+                    <div className="bilan-print-header">
+                      <div className="bilan-print-title">Bilans & Analyses</div>
+                      <div className="bilan-print-doc">Dr DIB Amel</div>
+                      <div className="bilan-print-date">
+                        {new Date().toLocaleDateString("fr-FR", {
+                          year: "numeric",
+                          month: "long",
+                          day: "numeric",
+                        })}
+                      </div>
+                    </div>
+                    <div className="bilan-print-list">
+                      {labItems.length === 0 ? (
+                        <div className="text-gray-500 px-4 py-8">
+                          Aucun examen ajouté.
+                        </div>
+                      ) : (
+                        labItems.map((exam) => (
+                          <div key={exam} className="bilan-print-item">
+                            <div className="font-medium text-purple-700">
+                              {exam}
+                            </div>
+                            <div className="text-sm text-gray-500">
+                              Type : {bilanType ? bilanType : "Non précisé"}
+                            </div>
+                          </div>
+                        ))
+                      )}
+                    </div>
+                    <div className="bilan-print-footer">
+                      Signature : ................................
+                    </div>
                   </div>
-                </div>
-                <div className="justif-print-text">{justifText}</div>
-                <div className="justif-print-footer">
-                  Signature : ................................
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
+                </CardContent>
+              </Card>
+            </TabsContent>
 
-      {/* Footer Save */}
-      <div className="mt-6 flex justify-end gap-2">
-        <Button
-          variant="ghost"
-          className="text-red-500"
-          onClick={() => {
-            setPrescriptionItems([]);
-            setLabItems([]);
-            setJustifText("");
-          }}
-        >
-          Tout réinitialiser
-        </Button>
-        <Button
-          className="bg-purple-600 hover:bg-purple-700"
-          onClick={handleSave}
-        >
-          Sauvegarder tout
-        </Button>
-      </div>
-    </div>
+            {/* Justification médicale */}
+            <TabsContent value="justif">
+              <Card className="mt-4 border-purple-300">
+                <CardHeader className="flex flex-row items-center justify-between">
+                  <CardTitle className="text-purple-700">
+                    📄 Justification médicale / Arrêt de travail
+                  </CardTitle>
+                  <Button
+                    className="bg-purple-500 hover:bg-purple-700"
+                    onClick={handlePrintJustif}
+                    size="sm"
+                  >
+                    🖨️ Imprimer
+                  </Button>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-1 md:grid-cols-1 gap-4">
+                    <div>
+                      <Label>Type de justification</Label>
+                      <Select
+                        onValueChange={(v) => setJustifType(v)}
+                        defaultValue={justifType}
+                      >
+                        <SelectTrigger className="w-full border-purple-300">
+                          <SelectValue placeholder="Choisir le type" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {JUSTIF_PRESET_TYPES.map((t) => (
+                            <SelectItem key={t.id} value={t.id}>
+                              {t.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="h-114">
+                      <Label htmlFor="justif-text">Texte</Label>
+                      <textarea
+                        id="justif-text"
+                        rows={5}
+                        value={justifText}
+                        onChange={(e) => setJustifText(e.target.value)}
+                        className="w-full border rounded-lg p-3 mt-2 focus:ring-2 focus:ring-purple-400"
+                        placeholder="Ex : Arrêt de travail de 7 jours..."
+                      />
+                    </div>
+                  </div>
+                  {/* Print Section (hidden) */}
+                  <div className="hidden" ref={justifPrintRef}>
+                    <div className="justif-print-header">
+                      <div className="justif-print-title">
+                        Justification médicale
+                      </div>
+                      <div className="justif-print-doc">Dr DIB Amel</div>
+                      <div className="justif-print-date">
+                        {new Date().toLocaleDateString("fr-FR", {
+                          year: "numeric",
+                          month: "long",
+                          day: "numeric",
+                        })}
+                      </div>
+                    </div>
+                    <div className="justif-print-text">{justifText}</div>
+                    <div className="justif-print-footer">
+                      Signature : ................................
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </TabsContent>
+          </Tabs>
+
+          {/* Footer Save */}
+          <div className="mt-6 flex justify-end gap-2">
+            <Button
+              variant="ghost"
+              className="text-red-500"
+              onClick={() => {
+                setPrescriptionItems([]);
+                setLabItems([]);
+                setJustifText("");
+              }}
+            >
+              Tout réinitialiser
+            </Button>
+            <Button
+              className="bg-purple-600 hover:bg-purple-700"
+              onClick={handleSave}
+            >
+              Sauvegarder tout
+            </Button>
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
   );
 }

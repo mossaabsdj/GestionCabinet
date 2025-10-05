@@ -18,6 +18,9 @@ import { Input } from "@/components/ui/input";
 import AjouteModal from "@/app/component/NewPatient/page";
 import CourbePage from "@/app/component/Courbe/page";
 import NewConsultationPage from "../component/NewConsultation/page";
+import Analyses from "../component/Analyses/page";
+import PatientVisits from "../component/Visites/page";
+import Ordonnances from "../component/Ordanance/page";
 const patientsData = [
   {
     id: 1,
@@ -238,7 +241,7 @@ export default function PatientDashboard() {
             "Visites",
             "Analyses",
             "Courbe",
-            "Prescriptions",
+            "Ordonnances",
             "+ Nouvelle Consultation",
           ].map((tab) => (
             <button
@@ -256,83 +259,76 @@ export default function PatientDashboard() {
             </button>
           ))}
         </div>
-        {NewConsultation ? (
-          <NewConsultationPage />
-        ) : (
-          <div>
-            {selectedtab === "Informations Patient" && (
-              <>
-                {" "}
-                {[
-                  {
-                    title: "Informations Générales",
-                    icon: User,
-                    data: generalInfo,
-                  },
-                  {
-                    title: "Informations Médicales",
-                    icon: Stethoscope,
-                    data: medicalInfo,
-                  },
-                  {
-                    title: "Informations de Contact",
-                    icon: Phone,
-                    data: contactInfo,
-                  },
-                ].map((section) => (
-                  <div key={section.title} className="mb-6">
-                    <h3 className="text-xl font-semibold mb-4 text-purple-700 flex items-center gap-2">
-                      <section.icon size={20} /> {section.title}
-                    </h3>
-                    <div className="grid grid-cols-2 gap-4">
-                      {section.data.map((info) => (
-                        <Card
-                          key={info.label}
-                          className="flex items-center gap-3 p-3"
-                        >
-                          <div className="flex justify-between w-full">
-                            <div className="flex flex-row items-center">
-                              <info.icon
-                                className="text-purple-500"
-                                size={20}
-                              />
-                              <span className="text-gray-500 ml-2">
-                                {info.label}
-                              </span>
-                            </div>
-                            <span>{info.value}</span>
+
+        <div>
+          {selectedtab === "Informations Patient" && (
+            <>
+              {" "}
+              {[
+                {
+                  title: "Informations Générales",
+                  icon: User,
+                  data: generalInfo,
+                },
+                {
+                  title: "Informations Médicales",
+                  icon: Stethoscope,
+                  data: medicalInfo,
+                },
+                {
+                  title: "Informations de Contact",
+                  icon: Phone,
+                  data: contactInfo,
+                },
+              ].map((section) => (
+                <div key={section.title} className="mb-6">
+                  <h3 className="text-xl font-semibold mb-4 text-purple-700 flex items-center gap-2">
+                    <section.icon size={20} /> {section.title}
+                  </h3>
+                  <div className="grid grid-cols-2 gap-4">
+                    {section.data.map((info) => (
+                      <Card
+                        key={info.label}
+                        className="flex items-center gap-3 p-3"
+                      >
+                        <div className="flex justify-between w-full">
+                          <div className="flex flex-row items-center">
+                            <info.icon className="text-purple-500" size={20} />
+                            <span className="text-gray-500 ml-2">
+                              {info.label}
+                            </span>
                           </div>
-                        </Card>
-                      ))}
-                    </div>
+                          <span>{info.value}</span>
+                        </div>
+                      </Card>
+                    ))}
                   </div>
-                ))}
-                {/* Derniers Diagnostics */}
-                <h3 className="text-xl font-semibold mb-4 text-purple-700 flex items-center gap-2">
-                  <FileText size={20} /> Derniers Diagnostics
-                </h3>
-                <div className="grid grid-cols-3 gap-4">
-                  {latestDiagnoses.map((diag) => (
-                    <Card key={diag.name} className="bg-purple-50 p-3">
-                      <CardContent>
-                        <p className="font-medium">{diag.name}</p>
-                        <p className="text-sm text-gray-500">{diag.date}</p>
-                      </CardContent>
-                    </Card>
-                  ))}
                 </div>
-              </>
-            )}
-            {selectedtab === "Courbe" && <CourbePage />}
-            {selectedtab === "+ Nouvelle Consultation" && (
-              <NewConsultationPage />
-            )}
+              ))}
+              {/* Derniers Diagnostics */}
+              <h3 className="text-xl font-semibold mb-4 text-purple-700 flex items-center gap-2">
+                <FileText size={20} /> Derniers Diagnostics
+              </h3>
+              <div className="grid grid-cols-3 gap-4">
+                {latestDiagnoses.map((diag) => (
+                  <Card key={diag.name} className="bg-purple-50 p-3">
+                    <CardContent>
+                      <p className="font-medium">{diag.name}</p>
+                      <p className="text-sm text-gray-500">{diag.date}</p>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            </>
+          )}
+          {selectedtab === "Courbe" && <CourbePage />}
+          {selectedtab === "+ Nouvelle Consultation" && <NewConsultationPage />}
+          {selectedtab === "Analyses" && <Analyses />}
+          {selectedtab === "Visites" && <PatientVisits />}
+          {selectedtab === "Ordonnances" && <Ordonnances />}
 
-            {/* Sections */}
-          </div>
-        )}
-
-        {/* Tabs */}
+          {/* Sections */}
+        </div>
       </div>
     </div>
   );

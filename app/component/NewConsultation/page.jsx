@@ -13,7 +13,7 @@ import {
   Plus,
 } from "lucide-react";
 import { Card } from "@/components/ui/card"; // shadcn/ui
-
+import NewOrdanance from "@/app/component/NewOrdanance/page";
 export default function NewConsultationPage({ selectedPatient = {}, onSave }) {
   const [form, setForm] = useState({
     note: "",
@@ -32,7 +32,7 @@ export default function NewConsultationPage({ selectedPatient = {}, onSave }) {
   const [files, setFiles] = useState([]); // store multiple files
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
-  const [showOrdonnance, setShowOrdonnance] = useState(false);
+  const [showNewOrdonnance, setShowNewOrdonnance] = useState(false);
 
   useEffect(() => {
     if (selectedPatient && Object.keys(selectedPatient).length > 0) {
@@ -158,38 +158,6 @@ export default function NewConsultationPage({ selectedPatient = {}, onSave }) {
           />
         </div>
 
-        {/* Bouton ordonnance */}
-        <div className="mb-6">
-          {!showOrdonnance ? (
-            <button
-              type="button"
-              onClick={() => setShowOrdonnance(true)}
-              className="flex items-center gap-2 px-4 py-2 rounded-lg bg-purple-600 
-                         text-white hover:bg-purple-700 transition"
-            >
-              <Plus className="w-4 h-4" />
-              Ajouter une ordonnance
-            </button>
-          ) : (
-            <div className="space-y-2">
-              <label className="flex items-center gap-2 text-sm font-medium text-gray-700 dark:text-gray-200">
-                <FileText className="w-4 h-4 text-purple-500" />
-                Ordonnance
-              </label>
-              <textarea
-                name="ordonnance"
-                value={form.ordonnance}
-                onChange={handleChange}
-                rows={4}
-                className="w-full rounded-lg border px-3 py-2 text-sm shadow-sm 
-                           focus:outline-none focus:ring-2 focus:ring-purple-400 
-                           bg-white dark:bg-gray-700 dark:text-gray-200"
-                placeholder="Ex: Amoxicilline 1g matin et soir pendant 7 jours..."
-              />
-            </div>
-          )}
-        </div>
-
         {/* Infos médicales */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {medicalInfo.map((info) => (
@@ -260,6 +228,22 @@ export default function NewConsultationPage({ selectedPatient = {}, onSave }) {
               </div>
             ))}
           </div>
+        </div>
+        {/* Bouton ordonnance */}
+        <div className="mb-6">
+          {!showNewOrdonnance ? (
+            <button
+              type="button"
+              onClick={() => setShowNewOrdonnance(true)}
+              className="flex items-center gap-2 px-4 py-2 rounded-lg bg-purple-600 
+                         text-white hover:bg-purple-700 transition"
+            >
+              <Plus className="w-4 h-4" />
+              Ajouter une ordonnance
+            </button>
+          ) : (
+            <NewOrdanance open={true} onOpenChange={setShowNewOrdonnance} />
+          )}
         </div>
 
         {/* Save Button */}

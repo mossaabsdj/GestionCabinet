@@ -32,7 +32,7 @@ const items = [
   { title: "Consulter", url: "Consulter", icon: Home }, // Vue d’ensemble
   { title: "Patients", url: "Patients", icon: Users }, // Gestion des patients
   { title: "Rapports", url: "Rapports", icon: CalendarCheck }, // Comptes rendus / résultats
-  { title: "Ordonnances", url: "Ordonnances", icon: FileText },
+  { title: "Predifined", url: "Predifined", icon: FileText },
   { title: "Médicaments", url: "Medicament", icon: Pill }, // Gestion des médicaments
 ];
 
