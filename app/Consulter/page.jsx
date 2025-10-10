@@ -123,32 +123,24 @@ export default function PatientDashboard() {
   const latestDiagnoses = [
     { name: selectedPatient.condition, date: "4 mai 2020" },
   ];
-  function handleAddPatient(e) {
-    e.preventDefault();
-    if (!newPatient.nom) return alert("Le nom est requis");
+  async function handleAddPatient(data) {
+    console.log(JSON.stringify(data));
+    if (!data.nom) return alert("Le nom est requis");
 
-    const nextId = (patients.reduce((m, x) => Math.max(m, x.id), 0) || 0) + 1;
-    const created = {
-      id: nextId,
-      nom: newPatient.nom,
-      age: newPatient.age ? Number(newPatient.age) : null,
-      telephone: newPatient.telephone || null,
-      adresse: newPatient.adresse || null,
-      antecedents: newPatient.antecedents || null,
-      groupeSanguin: newPatient.groupeSanguin || null,
-      createdAt: new Date().toISOString(),
-    };
+    try {
+      const res = await fetch("/api/patients", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      });
+      if (!res.ok) throw new Error("Erreur lors de la création");
+      const created = await res.json();
 
-    setPatients((prev) => [created, ...prev]);
-    setNewPatient({
-      nom: "",
-      age: "",
-      telephone: "",
-      adresse: "",
-      antecedents: "",
-      groupeSanguin: "",
-    });
-    setIsAddOpen(false);
+      setIsAddOpen(false);
+    } catch (err) {
+      console.error(err);
+      alert("Erreur lors de la création du patient");
+    }
   }
 
   return (

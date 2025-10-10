@@ -10,6 +10,8 @@
   "dependencies": {
     "@heroui/react": "^2.8.4",
     "@heroui/theme": "^2.4.22",
+    "@prisma/client": "^6.16.2",
+    "@radix-ui/react-alert-dialog": "^1.1.15",
     "@radix-ui/react-dialog": "^1.1.15",
     "@radix-ui/react-label": "^2.1.7",
     "@radix-ui/react-select": "^2.2.6",

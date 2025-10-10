@@ -1,9 +1,6 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
+// ====================
+// Prisma Configuration
+// ====================
 generator client {
   provider = "prisma-client-js"
   output   = "../app/generated/prisma"
@@ -13,11 +10,11 @@ datasource db {
   provider = "mysql"
   url      = env("DATABASE_URL")
 }
+
 // ====================
 // Enums
 // ====================
 
-// Groupe sanguin للمريض (اختياري)
 enum GroupeSanguin {
   A_POS
   A_NEG
@@ -30,70 +27,76 @@ enum GroupeSanguin {
 }
 
 // ====================
-// Modèles principaux
+// Main Models
 // ====================
 
 model Patient {
   id             Int             @id @default(autoincrement())
-  nom            String          // اسم المريض
-  age            Int?            // العمر (اختياري)
-  telephone      String?         // رقم الهاتف
-  adresse        String?         // العنوان
-  antecedents    String?         // سوابق مرضية / تاريخ طبي
-  groupeSanguin  GroupeSanguin?  // زمرة الدم
+  nom            String          @unique
+  age            Int?
+  telephone      String?
+  adresse        String?
+  antecedents    String?
+  groupeSanguin  GroupeSanguin?
   consultations  Consultation[]
   ordonnances    Ordonnance[]
+  bilans         BilanRecip[]
   paiements      Paiement[]
   createdAt      DateTime        @default(now())
 }
 
 model Consultation {
-  id                   Int           @id @default(autoincrement())
-  patientId            Int
-  patient              Patient       @relation(fields: [patientId], references: [id])
-  note                 String?       // ملاحظات الاستشارة
-  taille               Float?        // الطول (سم)
-  poids                Float?        // الوزن (كغ)
-  tensionSystolique    Int?          // الضغط الانقباضي
-  tensionDiastolique   Int?          // الضغط الانبساطي
-  temperature          Float?        // الحرارة °C
-  frequenceCardiaque   Int?          // نبض القلب (نبضة/دقيقة)
-  frequenceRespiratoire Int?         // معدل التنفس (مرة/دقيقة)
-  saturationOxygene    Int?          // SpO2 %
-  glycemie             Float?        // نسبة السكر في الدم
-  radios               Radio[]       // صور الأشعة
-  bilans               Bilan[]       // تحاليل مخبرية
-  ordonnance           Ordonnance?   // وصفة طبية مرتبطة
-  createdAt            DateTime      @default(now())
+  id                    Int           @id @default(autoincrement())
+  patientId             Int
+  patient               Patient       @relation(fields: [patientId], references: [id])
+  note                  String?
+  taille                Float?
+  poids                 Float?
+  tensionSystolique     Int?
+  tensionDiastolique    Int?
+  temperature           Float?
+  frequenceCardiaque    Int?
+  frequenceRespiratoire Int?
+  saturationOxygene     Int?
+  glycemie              Float?
+  radios                Radio[]
+  bilansFiles           BilanFile[]
+  ordonnance            Ordonnance?
+  bilanRecip            BilanRecip?
+  createdAt             DateTime      @default(now())
 }
 
 model Radio {
   id              Int           @id @default(autoincrement())
   consultationId  Int
   consultation    Consultation  @relation(fields: [consultationId], references: [id])
-  description     String?       // وصف الفحص
-  fichier         String?       // رابط صورة/ملف
+  description     String?
+  fichier         String?
   createdAt       DateTime      @default(now())
 }
 
-model Bilan {
+model BilanFile {
   id              Int           @id @default(autoincrement())
   consultationId  Int
   consultation    Consultation  @relation(fields: [consultationId], references: [id])
-  type            String?       // نوع التحليل (مثلاً: دموي، بولي)
-  resultat        String?       // النتيجة
-  fichier         String?       // رابط ملف (PDF أو صورة)
+  type            String?
+  resultat        String?
+  fichier         String?
   createdAt       DateTime      @default(now())
 }
 
+// ====================
+// Ordonnances (Prescriptions)
+// ====================
+
 model Ordonnance {
-  id             Int             @id @default(autoincrement())
-  patientId      Int
-  patient        Patient         @relation(fields: [patientId], references: [id])
-  consultationId   Int           @unique
-  consultation   Consultation?   @relation(fields: [consultationId], references: [id])
-  items          OrdonnanceItem[]
-  createdAt      DateTime        @default(now())
+  id              Int              @id @default(autoincrement())
+  patientId       Int
+  patient         Patient          @relation(fields: [patientId], references: [id])
+  consultationId  Int              @unique
+  consultation    Consultation?    @relation(fields: [consultationId], references: [id])
+  items           OrdonnanceItem[]
+  createdAt       DateTime         @default(now())
 }
 
 model OrdonnanceItem {
@@ -102,41 +105,107 @@ model OrdonnanceItem {
   ordonnance    Ordonnance  @relation(fields: [ordonnanceId], references: [id])
   medicamentId  Int
   medicament    Medicament  @relation(fields: [medicamentId], references: [id])
-  dosage        String?     // "500mg"
-  frequence     String?     // "2 fois par jour"
-  duree         String?     // "7 jours"
+  dosage        String?     // ex: "500 mg"
+  frequence     String?     // ex: "2 fois par jour"
+  duree         String?     // ex: "7 jours"
+  quantite      Int?        // nombre de boîtes (ex: 2)
 }
+
+
+// ====================
+// Médicaments
+// ====================
 
 model Medicament {
-  id        Int              @id @default(autoincrement())
-  nom       String           @unique   // اسم الدواء
-  items     OrdonnanceItem[]
-    recetteTypeItems RecetteTypeItem[] // <-- Add this line
-
+  id                Int                @id @default(autoincrement())
+  nom               String             @unique
+  ordonnanceItems   OrdonnanceItem[]
+  recetteTypeItems  RecetteTypeItem[]
+  createdAt         DateTime           @default(now())
 }
+
+// ====================
+// Bilans (Tests / Analyses)
+// ====================
+
+model Bilan {
+  id               Int             @id @default(autoincrement())
+  nom              String          @unique
+  bilanTypeItems   BilanTypeItem[]
+  BilanItems       BilanItem[]
+  createdAt        DateTime        @default(now())
+}
+
+model BilanRecip {
+  id               Int             @id @default(autoincrement())
+  patientId        Int
+  patient          Patient         @relation(fields: [patientId], references: [id])
+  consultationId   Int             @unique
+  consultation     Consultation?   @relation(fields: [consultationId], references: [id])
+  items            BilanItem[]
+  createdAt        DateTime        @default(now())
+}
+
+model BilanItem {
+  id            Int          @id @default(autoincrement())
+  bilanRecipId  Int
+  bilanRecip    BilanRecip   @relation(fields: [bilanRecipId], references: [id])
+  bilanId       Int
+  bilan         Bilan        @relation(fields: [bilanId], references: [id])
+  resultat      String?      // résultat du test
+  remarque      String?      // remarque ou observation
+}
+
+// ====================
+// Types de Bilan
+// ====================
+
+model BilanType {
+  id        Int             @id @default(autoincrement())
+  nom       String
+  items     BilanTypeItem[]
+}
+
+model BilanTypeItem {
+  id          Int         @id @default(autoincrement())
+  bilanTypeId Int
+  bilanType   BilanType   @relation(fields: [bilanTypeId], references: [id])
+  bilanId     Int
+  bilan       Bilan       @relation(fields: [bilanId], references: [id])
+  remarque    String?
+}
+
+// ====================
+// Recettes Types (Ordonnances types)
+// ====================
 
 model RecetteType {
   id        Int               @id @default(autoincrement())
-  nom       String            // اسم الوصفة الشائعة (مثال: "Diabète")
+  nom       String
   items     RecetteTypeItem[]
-
 }
 
 model RecetteTypeItem {
   id           Int          @id @default(autoincrement())
   recetteId    Int
   recette      RecetteType  @relation(fields: [recetteId], references: [id])
-  medicamentId Int 
+  medicamentId Int
   medicament   Medicament   @relation(fields: [medicamentId], references: [id])
   dosage       String?
   frequence    String?
   duree        String?
+  quantite     Int?         // nombre de boîtes pour cette recette type
 }
+
+
+// ====================
+// Paiements
+// ====================
 
 model Paiement {
   id        Int       @id @default(autoincrement())
   patientId Int
   patient   Patient   @relation(fields: [patientId], references: [id])
-  montant   Float     // المبلغ المدفوع
+  montant   Float
   date      DateTime  @default(now())
 }

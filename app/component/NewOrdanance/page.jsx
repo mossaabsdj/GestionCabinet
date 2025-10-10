@@ -195,8 +195,9 @@ export default function PrescriptionModal({ open, onOpenChange }) {
   const [openMedDialog, setOpenMedDialog] = useState(false);
 
   const [tmpStrength, setTmpStrength] = useState("");
-  const [tmpDose, setTmpDose] = useState("1 cp");
+  const [tmpDose, setTmpDose] = useState("1 fois/jour");
   const [tmpDuration, setTmpDuration] = useState("5 jours");
+  const [tmpQuantite, setTmpQuantite] = useState(1);
 
   const [labQuery, setLabQuery] = useState("");
   const [labSuggestions, setLabSuggestions] = useState([]);
@@ -285,13 +286,15 @@ export default function PrescriptionModal({ open, onOpenChange }) {
       form: selectedMed.form,
       strength: tmpStrength || selectedMed.strengths[0],
       dose: tmpDose,
-      frequency: "x2/j",
+      frequency: "",
       duration: tmpDuration,
+      quantite: tmpQuantite,
     };
     setPrescriptionItems([...prescriptionItems, item]);
     setSelectedMed(null);
     setQuery("");
     setOpenMedDialog(false);
+    setTmpQuantite(1);
   }
 
   function removeItem(uid) {
@@ -331,8 +334,8 @@ export default function PrescriptionModal({ open, onOpenChange }) {
         name: med.name,
         form: med.form,
         strength: med.strengths[0],
-        dose: "1 cp",
-        frequency: "x2/j",
+        dose: "1 fois/jour",
+        frequency: "",
         duration: "7 jours",
       }));
       setPrescriptionItems(meds);
@@ -465,7 +468,7 @@ export default function PrescriptionModal({ open, onOpenChange }) {
     <Dialog open={open} onOpenChange={onOpenChange}>
       {/* Optional: Close button */}
 
-      <DialogContent className="max-w-4xl p-0">
+      <DialogContent className="max-w-4xl min-w-4xl p-0">
         <div className="p-6">
           <Tabs defaultValue="ordonnance">
             <TabsList className="grid grid-cols-3 bg-purple-100 text-purple-700 rounded-lg">
@@ -545,9 +548,6 @@ export default function PrescriptionModal({ open, onOpenChange }) {
                                     <div className="font-medium text-purple-700">
                                       {s.name}
                                     </div>
-                                    <div className="text-sm text-gray-500">
-                                      {s.form} • {s.strengths.join(" / ")}
-                                    </div>
                                   </div>
                                   <div className="text-xs text-purple-500 font-medium">
                                     sélectionner
@@ -588,47 +588,115 @@ export default function PrescriptionModal({ open, onOpenChange }) {
 
               {/* Modal Médicament */}
               <Dialog open={openMedDialog} onOpenChange={setOpenMedDialog}>
-                <DialogContent className="sm:max-w-md">
+                <DialogContent className="sm:max-w-2xl">
                   <DialogHeader>
                     <DialogTitle className="text-purple-700">
                       {selectedMed?.name}{" "}
                       {selectedMed && `(${selectedMed.form})`}
                     </DialogTitle>
                     <p className="text-sm text-gray-500">
-                      Choisissez la concentration, la posologie et la durée.
+                      Choisissez la concentration, la posologie, la durée et la
+                      quantité.
                     </p>
                   </DialogHeader>
 
                   {selectedMed && (
                     <div className="grid gap-3">
                       <div>
-                        <Label>Concentration</Label>
-                        <select
-                          className="w-full rounded-md border px-3 py-2"
-                          value={tmpStrength}
-                          onChange={(e) => setTmpStrength(e.target.value)}
-                        >
-                          {selectedMed.strengths.map((st) => (
-                            <option key={st} value={st}>
-                              {st}
+                        {/* === Dosage === */}
+                        <div>
+                          <Label>Dosage</Label>
+                          <select
+                            className="w-full rounded-md border px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                            value={tmpStrength}
+                            onChange={(e) => setTmpStrength(e.target.value)}
+                          >
+                            <option value="">-- Sélectionner --</option>
+                            {selectedMed?.strengths?.map((st) => (
+                              <option key={st} value={st}>
+                                {st}
+                              </option>
+                            ))}
+                            <option value="custom">Autre...</option>
+                          </select>
+
+                          {tmpStrength === "custom" && (
+                            <input
+                              type="text"
+                              className="mt-2 w-full rounded-md border px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                              placeholder="Entrer un dosage personnalisé..."
+                              onChange={(e) => setTmpStrength(e.target.value)}
+                            />
+                          )}
+                        </div>
+
+                        {/* === Posologie === */}
+                        <div>
+                          <Label>Posologie (rythme de prise)</Label>
+                          <select
+                            className="w-full rounded-md border px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                            value={tmpDose}
+                            onChange={(e) => setTmpDose(e.target.value)}
+                          >
+                            <option value="">-- Sélectionner --</option>
+                            <option value="1 fois / jour">1 fois / jour</option>
+                            <option value="2 fois / jour">2 fois / jour</option>
+                            <option value="3 fois / jour">3 fois / jour</option>
+                            <option value="Toutes les 8 heures">
+                              Toutes les 8 heures
                             </option>
-                          ))}
-                        </select>
+                            <option value="Selon besoin">Selon besoin</option>
+                            <option value="custom">Autre...</option>
+                          </select>
+
+                          {tmpDose === "custom" && (
+                            <input
+                              type="text"
+                              className="mt-2 w-full rounded-md border px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                              placeholder="Entrer une posologie personnalisée..."
+                              onChange={(e) => setTmpDose(e.target.value)}
+                            />
+                          )}
+                        </div>
+
+                        {/* === Durée === */}
+                        <div>
+                          <Label>Durée</Label>
+                          <select
+                            className="w-full rounded-md border px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                            value={tmpDuration}
+                            onChange={(e) => setTmpDuration(e.target.value)}
+                          >
+                            <option value="">-- Sélectionner --</option>
+                            <option value="3 jours">3 jours</option>
+                            <option value="5 jours">5 jours</option>
+                            <option value="7 jours">7 jours</option>
+                            <option value="10 jours">10 jours</option>
+                            <option value="14 jours">14 jours</option>
+                            <option value="1 mois">1 mois</option>
+                            <option value="custom">Autre...</option>
+                          </select>
+
+                          {tmpDuration === "custom" && (
+                            <input
+                              type="text"
+                              className="mt-2 w-full rounded-md border px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                              placeholder="Entrer une durée personnalisée..."
+                              onChange={(e) => setTmpDuration(e.target.value)}
+                            />
+                          )}
+                        </div>
                       </div>
 
                       <div>
-                        <Label>Posologie</Label>
+                        <Label>Quantité (boîtes)</Label>
                         <Input
-                          value={tmpDose}
-                          onChange={(e) => setTmpDose(e.target.value)}
-                        />
-                      </div>
-
-                      <div>
-                        <Label>Durée</Label>
-                        <Input
-                          value={tmpDuration}
-                          onChange={(e) => setTmpDuration(e.target.value)}
+                          type="number"
+                          min={1}
+                          value={tmpQuantite}
+                          onChange={(e) =>
+                            setTmpQuantite(Number(e.target.value))
+                          }
                         />
                       </div>
                     </div>
@@ -677,7 +745,11 @@ export default function PrescriptionModal({ open, onOpenChange }) {
                               </span>
                             </div>
                             <div className="text-sm text-gray-600">
-                              {it.dose} • {it.frequency} • {it.duration}
+                              {it.dose} pendant{it.frequency} {it.duration} •
+                              <span className="ml-2 text-purple-700 font-bold">
+                                {it.quantite ? it.quantite : 1} x boîte
+                                {it.quantite > 1 ? "s" : ""}
+                              </span>
                             </div>
                           </div>
                           <Button
@@ -717,16 +789,19 @@ export default function PrescriptionModal({ open, onOpenChange }) {
                       {prescriptionItems.map((it) => (
                         <li
                           key={it.uid}
-                          className="flex flex-col p-3 border rounded-md hover:bg-purple-50 transition-colors"
+                          className="flex flex-col p-3 border rounded-md hover:bg-purple-50 transition-colors ord-print-item"
                         >
-                          <div className="font-medium text-purple-700">
+                          <div className="font-medium text-purple-700 ord-print-item-title">
                             {it.name}{" "}
                             <span className="text-gray-600 font-normal">
                               {it.strength}
                             </span>
                           </div>
-                          <div className="text-sm text-gray-700 mt-1">
-                            {it.dose} • {it.frequency} • {it.duration}
+                          <div className="text-sm text-gray-700 mt-1 ord-print-item-details">
+                            {it.dose} • {it.frequency} • {it.duration} •{" "}
+                            <span className="text-purple-700 font-bold">
+                              {it.quantite} boîte{it.quantite > 1 ? "s" : ""}
+                            </span>
                           </div>
                         </li>
                       ))}

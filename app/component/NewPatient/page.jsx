@@ -119,21 +119,22 @@ export default function AddPatientModal({ open, onClose, onAdd }) {
               <Select
                 value={form.groupeSanguin}
                 onValueChange={(val) =>
-                  setForm({ ...form, groupeSanguin: val })
+                  setForm({ ...form, groupeSanguin: val }) +
+                  console.log(val + JSON.stringify(form))
                 }
               >
                 <SelectTrigger className="h-12 px-4 mt-1 rounded-xl bg-gray-50 text-gray-600">
                   <SelectValue placeholder="---" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="A+">A+</SelectItem>
-                  <SelectItem value="A-">A-</SelectItem>
-                  <SelectItem value="B+">B+</SelectItem>
-                  <SelectItem value="B-">B-</SelectItem>
-                  <SelectItem value="O+">O+</SelectItem>
-                  <SelectItem value="O-">O-</SelectItem>
-                  <SelectItem value="AB+">AB+</SelectItem>
-                  <SelectItem value="AB-">AB-</SelectItem>
+                  <SelectItem value="A_POS">A+</SelectItem>
+                  <SelectItem value="A_NEG">A-</SelectItem>
+                  <SelectItem value="B_POS">B+</SelectItem>
+                  <SelectItem value="B_NEG">B-</SelectItem>
+                  <SelectItem value="AB_POS">AB+</SelectItem>
+                  <SelectItem value="AB_NEG">AB-</SelectItem>
+                  <SelectItem value="O_POS">O+</SelectItem>
+                  <SelectItem value="O_NEG">O-</SelectItem>
                 </SelectContent>
               </Select>
             </div>

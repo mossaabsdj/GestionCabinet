@@ -12,6 +12,8 @@ import {
   FileText,
   Pill,
   Tablet,
+  TestTube,
+  ClipboardList,
 } from "lucide-react";
 
 import {
@@ -34,6 +36,7 @@ const items = [
   { title: "Rapports", url: "Rapports", icon: CalendarCheck }, // Comptes rendus / résultats
   { title: "Predifined", url: "Predifined", icon: FileText },
   { title: "Médicaments", url: "Medicament", icon: Pill }, // Gestion des médicaments
+  { title: "Bilans", url: "Bilans", icon: TestTube }, // Gestion des bilans
 ];
 
 export function AppSidebar() {

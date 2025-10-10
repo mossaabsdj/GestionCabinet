@@ -11,6 +11,13 @@ export default function RootLayout({ children }) {
   return (
     <html lang="en">
       <body className="flex min-h-screen pl-8 bg-gradient-to-br from-purple-50 via-white to-purple-100">
+        <div
+          className="absolute inset-20 bg-no-repeat bg-cover bg-center opacity-15 pointer-events-none "
+          style={{
+            backgroundImage: "url('/background.png')",
+          }}
+        ></div>
+
         <SidebarProvider defaultOpen={false}>
           {/* القائمة الجانبية */}
           <AppSidebar />

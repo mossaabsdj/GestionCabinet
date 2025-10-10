@@ -1,8 +1,7 @@
 "use client";
 
 import { useState, useMemo, useEffect } from "react";
-import { Search, Plus, Trash, Pill } from "lucide-react";
-import AddMedicamentModal from "@/app/component/NewMedicament/page";
+import { Search, Plus, Trash, ClipboardList } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -15,6 +14,15 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+  DialogTrigger,
+  DialogClose,
+} from "@/components/ui/dialog";
 import DialogPage from "@/app/component/DialogPage/page";
 import DialogAlert from "@/app/component/DialgoAlert/page";
 
@@ -23,11 +31,10 @@ function formatDate(d) {
   return new Date(d).toLocaleDateString();
 }
 
-export default function MedicamentsPage() {
-  const [medicaments, setMedicaments] = useState([]);
+export default function BilansPage() {
+  const [bilans, setBilans] = useState([]);
   const [query, setQuery] = useState("");
-  const [isAddOpen, setIsAddOpen] = useState(false);
-  const [newMedicament, setNewMedicament] = useState({ nom: "" });
+  const [newBilan, setNewBilan] = useState({ nom: "" });
   const [loading, setLoading] = useState(false);
   const [alertData, setAlertData] = useState({
     open: false,
@@ -37,63 +44,61 @@ export default function MedicamentsPage() {
 
   const showAlert = (title, message) =>
     setAlertData({ open: true, title, message });
-  // 🧩 Load medicaments from API
+  // 🧩 Load bilans from API
   useEffect(() => {
-    async function fetchMedicaments() {
+    async function fetchBilans() {
       try {
-        const res = await fetch("/api/medicaments");
+        const res = await fetch("/api/bilans");
         const data = await res.json();
-        if (Array.isArray(data)) setMedicaments(data);
+        if (Array.isArray(data)) setBilans(data);
       } catch (err) {
-        showAlert("Erreur", "Impossible de charger les médicaments.");
+        showAlert("Erreur", "Impossible de charger les bilans.");
       }
     }
-    fetchMedicaments();
+    fetchBilans();
   }, []);
 
   // 🔍 Filter search
-  const filteredMedicaments = useMemo(() => {
-    return medicaments.filter((m) =>
-      m.nom.toLowerCase().includes(query.toLowerCase())
+  const filteredBilans = useMemo(() => {
+    return bilans.filter((b) =>
+      b.nom.toLowerCase().includes(query.toLowerCase())
     );
-  }, [medicaments, query]);
+  }, [bilans, query]);
 
-  const totalCount = medicaments.length;
+  const totalCount = bilans.length;
 
-  // ➕ Add Medicament (calls API)
-  async function handleAddMedicament(nom) {
-    if (!nom) return;
-    showAlert("Erreur", "Le nom du médicament est requis");
-
+  // ➕ Add Bilan
+  async function handleAddBilan(close) {
+    if (!newBilan.nom.trim())
+      return showAlert("Champ requis", "Le nom du bilan est obligatoire.");
     setLoading(true);
     try {
-      const res = await fetch("/api/medicaments", {
+      const res = await fetch("/api/bilans", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(nom),
+        body: JSON.stringify({ nom: newBilan.nom }),
       });
 
-      if (!res.ok) throw new showAlert("Erreur", "erreur api");
+      if (!res.ok) throw new Error("Erreur API");
+
       const created = await res.json();
-      setMedicaments((prev) => [created, ...prev]);
-      setNewMedicament({ nom: "" });
-      setIsAddOpen(false);
+      setBilans((prev) => [created, ...prev]);
+      setNewBilan({ nom: "" });
+      close();
     } catch (err) {
       console.error("Erreur lors de l’ajout", err);
-      showAlert("Erreur", "Impossible d’ajouter le médicament.");
+      showAlert("Erreur", "Impossible d’ajouter le bilan.");
     } finally {
       setLoading(false);
     }
   }
 
-  // ❌ Delete Medicament
+  // ❌ Delete Bilan
   async function handleDelete(id) {
     try {
-      const res = await fetch(`/api/medicaments/${id}`, {
-        method: "DELETE",
-      });
+      const res = await fetch(`/api/bilans?id=${id}`, { method: "DELETE" });
       if (!res.ok) throw new Error("Erreur API");
-      setMedicaments((prev) => prev.filter((m) => m.id !== id));
+      setBilans((prev) => prev.filter((b) => b.id !== id));
     } catch (err) {
       console.error("Erreur suppression:", err);
       showAlert("Erreur", "Erreur lors de la suppression.");
@@ -102,41 +107,81 @@ export default function MedicamentsPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-50 via-white to-purple-100 p-6">
+      {/* Header */}
       <DialogAlert
         open={alertData.open}
         onClose={() => setAlertData({ ...alertData, open: false })}
         title={alertData.title}
         message={alertData.message}
       />
-      <AddMedicamentModal
-        open={isAddOpen}
-        onClose={() => setIsAddOpen(false)}
-        onAdd={handleAddMedicament}
-        value={newMedicament}
-        setValue={setNewMedicament}
-        loading={loading}
-      />
-
-      {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-4">
           <div className="p-3 bg-purple-100 rounded-full shadow-md">
-            <Pill className="w-6 h-6 text-purple-700" />
+            <ClipboardList className="w-6 h-6 text-purple-700" />
           </div>
           <div>
-            <h2 className="text-2xl font-bold text-purple-800">Médicaments</h2>
+            <h2 className="text-2xl font-bold text-purple-800">Bilans</h2>
             <p className="text-sm text-muted-foreground">
-              Gestion des médicaments
+              Gestion des bilans médicaux
             </p>
           </div>
         </div>
 
-        <Button
-          onClick={() => setIsAddOpen(true)}
-          className="flex items-center gap-2 bg-purple-600 hover:bg-purple-700 text-white shadow"
-        >
-          <Plus className="w-4 h-4" /> Ajouter
-        </Button>
+        <Dialog>
+          <DialogTrigger asChild>
+            <Button className="flex items-center gap-2 bg-purple-600 hover:bg-purple-700 text-white shadow">
+              <Plus className="w-4 h-4" />
+              Ajouter
+            </Button>
+          </DialogTrigger>
+
+          <DialogContent className="sm:max-w-md backdrop-blur-md bg-white/90 border border-purple-200 shadow-lg">
+            <DialogHeader>
+              <DialogTitle className="text-purple-700 font-semibold flex items-center gap-2">
+                <ClipboardList className="w-5 h-5" />
+                Nouveau Bilan
+              </DialogTitle>
+            </DialogHeader>
+
+            <div className="space-y-4 py-4">
+              <div className="grid gap-2">
+                <Label htmlFor="nom">Nom du bilan</Label>
+                <Input
+                  id="nom"
+                  placeholder="Ex: Bilan sanguin"
+                  value={newBilan.nom}
+                  onChange={(e) => setNewBilan({ nom: e.target.value })}
+                  className="focus:ring-purple-500"
+                />
+              </div>
+            </div>
+
+            <DialogFooter className="flex justify-end gap-2">
+              <DialogClose asChild>
+                <Button
+                  variant="outline"
+                  className="border-purple-300 text-purple-700"
+                >
+                  Annuler
+                </Button>
+              </DialogClose>
+              <Button
+                disabled={loading}
+                onClick={(e) => {
+                  e.preventDefault();
+                  handleAddBilan(() =>
+                    document
+                      .querySelector("[data-state='open'] button")
+                      ?.click()
+                  );
+                }}
+                className="bg-purple-600 hover:bg-purple-700 text-white"
+              >
+                {loading ? "Ajout..." : "Confirmer"}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
 
       {/* Search */}
@@ -147,7 +192,7 @@ export default function MedicamentsPage() {
             <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
               <Input
-                placeholder="Nom du médicament..."
+                placeholder="Nom du bilan..."
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 className="pl-10 w-64 focus:ring-purple-500"
@@ -181,24 +226,24 @@ export default function MedicamentsPage() {
               </TableHeader>
 
               <TableBody>
-                {filteredMedicaments.length === 0 && (
+                {filteredBilans.length === 0 && (
                   <TableRow>
                     <TableCell colSpan={3} className="text-center py-6">
-                      Aucun médicament trouvé
+                      Aucun bilan trouvé
                     </TableCell>
                   </TableRow>
                 )}
-                {filteredMedicaments.map((m) => (
-                  <TableRow key={m.id} className="hover:bg-purple-50/50">
-                    <TableCell>{m.nom}</TableCell>
-                    <TableCell>{formatDate(m.createdAt)}</TableCell>
+                {filteredBilans.map((b) => (
+                  <TableRow key={b.id} className="hover:bg-purple-50/50">
+                    <TableCell>{b.nom}</TableCell>
+                    <TableCell>{formatDate(b.createdAt)}</TableCell>
                     <TableCell>
                       <div className="flex items-center justify-center gap-2">
                         <DialogPage
                           title="Supprimer"
                           triggerText={"Supprimer"}
                           description="Êtes-vous sûr de vouloir supprimer cet élément ? Cette action est irréversible."
-                          onConfirm={() => handleDelete(m.id)}
+                          onConfirm={() => handleDelete(b.id)}
                         />
                       </div>
                     </TableCell>
