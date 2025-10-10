@@ -11,13 +11,16 @@ import {
   Trash2,
   FileText,
   Plus,
+  FlaskConical,
+  Calendar,
+  Pill,
 } from "lucide-react";
 import { Card } from "@/components/ui/card"; // shadcn/ui
 import NewOrdanance from "@/app/component/NewOrdanance/page";
 export default function NewConsultationPage({ selectedPatient = {}, onSave }) {
   const [form, setForm] = useState({
     note: "",
-    ordonnance: "",
+    ordonnance: {},
     taille: "",
     poids: "",
     tensionSystolique: "",
@@ -33,7 +36,14 @@ export default function NewConsultationPage({ selectedPatient = {}, onSave }) {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [showNewOrdonnance, setShowNewOrdonnance] = useState(false);
-
+  const setordananceData = (data) => {
+    setForm((prev) => ({
+      ...prev,
+      ordonnance: data,
+    }));
+    console.log("Form" + JSON.stringify(form));
+    setShowNewOrdonnance(false);
+  };
   useEffect(() => {
     if (selectedPatient && Object.keys(selectedPatient).length > 0) {
       setForm((prev) => ({
@@ -145,7 +155,6 @@ export default function NewConsultationPage({ selectedPatient = {}, onSave }) {
             <AlertCircle className="w-4 h-4" /> {error}
           </div>
         )}
-
         {/* Notes */}
         <div className="mb-6">
           <label className="block text-sm font-medium mb-2">Notes</label>
@@ -157,7 +166,6 @@ export default function NewConsultationPage({ selectedPatient = {}, onSave }) {
             className="w-full rounded-lg border px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-purple-300"
           />
         </div>
-
         {/* Infos médicales */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {medicalInfo.map((info) => (
@@ -177,7 +185,6 @@ export default function NewConsultationPage({ selectedPatient = {}, onSave }) {
             </Card>
           ))}
         </div>
-
         {/* Upload fichiers */}
         <div className="mt-6">
           <label className="block text-sm font-medium mb-2 flex items-center gap-2">
@@ -230,22 +237,112 @@ export default function NewConsultationPage({ selectedPatient = {}, onSave }) {
           </div>
         </div>
         {/* Bouton ordonnance */}
-        <div className="mb-6">
+        <div className="mb-6 space-y-4">
+          {/* === Add Ordonnance Button === */}
           {!showNewOrdonnance ? (
             <button
               type="button"
               onClick={() => setShowNewOrdonnance(true)}
               className="flex items-center gap-2 px-4 py-2 rounded-lg bg-purple-600 
-                         text-white hover:bg-purple-700 transition"
+                 text-white hover:bg-purple-700 transition"
             >
               <Plus className="w-4 h-4" />
               Ajouter une ordonnance
             </button>
           ) : (
-            <NewOrdanance open={true} onOpenChange={setShowNewOrdonnance} />
+            <NewOrdanance
+              open={true}
+              onOpenChange={setShowNewOrdonnance}
+              onsave={setordananceData}
+              selectedPatient={selectedPatient}
+            />
+          )}
+
+          {/* === Ordonnance Summary Card === */}
+          {form?.ordonnance && Object.keys(form.ordonnance).length > 0 && (
+            <div className="flex items-center justify-between bg-purple-50 border border-purple-100 rounded-xl p-4 shadow-sm">
+              <div className="flex flex-col sm:flex-row sm:items-center gap-4">
+                <div className="flex items-center gap-2 text-purple-700">
+                  <FileText size={20} />
+                  <span className="font-semibold">
+                    Ordonnance:{" "}
+                    {form.ordonnance.type || form.ordonnance.id || "—"}
+                  </span>
+                </div>
+                <div className="flex items-center gap-2 text-gray-600">
+                  <Pill size={18} />
+                  <span>
+                    Médicaments:{" "}
+                    {form.ordonnance.items ? form.ordonnance.items.length : 0}
+                  </span>
+                </div>
+                <div className="flex items-center gap-2 text-gray-600">
+                  <Calendar size={18} />
+                  <span>
+                    {form.ordonnance.date
+                      ? new Date(form.ordonnance.date).toLocaleDateString()
+                      : "—"}
+                  </span>
+                </div>
+              </div>
+
+              <button
+                type="button"
+                onClick={() =>
+                  setForm((prev) => ({
+                    ...prev,
+                    ordonnance: {},
+                  }))
+                }
+                className="text-red-500 hover:text-red-700 transition"
+              >
+                <Trash2 size={20} />
+              </button>
+            </div>
+          )}
+
+          {/* === Bilan Summary Card === */}
+          {form.ordonnance.labs && form.ordonnance.labs.length > 0 && (
+            <div className="flex items-center justify-between bg-green-50 border border-green-100 rounded-xl p-4 shadow-sm">
+              <div className="flex flex-col sm:flex-row sm:items-center gap-4">
+                <div className="flex items-center gap-2 text-green-700">
+                  <FlaskConical size={20} />
+                  <span className="font-semibold">
+                    Bilan: {form.ordonnance.type || form.ordonnance.id || "—"}
+                  </span>
+                </div>
+                <div className="flex items-center gap-2 text-gray-600">
+                  <FlaskConical size={18} />
+                  <span>
+                    Analyses:{" "}
+                    {form.ordonnance.labs ? form.ordonnance.labs.length : 0}
+                  </span>
+                </div>
+                <div className="flex items-center gap-2 text-gray-600">
+                  <Calendar size={18} />
+                  <span>
+                    {form.ordonnance.date
+                      ? new Date(form.ordonnance.date).toLocaleDateString()
+                      : "—"}
+                  </span>
+                </div>
+              </div>
+
+              <button
+                type="button"
+                onClick={() =>
+                  setForm((prev) => ({
+                    ...prev,
+                    bilan: {},
+                  }))
+                }
+                className="text-red-500 hover:text-red-700 transition"
+              >
+                <Trash2 size={20} />
+              </button>
+            </div>
           )}
         </div>
-
         {/* Save Button */}
         <div className="flex justify-end mt-6">
           <button

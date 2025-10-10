@@ -15,9 +15,13 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useState, useMemo, useEffect } from "react";
+import { motion } from "framer-motion";
+
 import { Trash2, Plus, Search, Pill, TestTube } from "lucide-react";
 import DialogPage from "@/app/component/DialogPage/page";
+import SearchBarPage from "@/app/component/SearchBar/page";
 // Mock data
+
 const MEDICAMENTS = [
   "Metformine",
   "Glibenclamide",
@@ -68,6 +72,9 @@ export default function TypesPage() {
   const [ordTypes, setOrdTypes] = useState([]);
   const [bilanTypes, setBilanTypes] = useState([]);
   const [justifTypes, setJustifTypes] = useState([]);
+  const [ordSearch, setOrdSearch] = useState("");
+  const [bilanSearch, setBilanSearch] = useState("");
+  const [justifSearch, setJustifSearch] = useState("");
 
   // modal
   const [modal, setModal] = useState({
@@ -565,6 +572,12 @@ export default function TypesPage() {
               <CardTitle className="text-purple-700 font-bold">
                 Types d’ordonnance
               </CardTitle>
+              <SearchBarPage
+                value={ordSearch}
+                onChange={(e) => setOrdSearch(e.target.value)}
+                placeholder="Rechercher un type d’ordonnance..."
+              />
+
               <Button
                 size="sm"
                 className="bg-purple-600 hover:bg-purple-700 text-white"
@@ -573,7 +586,15 @@ export default function TypesPage() {
                 Ajouter
               </Button>
             </CardHeader>
-            <CardContent>{renderTable("ord", ordTypes)}</CardContent>
+            <CardContent>
+              {" "}
+              {renderTable(
+                "ord",
+                ordTypes.filter((t) =>
+                  t.nom.toLowerCase().includes(ordSearch.toLowerCase())
+                )
+              )}
+            </CardContent>
           </Card>
         </TabsContent>
 
@@ -583,6 +604,12 @@ export default function TypesPage() {
               <CardTitle className="text-purple-700 font-bold">
                 Types de bilan
               </CardTitle>
+              <SearchBarPage
+                value={bilanSearch}
+                onChange={(e) => setBilanSearch(e.target.value)}
+                placeholder="Rechercher un type d’ordonnance..."
+              />
+
               <Button
                 size="sm"
                 className="bg-purple-600 hover:bg-purple-700 text-white"
@@ -591,7 +618,15 @@ export default function TypesPage() {
                 Ajouter
               </Button>
             </CardHeader>
-            <CardContent>{renderTable("bilan", bilanTypes)}</CardContent>
+            <CardContent>
+              {" "}
+              {renderTable(
+                "bilan",
+                bilanTypes.filter((t) =>
+                  t.nom.toLowerCase().includes(bilanSearch.toLowerCase())
+                )
+              )}
+            </CardContent>
           </Card>
         </TabsContent>
 

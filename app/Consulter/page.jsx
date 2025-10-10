@@ -1,6 +1,5 @@
 "use client";
 
-import { useState } from "react";
 import {
   Plus,
   Search,
@@ -11,8 +10,17 @@ import {
   ClipboardList,
   FileText,
   Stethoscope,
+  Ruler,
+  Weight,
+  Activity,
+  Thermometer,
+  HeartPulse,
+  Gauge,
+  Droplets,
 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
+import { useState, useMemo, useEffect } from "react";
+
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import AjouteModal from "@/app/component/NewPatient/page";
@@ -24,7 +32,7 @@ import Ordonnances from "../component/Ordanance/page";
 const patientsData = [
   {
     id: 1,
-    name: "Antonio Carson",
+    nom: "Antonio Carson",
     condition: "Rhinite allergique",
     note: "Le patient présente des symptômes légers.",
     taille: 175,
@@ -59,69 +67,121 @@ const patientsData = [
 ];
 
 export default function PatientDashboard() {
-  const [selectedPatient, setSelectedPatient] = useState(patientsData[0]);
+  const [selectedPatient, setSelectedPatient] = useState();
   const [search, setSearch] = useState("");
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [selectedtab, setselectedtab] = useState("Informations Patient");
   const [NewConsultation, setNewConsultation] = useState(false);
+  const [patientsData, setPatients] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [NewConsultationData, setNewConsultationData] = useState({});
   const filteredPatients = patientsData.filter((p) =>
-    p.name.toLowerCase().includes(search.toLowerCase())
+    p.nom.toLowerCase().includes(search.toLowerCase())
   );
-
+  useEffect(() => {
+    if (!NewConsultationData) return;
+    console.log("New consultation data:" + JSON.stringify(NewConsultationData));
+  }, [NewConsultationData]);
+  async function fetchPatients() {
+    try {
+      const res = await fetch("/api/patients");
+      if (!res.ok) throw new Error("Failed to fetch patients");
+      const data = await res.json();
+      setPatients(data);
+      setSelectedPatient(data[0]);
+      console.log("data" + JSON.stringify(data));
+    } catch (error) {
+      console.error("❌ Error fetching patients:", error);
+    } finally {
+      setLoading(false);
+    }
+  }
+  useEffect(() => {
+    fetchPatients();
+  }, []);
   // --- Données des sections ---
-  const generalInfo = [
-    { icon: Calendar, label: "Date de naissance", value: "9 mars 1990" },
-    { icon: Calendar, label: "Âge", value: "30 ans" },
-    { icon: User, label: "Sexe", value: "Homme" },
-    { icon: User, label: "Origine ethnique", value: "Blanc" },
-    { icon: User, label: "Nationalité", value: "Canadien" },
-    { icon: User, label: "Langue", value: "Anglais" },
+
+  const generalInfo = (selectedPatient) => [
+    {
+      icon: Calendar,
+      label: "Date de naissance",
+      value: selectedPatient?.dateNaissance || "Non spécifiée",
+    },
+    {
+      icon: Calendar,
+      label: "Âge",
+      value: selectedPatient?.age
+        ? `${selectedPatient?.age} ans`
+        : "Non spécifié",
+    },
+    {
+      icon: User,
+      label: "Sexe",
+      value: selectedPatient?.sexe || "Non spécifié",
+    },
+    {
+      icon: User,
+      label: "Groupe sanguin",
+      value: selectedPatient?.groupeSanguin || "Non spécifié",
+    },
   ];
 
-  const contactInfo = [
-    { icon: Home, label: "Adresse", value: "434 Santino Oval Suite 205" },
-    { icon: Phone, label: "Téléphone", value: "+1 234 567 890" },
+  const contactInfo = (selectedPatient) => [
+    {
+      icon: Home,
+      label: "Adresse",
+      value: selectedPatient?.adresse || "Non spécifiée",
+    },
+    {
+      icon: Phone,
+      label: "Téléphone",
+      value: selectedPatient?.telephone || "Non spécifié",
+    },
   ];
 
-  const medicalInfo = [
-    { icon: ClipboardList, label: "Notes", value: selectedPatient.note },
-    { icon: User, label: "Taille (cm)", value: selectedPatient.taille },
-    { icon: User, label: "Poids (kg)", value: selectedPatient.poids },
-    {
-      icon: User,
-      label: "TA systolique",
-      value: selectedPatient.tensionSystolique,
-    },
-    {
-      icon: User,
-      label: "TA diastolique",
-      value: selectedPatient.tensionDiastolique,
-    },
-    {
-      icon: User,
-      label: "Température (°C)",
-      value: selectedPatient.temperature,
-    },
-    {
-      icon: User,
-      label: "Fréquence cardiaque",
-      value: selectedPatient.frequenceCardiaque,
-    },
-    {
-      icon: User,
-      label: "Fréquence respiratoire",
-      value: selectedPatient.frequenceRespiratoire,
-    },
-    {
-      icon: User,
-      label: "Saturation en oxygène (%)",
-      value: selectedPatient.saturationOxygene,
-    },
-    { icon: User, label: "Glycémie", value: selectedPatient.glycemie },
-  ];
+  const medicalInfo = (selectedPatient) => {
+    const c = selectedPatient?.consultations?.[0]; // Get latest or first consultation
+
+    return [
+      { icon: ClipboardList, label: "Notes", value: c?.note || "—" },
+      { icon: Ruler, label: "Taille (cm)", value: c?.taille ?? "—" },
+      { icon: Weight, label: "Poids (kg)", value: c?.poids ?? "—" },
+      {
+        icon: Activity,
+        label: "TA systolique",
+        value: c?.tensionSystolique ?? "—",
+      },
+      {
+        icon: Activity,
+        label: "TA diastolique",
+        value: c?.tensionDiastolique ?? "—",
+      },
+      {
+        icon: Thermometer,
+        label: "Température (°C)",
+        value: c?.temperature ?? "—",
+      },
+      {
+        icon: HeartPulse,
+        label: "Fréquence cardiaque",
+        value: c?.frequenceCardiaque ?? "—",
+      },
+      {
+        icon: Gauge,
+        label: "Fréquence respiratoire",
+        value: c?.frequenceRespiratoire ?? "—",
+      },
+      {
+        icon: Droplets,
+        label: "Saturation en oxygène (%)",
+        value: c?.saturationOxygene ?? "—",
+      },
+      { icon: ClipboardList, label: "Glycémie", value: c?.glycemie ?? "—" },
+    ];
+  };
 
   const latestDiagnoses = [
-    { name: selectedPatient.condition, date: "4 mai 2020" },
+    { name: "selectedPatient.condition,", date: "4 mai 2020" },
   ];
   async function handleAddPatient(data) {
     console.log(JSON.stringify(data));
@@ -135,7 +195,7 @@ export default function PatientDashboard() {
       });
       if (!res.ok) throw new Error("Erreur lors de la création");
       const created = await res.json();
-
+      await fetchPatients();
       setIsAddOpen(false);
     } catch (err) {
       console.error(err);
@@ -189,7 +249,7 @@ export default function PatientDashboard() {
               }`}
             >
               <p className="font-medium flex items-center gap-2">
-                <User size={16} /> {patient.name}
+                <User size={16} /> {patient.nom}
               </p>
               <p className="text-sm flex items-center gap-2">
                 <Stethoscope size={14} /> {patient.condition}
@@ -207,7 +267,7 @@ export default function PatientDashboard() {
             <div className="relative flex items-center justify-center ">
               {" "}
               <h1 className="text-3xl font-bold text-purple-800">
-                {selectedPatient.name}
+                {selectedPatient?.nom}
               </h1>
             </div>
             <p className="text-gray-500 text-sm flex items-center gap-1">
@@ -260,17 +320,17 @@ export default function PatientDashboard() {
                 {
                   title: "Informations Générales",
                   icon: User,
-                  data: generalInfo,
+                  data: generalInfo(selectedPatient),
                 },
                 {
                   title: "Informations Médicales",
                   icon: Stethoscope,
-                  data: medicalInfo,
+                  data: medicalInfo(selectedPatient),
                 },
                 {
                   title: "Informations de Contact",
                   icon: Phone,
-                  data: contactInfo,
+                  data: contactInfo(selectedPatient),
                 },
               ].map((section) => (
                 <div key={section.title} className="mb-6">
@@ -278,7 +338,7 @@ export default function PatientDashboard() {
                     <section.icon size={20} /> {section.title}
                   </h3>
                   <div className="grid grid-cols-2 gap-4">
-                    {section.data.map((info) => (
+                    {section?.data.map((info) => (
                       <Card
                         key={info.label}
                         className="flex items-center gap-3 p-3"
@@ -314,7 +374,12 @@ export default function PatientDashboard() {
             </>
           )}
           {selectedtab === "Courbe" && <CourbePage />}
-          {selectedtab === "+ Nouvelle Consultation" && <NewConsultationPage />}
+          {selectedtab === "+ Nouvelle Consultation" && (
+            <NewConsultationPage
+              onSave={setNewConsultationData}
+              selectedPatient={selectedPatient}
+            />
+          )}
           {selectedtab === "Analyses" && <Analyses />}
           {selectedtab === "Visites" && <PatientVisits />}
           {selectedtab === "Ordonnances" && <Ordonnances />}

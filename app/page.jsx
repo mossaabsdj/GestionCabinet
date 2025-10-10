@@ -1,7 +1,15 @@
 "use client";
 
-import Image from "next/image";
+import { useEffect } from "react";
+import { useRouter } from "next/navigation";
 import SideBar from "@/app/component/sidebar/page";
+
 export default function Home() {
-  return <></>;
+  const router = useRouter();
+
+  useEffect(() => {
+    router.replace("/Accueill"); // redirects to /Accueill without back button history
+  }, [router]);
+
+  return null; // nothing to show while redirecting
 }

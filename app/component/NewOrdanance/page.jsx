@@ -186,7 +186,12 @@ const JUSTIF_TYPE_TEXTS = {
   autre: "",
 };
 
-export default function PrescriptionModal({ open, onOpenChange }) {
+export default function PrescriptionModal({
+  open,
+  onOpenChange,
+  onsave,
+  selectedPatient,
+}) {
   const [query, setQuery] = useState("");
   const [suggestions, setSuggestions] = useState([]);
   const [selectedMed, setSelectedMed] = useState(null);
@@ -318,6 +323,7 @@ export default function PrescriptionModal({ open, onOpenChange }) {
       justification: justifText,
       date: new Date().toISOString(),
     };
+    onsave(payload);
     console.log("✅ Saved:", payload);
     alert("✅ Données sauvegardées");
   }
