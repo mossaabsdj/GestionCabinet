@@ -1,12 +1,13 @@
 "use client";
 
 import { useState, useMemo, useEffect } from "react";
-import { Search, Plus, Trash, Pill } from "lucide-react";
-import AddMedicamentModal from "@/app/component/NewMedicament/page";
+import { Search, Plus, Syringe } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import LoadingScreen from "../component/LoadingScreen/page";
+
 import {
   Table,
   TableBody,
@@ -15,21 +16,23 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import LoadingScreen from "../component/LoadingScreen/page";
-
 import DialogPage from "@/app/component/DialogPage/page";
 import DialogAlert from "@/app/component/DialgoAlert/page";
+import VaccinationModal from "@/app/component/VaccinationModal/page";
 
 function formatDate(d) {
   if (!d) return "";
   return new Date(d).toLocaleDateString();
 }
 
-export default function MedicamentsPage() {
-  const [medicaments, setMedicaments] = useState([]);
+export default function VaccinationsPage() {
+  const [vaccinations, setVaccinations] = useState([]);
   const [query, setQuery] = useState("");
   const [isAddOpen, setIsAddOpen] = useState(false);
-  const [newMedicament, setNewMedicament] = useState({ nom: "" });
+  const [newVaccination, setNewVaccination] = useState({
+    vaccineName: "",
+    createdAt: "",
+  });
   const [loading, setLoading] = useState(true);
   const [alertData, setAlertData] = useState({
     open: false,
@@ -39,68 +42,69 @@ export default function MedicamentsPage() {
 
   const showAlert = (title, message) =>
     setAlertData({ open: true, title, message });
-  // 🧩 Load medicaments from API
+
   useEffect(() => {
-    async function fetchMedicaments() {
+    async function fetchVaccinations() {
       setLoading(true);
 
       try {
-        const res = await fetch("/api/medicaments");
+        const res = await fetch("/api/Vaccine");
         const data = await res.json();
-        if (Array.isArray(data)) setMedicaments(data);
+        if (Array.isArray(data)) setVaccinations(data);
         setLoading(false);
-      } catch (err) {
-        showAlert("Erreur", "Impossible de charger les médicaments.");
+      } catch {
+        showAlert("Erreur", "Impossible de charger les vaccinations.");
       }
     }
-    fetchMedicaments();
+    fetchVaccinations();
   }, []);
 
-  // 🔍 Filter search
-  const filteredMedicaments = useMemo(() => {
-    return medicaments.filter((m) =>
-      m.nom.toLowerCase().includes(query.toLowerCase())
+  const filteredVaccinations = useMemo(() => {
+    return vaccinations.filter((v) =>
+      v.name.toLowerCase().includes(query.toLowerCase())
     );
-  }, [medicaments, query]);
+  }, [vaccinations, query]);
 
-  const totalCount = medicaments.length;
+  const totalCount = vaccinations.length;
 
-  // ➕ Add Medicament (calls API)
-  async function handleAddMedicament(nom) {
-    if (!nom) return;
-    showAlert("Erreur", "Le nom du médicament est requis");
+  async function handleAddVaccination(vaccineName) {
+    console.log(vaccineName);
+
+    if (!vaccineName) {
+      return showAlert("Erreur", "Le nom du vaccin est requis.");
+    }
 
     setLoading(true);
     try {
-      const res = await fetch("/api/medicaments", {
+      const res = await fetch("/api/Vaccine", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(nom),
+        body: JSON.stringify({
+          name: vaccineName,
+          createdAt: new Date().toISOString(),
+        }),
       });
 
-      if (!res.ok) throw new showAlert("Erreur", "erreur api");
+      if (!res.ok) throw new Error("Erreur API");
       const created = await res.json();
-      setMedicaments((prev) => [created, ...prev]);
-      setNewMedicament({ nom: "" });
+      setVaccinations((prev) => [created, ...prev]);
+      setNewVaccination({ vaccineName: "", createdAt: "" });
       setIsAddOpen(false);
-    } catch (err) {
-      console.error("Erreur lors de l’ajout", err);
-      showAlert("Erreur", "Impossible d’ajouter le médicament.");
+    } catch {
+      showAlert("Erreur", "Impossible d’ajouter la vaccination.");
     } finally {
       setLoading(false);
     }
   }
 
-  // ❌ Delete Medicament
   async function handleDelete(id) {
     try {
-      const res = await fetch(`/api/medicaments/${id}`, {
+      const res = await fetch(`/api/Vaccine?id=${id}`, {
         method: "DELETE",
       });
       if (!res.ok) throw new Error("Erreur API");
-      setMedicaments((prev) => prev.filter((m) => m.id !== id));
-    } catch (err) {
-      console.error("Erreur suppression:", err);
+      setVaccinations((prev) => prev.filter((v) => v.id !== id));
+    } catch {
       showAlert("Erreur", "Erreur lors de la suppression.");
     }
   }
@@ -114,12 +118,13 @@ export default function MedicamentsPage() {
         title={alertData.title}
         message={alertData.message}
       />
-      <AddMedicamentModal
+
+      <VaccinationModal
         open={isAddOpen}
         onClose={() => setIsAddOpen(false)}
-        onAdd={handleAddMedicament}
-        value={newMedicament}
-        setValue={setNewMedicament}
+        onAdd={handleAddVaccination}
+        value={newVaccination}
+        setValue={setNewVaccination}
         loading={loading}
       />
 
@@ -127,19 +132,19 @@ export default function MedicamentsPage() {
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-4">
           <div className="p-3 bg-purple-100 rounded-full shadow-md">
-            <Pill className="w-6 h-6 text-purple-700" />
+            <Syringe className="w-6 h-6 text-purple-700" />
           </div>
           <div>
-            <h2 className="text-2xl font-bold text-purple-800">Médicaments</h2>
-            <p className="text-sm text-muted-foreground">
-              Gestion des médicaments
+            <h2 className="text-2xl font-bold text-purple-800">Vaccinations</h2>
+            <p className="text-sm text-gray-500">
+              Gestion des noms et dates de vaccination
             </p>
           </div>
         </div>
 
         <Button
           onClick={() => setIsAddOpen(true)}
-          className="flex items-center gap-2 bg-purple-600 hover:bg-purple-700 text-white shadow"
+          className="flex items-center gap-2 bg-purple-600 hover:bg-purple-700 text-white shadow rounded-xl"
         >
           <Plus className="w-4 h-4" /> Ajouter
         </Button>
@@ -153,13 +158,12 @@ export default function MedicamentsPage() {
             <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
               <Input
-                placeholder="Nom du médicament..."
+                placeholder="Nom du vaccin..."
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 className="pl-10 w-64 focus:ring-purple-500"
               />
             </div>
-
             <div className="ml-auto px-4 py-2 text-purple-700 bg-purple-50 border border-purple-200 rounded-xl shadow font-semibold">
               Total : {totalCount}
             </div>
@@ -175,10 +179,10 @@ export default function MedicamentsPage() {
               <TableHeader className="sticky top-0 bg-gradient-to-r from-purple-50 to-purple-100">
                 <TableRow>
                   <TableHead className="px-4 py-3 font-bold text-purple-800 border-b border-purple-200">
-                    Nom
+                    Nom du vaccin
                   </TableHead>
                   <TableHead className="px-4 py-3 font-bold text-purple-800 border-b border-purple-200">
-                    Créé le
+                    Date de création
                   </TableHead>
                   <TableHead className="px-4 py-3 font-bold text-purple-800 border-b border-purple-200 text-center">
                     Actions
@@ -187,29 +191,30 @@ export default function MedicamentsPage() {
               </TableHeader>
 
               <TableBody>
-                {filteredMedicaments.length === 0 && (
+                {filteredVaccinations.length === 0 ? (
                   <TableRow>
                     <TableCell colSpan={3} className="text-center py-6">
-                      Aucun médicament trouvé
+                      Aucune vaccination trouvée
                     </TableCell>
                   </TableRow>
-                )}
-                {filteredMedicaments.map((m) => (
-                  <TableRow key={m.id} className="hover:bg-purple-50/50">
-                    <TableCell>{m.nom}</TableCell>
-                    <TableCell>{formatDate(m.createdAt)}</TableCell>
-                    <TableCell>
-                      <div className="flex items-center justify-center gap-2">
+                ) : (
+                  filteredVaccinations.map((v) => (
+                    <TableRow key={v.id} className="hover:bg-purple-50/50">
+                      <TableCell>{v.name}</TableCell>
+                      <TableCell>
+                        {formatDate(v.createdAt || v.dateGiven)}
+                      </TableCell>
+                      <TableCell className="text-center">
                         <DialogPage
                           title="Supprimer"
                           triggerText={"Supprimer"}
-                          description="Êtes-vous sûr de vouloir supprimer cet élément ? Cette action est irréversible."
-                          onConfirm={() => handleDelete(m.id)}
+                          description="Êtes-vous sûr de vouloir supprimer cette vaccination ? Cette action est irréversible."
+                          onConfirm={() => handleDelete(v.id)}
                         />
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))}
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
               </TableBody>
             </Table>
           </div>

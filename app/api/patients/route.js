@@ -33,7 +33,16 @@ export async function GET() {
 export async function POST(req) {
   try {
     const body = await req.json();
-    const { nom, age, telephone, adresse, antecedents, groupeSanguin } = body;
+    const {
+      nom,
+      age,
+      telephone,
+      adresse,
+      antecedents,
+      groupeSanguin,
+      poidsDeNaissance,
+      dateDeNaissance,
+    } = body;
 
     if (!nom || nom.trim() === "") {
       return NextResponse.json({ error: "Nom est requis" }, { status: 400 });
@@ -46,7 +55,9 @@ export async function POST(req) {
         telephone: telephone || null,
         adresse: adresse || null,
         antecedents: antecedents || null,
-        groupeSanguin: groupeSanguin || null, // <- assign enum value directly
+        groupeSanguin: groupeSanguin || null,
+        dateDeNaissance: dateDeNaissance || null,
+        poidsDeNaissance: poidsDeNaissance || null, // <- assign enum value directly
       },
     });
 

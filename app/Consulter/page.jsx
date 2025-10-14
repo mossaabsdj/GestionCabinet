@@ -17,10 +17,12 @@ import {
   HeartPulse,
   Gauge,
   Droplets,
+  FilePlus,
 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
+import AddVaccinationButton from "../component/NewVaccination/page";
 import { useState, useMemo, useEffect } from "react";
-
+import VaccinationsPage from "@/app/component/Vaccination/page";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import AjouteModal from "@/app/component/NewPatient/page";
@@ -29,6 +31,7 @@ import NewConsultationPage from "../component/NewConsultation/page";
 import Analyses from "../component/Analyses/page";
 import PatientVisits from "../component/Visites/page";
 import Ordonnances from "../component/Ordanance/page";
+import LoadingScreen from "../component/LoadingScreen/page";
 const patientsData = [
   {
     id: 1,
@@ -69,27 +72,128 @@ const patientsData = [
 export default function PatientDashboard() {
   const [selectedPatient, setSelectedPatient] = useState();
   const [search, setSearch] = useState("");
+  const [files, setFiles] = useState([]); // store multiple files
+  const [refrech, setrefrech] = useState(false);
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [selectedtab, setselectedtab] = useState("Informations Patient");
   const [NewConsultation, setNewConsultation] = useState(false);
   const [patientsData, setPatients] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [ShowAddDialogNewAnalyse, setShowAddDialogNewAnalyse] = useState(false);
   const [NewConsultationData, setNewConsultationData] = useState({});
+  const [lastid, setlastid] = useState(null);
   const filteredPatients = patientsData.filter((p) =>
     p.nom.toLowerCase().includes(search.toLowerCase())
   );
+
+  function handleFileAdd(e) {
+    const file = e.target.files[0];
+    if (file) {
+      setFiles((prev) => [...prev, { file, type: "bilan" }]);
+    }
+  }
+
+  // Change type of a file
+  function handleFileTypeChange(index, value) {
+    setFiles((prev) =>
+      prev.map((f, i) => (i === index ? { ...f, type: value } : f))
+    );
+  }
+
+  // Remove a file
+  function handleFileRemove(index) {
+    setFiles((prev) => prev.filter((_, i) => i !== index));
+  }
+  async function addConsultation(formData) {
+    setlastid(selectedPatient.id);
+    console.log(formData);
+    try {
+      const response = await fetch("/api/Consulter", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          patientId: selectedPatient.id,
+          note: formData.note || "",
+          taille: formData.taille || null,
+          poids: formData.poids || null,
+          tensionSystolique: formData.tensionSystolique || null,
+          tensionDiastolique: formData.tensionDiastolique || null,
+          temperature: formData.temperature || null,
+          frequenceCardiaque: formData.frequenceCardiaque || null,
+          frequenceRespiratoire: formData.frequenceRespiratoire || null,
+          saturationOxygene: formData.saturationOxygene || null,
+          glycemie: formData.glycemie || null,
+          developpementPsychomoteur: formData.developpementPsychomoteur || null,
+
+          ordonnance:
+            formData?.ordonnance?.items?.length > 0
+              ? {
+                  items: formData.ordonnance.items.map((item) => ({
+                    medicamentId: item.medicamentId,
+                    dosage: item.dosage,
+                    frequence: item.frequence,
+                    duree: item.duree,
+                    quantite: item.quantite,
+                  })),
+                }
+              : undefined,
+
+          bilanRecip:
+            formData?.bilanRecip?.items?.length > 0
+              ? {
+                  items: formData.bilanRecip.items.map((item) => ({
+                    bilanId: item.id,
+                    resultat: null,
+                    remarque: null,
+                  })),
+                }
+              : undefined,
+        }),
+      });
+
+      if (!response.ok) {
+        const err = await response.json();
+        throw new Error(
+          err.error || "Erreur lors de la création de la consultation"
+        );
+      }
+
+      const consultation = await response.json();
+      await fetchPatients();
+
+      console.log("✅ Consultation créée:", consultation);
+      return consultation;
+    } catch (error) {
+      console.error("❌ addConsultation error:", error);
+      throw error;
+    }
+  }
+  async function addconsultationfunction(data) {
+    await addConsultation(data);
+  }
   useEffect(() => {
     if (!NewConsultationData) return;
     console.log("New consultation data:" + JSON.stringify(NewConsultationData));
+    addconsultationfunction(NewConsultationData);
   }, [NewConsultationData]);
   async function fetchPatients() {
+    console.log("lastid" + lastid);
     try {
       const res = await fetch("/api/patients");
       if (!res.ok) throw new Error("Failed to fetch patients");
       const data = await res.json();
       setPatients(data);
       setSelectedPatient(data[0]);
-      console.log("data" + JSON.stringify(data));
+
+      if (lastid != null && lastid != "") {
+        const updatedPatient = data.find((p) => p.id === lastid) || null;
+
+        setSelectedPatient(updatedPatient);
+      }
+      console.log(JSON.stringify(selectedPatient));
+      //console.log("data" + JSON.stringify(data));
     } catch (error) {
       console.error("❌ Error fetching patients:", error);
     } finally {
@@ -105,7 +209,9 @@ export default function PatientDashboard() {
     {
       icon: Calendar,
       label: "Date de naissance",
-      value: selectedPatient?.dateNaissance || "Non spécifiée",
+      value: selectedPatient?.dateDeNaissance
+        ? new Date(selectedPatient.dateDeNaissance).toLocaleDateString("fr-FR")
+        : "Non spécifiée",
     },
     {
       icon: Calendar,
@@ -116,8 +222,8 @@ export default function PatientDashboard() {
     },
     {
       icon: User,
-      label: "Sexe",
-      value: selectedPatient?.sexe || "Non spécifié",
+      label: "antecedents",
+      value: selectedPatient?.antecedents || "Non spécifié",
     },
     {
       icon: User,
@@ -140,43 +246,106 @@ export default function PatientDashboard() {
   ];
 
   const medicalInfo = (selectedPatient) => {
-    const c = selectedPatient?.consultations?.[0]; // Get latest or first consultation
+    if (!selectedPatient?.consultations?.length) return [];
+
+    const consultations = selectedPatient.consultations;
+    const lastIndex = consultations.length - 1;
+
+    // 🔁 Function to look backwards for a valid value
+    const getInfo = (attr, index) => {
+      for (let i = index; i >= 0; i--) {
+        const val = consultations[i]?.[attr];
+        if (val !== null && val !== undefined && val !== "") {
+          return val;
+        }
+      }
+      return "—";
+    };
+
+    const c = consultations[lastIndex]; // latest consultation
 
     return [
-      { icon: ClipboardList, label: "Notes", value: c?.note || "—" },
-      { icon: Ruler, label: "Taille (cm)", value: c?.taille ?? "—" },
-      { icon: Weight, label: "Poids (kg)", value: c?.poids ?? "—" },
+      {
+        icon: ClipboardList,
+        label: "Notes",
+        value: (
+          <textarea
+            rows={3} // number of visible lines
+            readOnly
+            className="w-full border rounded-md p-2 text-sm bg-gray-50 text-gray-800"
+            value={getInfo("note", lastIndex) || ""}
+          />
+        ),
+        unite: "",
+      },
+      {
+        icon: ClipboardList,
+        label: "Développement Psychomoteur",
+        value: (
+          <textarea
+            rows={3}
+            readOnly
+            className="w-full border rounded-md p-2 text-sm bg-gray-50 text-gray-800"
+            value={getInfo("developpementPsychomoteur", lastIndex) || ""}
+          />
+        ),
+        unite: "",
+      },
+
+      {
+        icon: Ruler,
+        label: "Taille",
+        value: getInfo("taille", lastIndex),
+        unite: "cm",
+      },
+      {
+        icon: Weight,
+        label: "Poids",
+        value: getInfo("poids", lastIndex),
+        unite: "kg",
+      },
       {
         icon: Activity,
         label: "TA systolique",
-        value: c?.tensionSystolique ?? "—",
+        value: getInfo("tensionSystolique", lastIndex),
+        unite: "mmHg",
       },
       {
         icon: Activity,
         label: "TA diastolique",
-        value: c?.tensionDiastolique ?? "—",
+        value: getInfo("tensionDiastolique", lastIndex),
+        unite: "mmHg",
       },
       {
         icon: Thermometer,
-        label: "Température (°C)",
-        value: c?.temperature ?? "—",
+        label: "Température",
+        value: getInfo("temperature", lastIndex),
+        unite: "°C",
       },
       {
         icon: HeartPulse,
         label: "Fréquence cardiaque",
-        value: c?.frequenceCardiaque ?? "—",
+        value: getInfo("frequenceCardiaque", lastIndex),
+        unite: "bpm",
       },
       {
         icon: Gauge,
         label: "Fréquence respiratoire",
-        value: c?.frequenceRespiratoire ?? "—",
+        value: getInfo("frequenceRespiratoire", lastIndex),
+        unite: "cpm",
       },
       {
         icon: Droplets,
-        label: "Saturation en oxygène (%)",
-        value: c?.saturationOxygene ?? "—",
+        label: "Saturation en oxygène",
+        value: getInfo("saturationOxygene", lastIndex),
+        unite: "%",
       },
-      { icon: ClipboardList, label: "Glycémie", value: c?.glycemie ?? "—" },
+      {
+        icon: ClipboardList,
+        label: "Glycémie",
+        value: getInfo("glycemie", lastIndex),
+        unite: "g/L",
+      },
     ];
   };
 
@@ -195,6 +364,7 @@ export default function PatientDashboard() {
       });
       if (!res.ok) throw new Error("Erreur lors de la création");
       const created = await res.json();
+
       await fetchPatients();
       setIsAddOpen(false);
     } catch (err) {
@@ -202,7 +372,7 @@ export default function PatientDashboard() {
       alert("Erreur lors de la création du patient");
     }
   }
-
+  if (loading) return <LoadingScreen />;
   return (
     <div className="flex min-h-screen bg-gradient-to-br from-purple-50 via-white to-purple-100">
       <AjouteModal
@@ -275,25 +445,43 @@ export default function PatientDashboard() {
               {!NewConsultation ? "Dernier diagnostic" : "Nouveau diagnostic"}
             </p>
           </div>
-          {!NewConsultation && (
-            <Button
-              onClick={() => {
-                setNewConsultation(true);
-              }}
-              className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg font-semibold"
-            >
-              <Plus size={18} />
-              Nouvelle Consultation
-            </Button>
+          {selectedtab === "Vaccinations" ? (
+            <AddVaccinationButton
+              patientId={selectedPatient.id}
+              setrefrech={setrefrech}
+            />
+          ) : selectedtab === "Analyses et Résultats" ? (
+            <>
+              <Button
+                onClick={() => setShowAddDialogNewAnalyse(true)}
+                className="flex items-center gap-2 bg-purple-600 hover:bg-purple-700 text-white font-medium px-5 py-2 rounded-xl shadow-md transition"
+              >
+                <Plus className="mr-2 h-4 w-4" /> Nouvelle analyse
+              </Button>
+            </>
+          ) : (
+            !NewConsultation && (
+              <Button
+                onClick={() => {
+                  setNewConsultation(true);
+                }}
+                className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg font-semibold"
+              >
+                <Plus size={18} />
+                Nouvelle Consultation
+              </Button>
+            )
           )}
         </div>
         <div className="flex border-b border-purple-200 mb-6">
           {[
             "Informations Patient",
-            "Visites",
-            "Analyses",
+
+            "Analyses et Résultats",
+            "Vaccinations",
             "Courbe",
-            "Ordonnances",
+            "Visites",
+            "Prescriptions et Bilans",
             "+ Nouvelle Consultation",
           ].map((tab) => (
             <button
@@ -350,7 +538,9 @@ export default function PatientDashboard() {
                               {info.label}
                             </span>
                           </div>
-                          <span>{info.value}</span>
+                          <span>
+                            {info.value} {info.unite}
+                          </span>
                         </div>
                       </Card>
                     ))}
@@ -358,19 +548,6 @@ export default function PatientDashboard() {
                 </div>
               ))}
               {/* Derniers Diagnostics */}
-              <h3 className="text-xl font-semibold mb-4 text-purple-700 flex items-center gap-2">
-                <FileText size={20} /> Derniers Diagnostics
-              </h3>
-              <div className="grid grid-cols-3 gap-4">
-                {latestDiagnoses.map((diag) => (
-                  <Card key={diag.name} className="bg-purple-50 p-3">
-                    <CardContent>
-                      <p className="font-medium">{diag.name}</p>
-                      <p className="text-sm text-gray-500">{diag.date}</p>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
             </>
           )}
           {selectedtab === "Courbe" && <CourbePage />}
@@ -380,9 +557,27 @@ export default function PatientDashboard() {
               selectedPatient={selectedPatient}
             />
           )}
-          {selectedtab === "Analyses" && <Analyses />}
-          {selectedtab === "Visites" && <PatientVisits />}
-          {selectedtab === "Ordonnances" && <Ordonnances />}
+          {selectedtab === "Analyses et Résultats" && (
+            <Analyses
+              patientID={selectedPatient?.id}
+              ShowAddDialogNewAnalyse={ShowAddDialogNewAnalyse}
+              setShowAddDialogNewAnalyse={setShowAddDialogNewAnalyse}
+            />
+          )}
+          {selectedtab === "Vaccinations" && (
+            <VaccinationsPage
+              refrech={refrech}
+              setrefrech={setrefrech}
+              patientId={selectedPatient?.id}
+            />
+          )}
+
+          {selectedtab === "Visites" && (
+            <PatientVisits patientId={selectedPatient?.id} />
+          )}
+          {selectedtab === "Prescriptions et Bilans" && (
+            <Ordonnances patientId={selectedPatient?.id} />
+          )}
 
           {/* Sections */}
         </div>

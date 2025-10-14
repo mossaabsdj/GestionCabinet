@@ -6,6 +6,8 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import LoadingScreen from "../component/LoadingScreen/page";
+
 import {
   Table,
   TableBody,
@@ -35,7 +37,7 @@ export default function BilansPage() {
   const [bilans, setBilans] = useState([]);
   const [query, setQuery] = useState("");
   const [newBilan, setNewBilan] = useState({ nom: "" });
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [alertData, setAlertData] = useState({
     open: false,
     title: "",
@@ -47,14 +49,18 @@ export default function BilansPage() {
   // 🧩 Load bilans from API
   useEffect(() => {
     async function fetchBilans() {
+      setLoading(true);
+
       try {
         const res = await fetch("/api/bilans");
         const data = await res.json();
         if (Array.isArray(data)) setBilans(data);
+        setLoading(false);
       } catch (err) {
         showAlert("Erreur", "Impossible de charger les bilans.");
       }
     }
+
     fetchBilans();
   }, []);
 
@@ -104,6 +110,7 @@ export default function BilansPage() {
       showAlert("Erreur", "Erreur lors de la suppression.");
     }
   }
+  if (loading) return <LoadingScreen />;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-50 via-white to-purple-100 p-6">

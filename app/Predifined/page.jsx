@@ -16,6 +16,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useState, useMemo, useEffect } from "react";
 import { motion } from "framer-motion";
+import LoadingScreen from "../component/LoadingScreen/page";
 
 import { Trash2, Plus, Search, Pill, TestTube } from "lucide-react";
 import DialogPage from "@/app/component/DialogPage/page";
@@ -97,6 +98,7 @@ export default function TypesPage() {
   const [tmpQuantite, setTmpQuantite] = useState(1);
   const [openMedDialog, setOpenMedDialog] = useState(false);
   const [selectedMed, setSelectedMed] = useState(null);
+  const [loading, setLoading] = useState(true);
 
   // justifs
   const [newJustif, setNewJustif] = useState({ nom: "", texte: "" });
@@ -167,13 +169,9 @@ export default function TypesPage() {
     }
   };
   useEffect(() => {
-    fetchBilanTypes();
-  }, []);
-  useEffect(() => {
+    setLoading(true);
     loadRecettes();
-  }, []);
-  // 🧩 Load medicaments from API
-  useEffect(() => {
+
     async function fetchMedicaments() {
       try {
         const res = await fetch("/api/medicaments");
@@ -183,9 +181,6 @@ export default function TypesPage() {
         console.error("Erreur de chargement des médicaments", err);
       }
     }
-    fetchMedicaments();
-  }, []);
-  useEffect(() => {
     async function fetchBilans() {
       try {
         const res = await fetch("/api/bilans");
@@ -196,6 +191,9 @@ export default function TypesPage() {
       }
     }
     fetchBilans();
+    fetchMedicaments();
+    fetchBilanTypes();
+    setLoading(false);
   }, []);
 
   const openEdit = (section, type) => {
@@ -221,8 +219,9 @@ export default function TypesPage() {
         nom: data.label,
         items: data.meds.map((item) => ({
           medicamentId: item.id,
-          dosage: item.tmpDose === "custom" ? item.tmpCustomDose : item.tmpDose,
           frequence:
+            item.tmpDose === "custom" ? item.tmpCustomDose : item.tmpDose,
+          dosage:
             item.tmpStrength === "custom"
               ? item.tmpCustomStrength
               : item.tmpStrength,
@@ -546,6 +545,7 @@ export default function TypesPage() {
       </table>
     </div>
   );
+  if (loading) return <LoadingScreen />;
 
   return (
     <div className="max-w-full mx-auto py-12 px-6">

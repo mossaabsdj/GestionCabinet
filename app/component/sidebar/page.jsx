@@ -14,6 +14,7 @@ import {
   Tablet,
   TestTube,
   ClipboardList,
+  Syringe,
 } from "lucide-react";
 
 import {
@@ -37,6 +38,7 @@ const items = [
   { title: "Predifined", url: "Predifined", icon: FileText },
   { title: "Médicaments", url: "Medicament", icon: Pill }, // Gestion des médicaments
   { title: "Bilans", url: "Bilans", icon: TestTube }, // Gestion des bilans
+  { title: "Vaccine ", url: "Vaccinations", icon: Syringe }, // Gestion des vaccinations
 ];
 
 export function AppSidebar() {

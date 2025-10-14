@@ -7,6 +7,8 @@ import {
   FileText,
   Pill,
 } from "lucide-react";
+import LoadingScreen from "../component/LoadingScreen/page";
+import { useState, useMemo, useEffect } from "react";
 
 import {
   Card,
@@ -94,6 +96,9 @@ const prescriptionsData = [
 ];
 
 export default function DashboardPage() {
+  const [loading, setLoading] = useState(false);
+  if (loading) return <LoadingScreen />;
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-50 via-white to-purple-100 ">
       {/* Header */}

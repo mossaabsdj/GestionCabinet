@@ -17,6 +17,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
   DialogFooter,
@@ -53,7 +54,7 @@ const MEDS = [
 ];
 
 // --- Liste exemple examens ---
-const EXAMS = [
+const bilans = [
   "Hémogramme",
   "Glycémie",
   "Cholestérol total",
@@ -64,59 +65,6 @@ const EXAMS = [
   "Ionogramme sanguin",
   "CRP",
   "TSH",
-];
-
-const TYPE_MED_MAP = {
-  diabete: [
-    {
-      id: "metformin",
-      name: "Metformine",
-      form: "Comprimé",
-      strengths: ["500 mg", "850 mg"],
-    },
-    {
-      id: "glibenclamide",
-      name: "Glibenclamide",
-      form: "Comprimé",
-      strengths: ["5 mg"],
-    },
-  ],
-  hta: [
-    {
-      id: "amlodipine",
-      name: "Amlodipine",
-      form: "Comprimé",
-      strengths: ["5 mg", "10 mg"],
-    },
-    {
-      id: "enalapril",
-      name: "Enalapril",
-      form: "Comprimé",
-      strengths: ["5 mg", "20 mg"],
-    },
-  ],
-  antibio: [
-    {
-      id: "amoxicillin",
-      name: "Amoxicilline",
-      form: "Capsule",
-      strengths: ["500 mg"],
-    },
-    {
-      id: "ciprofloxacin",
-      name: "Ciprofloxacine",
-      form: "Comprimé",
-      strengths: ["500 mg"],
-    },
-  ],
-  autre: [],
-};
-
-const PRESET_TYPES = [
-  { id: "diabete", label: "Ordonnance Diabète" },
-  { id: "hta", label: "Ordonnance Hypertension" },
-  { id: "antibio", label: "Ordonnance Antibiotique" },
-  { id: "autre", label: "Autre" },
 ];
 
 const BILAN_PRESET_TYPES = [
@@ -187,7 +135,7 @@ const JUSTIF_TYPE_TEXTS = {
 };
 
 export default function PrescriptionModal({
-  open,
+  open = true,
   onOpenChange,
   onsave,
   selectedPatient,
@@ -196,18 +144,24 @@ export default function PrescriptionModal({
   const [suggestions, setSuggestions] = useState([]);
   const [selectedMed, setSelectedMed] = useState(null);
   const [prescriptionItems, setPrescriptionItems] = useState([]);
-  const [type, setType] = useState(PRESET_TYPES[0].id);
+  const [type, setType] = useState();
   const [openMedDialog, setOpenMedDialog] = useState(false);
+  const [medicaments, setMedicaments] = useState([]);
+  const [bilans, setBilans] = useState([]);
+  const [ordTypes, setOrdTypes] = useState([]);
+  const [SelectedbilanType, setSelectedBilanType] = useState();
 
-  const [tmpStrength, setTmpStrength] = useState("");
+  const [bilanTypes, setBilanTypes] = useState([]);
+  const [tmpfreq, setTmpfreq] = useState("");
   const [tmpDose, setTmpDose] = useState("1 fois/jour");
   const [tmpDuration, setTmpDuration] = useState("5 jours");
   const [tmpQuantite, setTmpQuantite] = useState(1);
-
+  const [loading, setLoading] = useState();
   const [labQuery, setLabQuery] = useState("");
   const [labSuggestions, setLabSuggestions] = useState([]);
   const [labItems, setLabItems] = useState([]);
   const [labType, setLabType] = useState("");
+  const [existDialog, setExistDialog] = useState(false);
 
   const [justifText, setJustifText] = useState("");
 
@@ -215,11 +169,95 @@ export default function PrescriptionModal({
   const [highlightedLabIdx, setHighlightedLabIdx] = useState(-1);
 
   const printRef = useRef();
-  const [bilanType, setBilanType] = useState(BILAN_PRESET_TYPES[0].id);
-  const [justifType, setJustifType] = useState(JUSTIF_PRESET_TYPES[0].id);
+  const [bilanType, setBilanType] = useState();
+  const [justifType, setJustifType] = useState();
 
   const bilanPrintRef = useRef();
   const justifPrintRef = useRef();
+
+  async function fetchBilanTypes() {
+    try {
+      const response = await fetch("/api/BilansType", {
+        method: "GET",
+        headers: { "Content-Type": "application/json" },
+        cache: "no-store", // ensures fresh data
+      });
+
+      if (!response.ok) {
+        const err = await response.json();
+        throw new Error(
+          err.error || "Erreur lors du chargement des bilans types"
+        );
+      }
+
+      const data = await response.json();
+      setBilanTypes(data);
+    } catch (err) {
+      console.error("❌ fetchBilanTypes error:", err);
+    } finally {
+    }
+  }
+  async function fetchRecettes() {
+    try {
+      const response = await fetch("/api/OrdanaceType", {
+        method: "GET",
+        headers: { "Content-Type": "application/json" },
+      });
+
+      if (!response.ok) {
+        let message = "Erreur lors du chargement des recettes types";
+        try {
+          const error = await response.json();
+          message = error.error || message;
+        } catch {
+          // fallback if no JSON
+        }
+        throw new Error(message);
+      }
+
+      return await response.json();
+    } catch (err) {
+      console.error("❌ fetchRecettes error:", err);
+      throw err;
+    }
+  }
+  const loadRecettes = async () => {
+    try {
+      const data = await fetchRecettes();
+      console.log("ordertypes" + JSON.stringify(data));
+      setOrdTypes(data);
+    } catch (err) {
+      console.error(err);
+      // Optionally: toast.error(err.message);
+    }
+  };
+  useEffect(() => {
+    setLoading(true);
+    loadRecettes();
+
+    async function fetchMedicaments() {
+      try {
+        const res = await fetch("/api/medicaments");
+        const data = await res.json();
+        if (Array.isArray(data)) setMedicaments(data);
+      } catch (err) {
+        console.error("Erreur de chargement des médicaments", err);
+      }
+    }
+    async function fetchBilans() {
+      try {
+        const res = await fetch("/api/bilans");
+        const data = await res.json();
+        if (Array.isArray(data)) setBilans(data);
+      } catch (err) {
+        console.error("Erreur de chargement des bilans", err);
+      }
+    }
+    fetchBilans();
+    fetchMedicaments();
+    fetchBilanTypes();
+    setLoading(false);
+  }, []);
 
   // --- Search Médicaments ---
   useEffect(() => {
@@ -229,9 +267,7 @@ export default function PrescriptionModal({
       return;
     }
     const q = query.trim().toLowerCase();
-    const filtered = MEDS.filter(
-      (m) => m.name.toLowerCase().includes(q) || m.id.includes(q)
-    );
+    const filtered = medicaments.filter((m) => m.nom.toLowerCase().includes(q));
     setSuggestions(filtered);
     setHighlightedMedIdx(filtered.length > 0 ? 0 : -1);
   }, [query]);
@@ -244,8 +280,8 @@ export default function PrescriptionModal({
       return;
     }
     const q = labQuery.trim().toLowerCase();
-    const filtered = EXAMS.filter(
-      (e) => e.toLowerCase().includes(q) && !labItems.includes(e)
+    const filtered = bilans.filter(
+      (e) => e.nom.toLowerCase().includes(q) && !labItems.includes(e)
     );
     setLabSuggestions(filtered);
     setHighlightedLabIdx(filtered.length > 0 ? 0 : -1);
@@ -263,7 +299,6 @@ export default function PrescriptionModal({
     } else if (e.key === "Enter" && highlightedMedIdx >= 0) {
       const s = suggestions[highlightedMedIdx];
       setSelectedMed(s);
-      setTmpStrength(s.strengths[0]);
       setOpenMedDialog(true);
     }
   }
@@ -281,18 +316,23 @@ export default function PrescriptionModal({
       addLab(labSuggestions[highlightedLabIdx]);
     }
   }
-
   function addMedication() {
     if (!selectedMed) return;
+    const exists = prescriptionItems.some(
+      (it) => it.nom.toLowerCase() === selectedMed.nom.toLowerCase()
+    );
+
+    if (exists) {
+      setExistDialog(true);
+      return;
+    }
     const item = {
-      uid: `${selectedMed.id}-${Date.now()}`,
-      medId: selectedMed.id,
-      name: selectedMed.name,
+      medicamentId: selectedMed.id,
+      nom: selectedMed.nom,
       form: selectedMed.form,
-      strength: tmpStrength || selectedMed.strengths[0],
-      dose: tmpDose,
-      frequency: "",
-      duration: tmpDuration,
+      dosage: tmpDose,
+      frequency: tmpfreq,
+      duree: tmpDuration,
       quantite: tmpQuantite,
     };
     setPrescriptionItems([...prescriptionItems, item]);
@@ -302,11 +342,16 @@ export default function PrescriptionModal({
     setTmpQuantite(1);
   }
 
-  function removeItem(uid) {
-    setPrescriptionItems(prescriptionItems.filter((i) => i.uid !== uid));
+  function removeItem(id) {
+    console.log(id);
+    console.log(JSON.stringify(PrescriptionModal));
+    setPrescriptionItems(
+      prescriptionItems.filter((i) => i.medicamentId !== id)
+    );
   }
 
   function addLab(exam) {
+    console.log("hiiiiiiiiiiii" + JSON.stringify(exam) + labItems);
     if (!labItems.includes(exam)) setLabItems([...labItems, exam]);
     setLabQuery("");
   }
@@ -316,12 +361,15 @@ export default function PrescriptionModal({
   }
 
   function handleSave() {
-    const payload = {
-      type,
+    const ordonnance = {
       items: prescriptionItems,
-      labs: labItems,
-      justification: justifText,
-      date: new Date().toISOString(),
+    };
+    const bilanRecip = {
+      items: labItems,
+    };
+    const payload = {
+      ordonnance: ordonnance,
+      bilanRecip: bilanRecip,
     };
     onsave(payload);
     console.log("✅ Saved:", payload);
@@ -331,30 +379,42 @@ export default function PrescriptionModal({
   const totalMeds = prescriptionItems.length;
 
   useEffect(() => {
-    // Only auto-fill if not "autre"
-    if (type !== "autre" && TYPE_MED_MAP[type]) {
-      // Avoid duplicates
-      const meds = TYPE_MED_MAP[type].map((med) => ({
-        uid: `${med.id}-${Date.now()}-${Math.random()}`,
-        medId: med.id,
-        name: med.name,
-        form: med.form,
-        strength: med.strengths[0],
-        dose: "1 fois/jour",
-        frequency: "",
-        duration: "7 jours",
+    if (type && type !== "autre") {
+      const selectedtyoe = ordTypes.filter((o) => o.id === type);
+      console.log(JSON.stringify(selectedtyoe) + type);
+      // Avoid duplicates and map medications correctly
+      const meds = selectedtyoe[0].items.map((med) => ({
+        medicamentId: med.id,
+        nom: med.nom, // match your first dataset key naming
+        dosage: med.dosage || "—", // use first available strength
+        frequency: med.frequence,
+        duree: med.duree,
+        quantite: med.quantite,
       }));
+
       setPrescriptionItems(meds);
-    } else if (type === "autre") {
+    } else {
+      // Clear items if "autre" or invalid type
       setPrescriptionItems([]);
     }
   }, [type]);
 
   useEffect(() => {
-    if (bilanType && BILAN_TYPE_EXAMS_EXT[bilanType]) {
-      setLabItems(BILAN_TYPE_EXAMS_EXT[bilanType]);
+    if (SelectedbilanType && SelectedbilanType !== "autre") {
+      const selectedtyoe = bilanTypes.filter((o) => o.id === SelectedbilanType);
+      console.log(JSON.stringify(selectedtyoe) + SelectedbilanType);
+      // Avoid duplicates and map medications correctly
+      const labs = selectedtyoe[0].items.map((lab) => ({
+        id: lab.id,
+        nom: lab.nom, // match your first dataset key naming
+      }));
+
+      setLabItems(labs);
+    } else {
+      // Clear items if "autre" or invalid type
+      setLabItems([]);
     }
-  }, [bilanType]);
+  }, [SelectedbilanType]);
 
   useEffect(() => {
     if (justifType && JUSTIF_TYPE_TEXTS[justifType] !== undefined) {
@@ -480,7 +540,7 @@ export default function PrescriptionModal({
             <TabsList className="grid grid-cols-3 bg-purple-100 text-purple-700 rounded-lg">
               <TabsTrigger value="ordonnance">📝 Ordonnance</TabsTrigger>
               <TabsTrigger value="labs">🧪 Bilans & Analyses</TabsTrigger>
-              <TabsTrigger value="justif">
+              <TabsTrigger disabled value="justif">
                 📄 Justification médicale
               </TabsTrigger>
             </TabsList>
@@ -542,7 +602,6 @@ export default function PrescriptionModal({
                                   onMouseEnter={() => setHighlightedMedIdx(idx)}
                                   onClick={() => {
                                     setSelectedMed(s);
-                                    setTmpStrength(s.strengths[0]);
                                     setOpenMedDialog(true);
                                   }}
                                   ref={(el) => {
@@ -552,7 +611,7 @@ export default function PrescriptionModal({
                                 >
                                   <div>
                                     <div className="font-medium text-purple-700">
-                                      {s.name}
+                                      {s.nom}
                                     </div>
                                   </div>
                                   <div className="text-xs text-purple-500 font-medium">
@@ -580,11 +639,12 @@ export default function PrescriptionModal({
                           <SelectValue placeholder="Choisir" />
                         </SelectTrigger>
                         <SelectContent>
-                          {PRESET_TYPES.map((t) => (
+                          {ordTypes.map((t) => (
                             <SelectItem key={t.id} value={t.id}>
-                              {t.label}
+                              {t.nom}
                             </SelectItem>
                           ))}
+                          <SelectItem value="autre">Autre type</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
@@ -613,20 +673,22 @@ export default function PrescriptionModal({
                         <div>
                           <Label>Dosage</Label>
                           <select
-                            className="w-full rounded-md border px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                            value={tmpStrength}
-                            onChange={(e) => setTmpStrength(e.target.value)}
+                            value={tmpDose}
+                            onChange={(e) => setTmpDose(e.target.value)}
+                            className="border rounded-md p-2 w-full"
                           >
                             <option value="">-- Sélectionner --</option>
-                            {selectedMed?.strengths?.map((st) => (
-                              <option key={st} value={st}>
-                                {st}
-                              </option>
-                            ))}
-                            <option value="custom">Autre...</option>
+                            <option value="5 mg">5 mg</option>
+                            <option value="10 mg">10 mg</option>
+                            <option value="20 mg">20 mg</option>
+                            <option value="50 mg">50 mg</option>
+                            <option value="100 mg">100 mg</option>
+                            <option value="250 mg">250 mg</option>
+                            <option value="500 mg">500 mg</option>
+                            <option value="1 g">1 g</option>
                           </select>
 
-                          {tmpStrength === "custom" && (
+                          {tmpDose === "custom" && (
                             <input
                               type="text"
                               className="mt-2 w-full rounded-md border px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
@@ -641,8 +703,8 @@ export default function PrescriptionModal({
                           <Label>Posologie (rythme de prise)</Label>
                           <select
                             className="w-full rounded-md border px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                            value={tmpDose}
-                            onChange={(e) => setTmpDose(e.target.value)}
+                            value={tmpfreq}
+                            onChange={(e) => setTmpfreq(e.target.value)}
                           >
                             <option value="">-- Sélectionner --</option>
                             <option value="1 fois / jour">1 fois / jour</option>
@@ -655,7 +717,7 @@ export default function PrescriptionModal({
                             <option value="custom">Autre...</option>
                           </select>
 
-                          {tmpDose === "custom" && (
+                          {tmpfreq === "custom" && (
                             <input
                               type="text"
                               className="mt-2 w-full rounded-md border px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
@@ -725,45 +787,51 @@ export default function PrescriptionModal({
                 </DialogContent>
               </Dialog>
 
-              <Card className="mt-2 border-purple-300">
-                <CardHeader>
+              <Card className="mt-2 border-purple-300 h-[465px] flex flex-col">
+                <CardHeader className="pb-2">
                   <CardTitle className="text-purple-700">
                     Ordonnance — Aperçu ({totalMeds})
                   </CardTitle>
                 </CardHeader>
-                <CardContent>
+
+                <CardContent className="flex-1 overflow-hidden">
                   {prescriptionItems.length === 0 ? (
-                    <div className="h-88 text-gray-500">
+                    <div className="h-full flex items-center justify-center text-gray-500">
                       Aucun médicament ajouté.
                     </div>
                   ) : (
-                    <ul className="space-y-3 h-88 overflow-auto">
+                    <ul className="space-y-3 h-full overflow-y-auto p-2">
                       {prescriptionItems.map((it) => (
                         <li
-                          key={it.uid}
-                          className="flex items-center justify-between border rounded p-3 hover:bg-purple-50"
+                          key={it.uid || it.id}
+                          className="flex items-center justify-between bg-white border border-purple-100 rounded-2xl p-4 shadow-sm hover:shadow-md transition-all duration-300 hover:bg-purple-50/60"
                         >
-                          <div>
-                            <div className="font-medium text-purple-700">
-                              {it.name}{" "}
-                              <span className="text-sm text-gray-500">
-                                {it.strength}
+                          <div className="flex flex-col">
+                            <div className="flex items-center gap-2">
+                              <span className="text-base font-semibold text-purple-700">
+                                {it.nom}
+                              </span>
+                              <span className="text-sm text-gray-500 font-medium">
+                                {it.dosage}
                               </span>
                             </div>
-                            <div className="text-sm text-gray-600">
-                              {it.dose} pendant{it.frequency} {it.duration} •
-                              <span className="ml-2 text-purple-700 font-bold">
-                                {it.quantite ? it.quantite : 1} x boîte
+
+                            <div className="text-sm text-gray-600 mt-1">
+                              {it.frequency || "—"} pendant {it.duree || "—"} •
+                              <span className="ml-2 text-purple-700 font-semibold">
+                                {it.quantite || 1} boîte
                                 {it.quantite > 1 ? "s" : ""}
                               </span>
                             </div>
                           </div>
+
                           <Button
-                            size="sm"
+                            size="icon"
                             variant="ghost"
-                            onClick={() => removeItem(it.uid)}
+                            className="hover:bg-red-100 transition"
+                            onClick={() => removeItem(it.medicamentId)}
                           >
-                            <Trash2 size={16} className="text-red-500" />
+                            <Trash2 size={18} className="text-red-500" />
                           </Button>
                         </li>
                       ))}
@@ -866,7 +934,7 @@ export default function PrescriptionModal({
                             {labSuggestions.length > 0 ? (
                               labSuggestions.map((exam, idx) => (
                                 <li
-                                  key={exam}
+                                  key={exam.id}
                                   className={`px-3 py-2 flex justify-between items-center cursor-pointer ${
                                     idx === highlightedLabIdx
                                       ? "bg-purple-100"
@@ -880,7 +948,7 @@ export default function PrescriptionModal({
                                   }}
                                 >
                                   <span className="font-medium text-purple-700">
-                                    {exam}
+                                    {exam.nom}
                                   </span>
                                   <span className="text-xs text-purple-500 font-medium">
                                     ajouter
@@ -900,18 +968,21 @@ export default function PrescriptionModal({
                     <div>
                       <Label>Type de bilan</Label>
                       <Select
-                        onValueChange={(v) => setBilanType(v)}
-                        defaultValue={bilanType}
+                        onValueChange={(v) => setSelectedBilanType(v)}
+                        defaultValue={SelectedbilanType || "autre"}
                       >
                         <SelectTrigger className="w-full border-purple-300">
                           <SelectValue placeholder="Choisir le type" />
                         </SelectTrigger>
                         <SelectContent>
-                          {BILAN_PRESET_TYPES.map((t) => (
+                          {bilanTypes.map((t) => (
                             <SelectItem key={t.id} value={t.id}>
-                              {t.label}
+                              {t.nom}
                             </SelectItem>
                           ))}
+
+                          {/* Add "autre type" manually */}
+                          <SelectItem value="autre">Autre type</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
@@ -932,12 +1003,12 @@ export default function PrescriptionModal({
                         <ul className="space-y-3 h-88 overflow-auto">
                           {labItems.map((exam) => (
                             <li
-                              key={exam}
+                              key={exam.id}
                               className="flex items-center justify-between border rounded p-3 hover:bg-purple-50"
                             >
                               <div>
                                 <div className="font-medium text-purple-700">
-                                  {exam}
+                                  {exam.nom}
                                 </div>
                                 <div className="text-sm text-gray-500">
                                   Type : {bilanType ? bilanType : "Non précisé"}
@@ -976,9 +1047,9 @@ export default function PrescriptionModal({
                         </div>
                       ) : (
                         labItems.map((exam) => (
-                          <div key={exam} className="bilan-print-item">
+                          <div key={exam.id} className="bilan-print-item">
                             <div className="font-medium text-purple-700">
-                              {exam}
+                              {exam.nom}
                             </div>
                             <div className="text-sm text-gray-500">
                               Type : {bilanType ? bilanType : "Non précisé"}
@@ -1088,6 +1159,27 @@ export default function PrescriptionModal({
             </Button>
           </div>
         </div>
+        <Dialog open={existDialog} onOpenChange={setExistDialog}>
+          <DialogContent className="max-w-sm rounded-2xl">
+            <DialogHeader>
+              <DialogTitle className="text-purple-700">
+                Médicament existant
+              </DialogTitle>
+              <DialogDescription className="text-gray-600">
+                Ce médicament est déjà ajouté dans l’ordonnance.
+              </DialogDescription>
+            </DialogHeader>
+            <DialogFooter>
+              <Button
+                variant="outline"
+                onClick={() => setExistDialog(false)}
+                className="text-purple-700 border-purple-300 hover:bg-purple-50"
+              >
+                OK
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </DialogContent>
     </Dialog>
   );

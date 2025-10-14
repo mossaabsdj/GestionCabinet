@@ -31,19 +31,25 @@ enum GroupeSanguin {
 // ====================
 
 model Patient {
-  id             Int             @id @default(autoincrement())
-  nom            String          @unique
-  age            Int?
-  telephone      String?
-  adresse        String?
-  antecedents    String?
-  groupeSanguin  GroupeSanguin?
-  consultations  Consultation[]
-  ordonnances    Ordonnance[]
-  bilans         BilanRecip[]
-  paiements      Paiement[]
-  createdAt      DateTime        @default(now())
+  id               Int              @id @default(autoincrement())
+  nom              String           @unique
+  age              Int?
+  dateDeNaissance  DateTime?        // 🆕 optional date of birth
+  telephone        String?
+  adresse          String?
+  antecedents      String?
+  poidsDeNaissance Float?           // fixed naming consistency
+  groupeSanguin    GroupeSanguin?
+  consultations    Consultation[]
+  ordonnances      Ordonnance[]
+  bilans           BilanRecip[]
+  paiements        Paiement[]
+  radios           Radio[]
+  bilanFiles       BilanFile[]
+  vaccinations     Vaccination[]    // a patient can have many vaccinations
+  createdAt        DateTime         @default(now())
 }
+
 
 model Consultation {
   id                    Int           @id @default(autoincrement())
@@ -64,12 +70,16 @@ model Consultation {
   ordonnance            Ordonnance?
   bilanRecip            BilanRecip?
   createdAt             DateTime      @default(now())
+  developpementPsychomoteur String?  // e.g. "Normal", "Retard léger", "Avancé"
+
 }
 
 model Radio {
   id              Int           @id @default(autoincrement())
-  consultationId  Int
-  consultation    Consultation  @relation(fields: [consultationId], references: [id])
+  consultationId  Int?
+  consultation    Consultation?  @relation(fields: [consultationId], references: [id])
+  patientId       Int?
+  patient         Patient?      @relation(fields: [patientId], references: [id])
   description     String?
   fichier         String?
   createdAt       DateTime      @default(now())
@@ -77,14 +87,15 @@ model Radio {
 
 model BilanFile {
   id              Int           @id @default(autoincrement())
-  consultationId  Int
-  consultation    Consultation  @relation(fields: [consultationId], references: [id])
+  consultationId  Int?
+  consultation    Consultation?  @relation(fields: [consultationId], references: [id])
+  patientId       Int?
+  patient         Patient?      @relation(fields: [patientId], references: [id])
   type            String?
-  resultat        String?
+  description        String?
   fichier         String?
   createdAt       DateTime      @default(now())
 }
-
 // ====================
 // Ordonnances (Prescriptions)
 // ====================
@@ -208,4 +219,23 @@ model Paiement {
   patient   Patient   @relation(fields: [patientId], references: [id])
   montant   Float
   date      DateTime  @default(now())
+}
+model Vaccine {
+  id        Int          @id @default(autoincrement())
+  name      String        @unique
+  createdAt DateTime      @default(now())
+
+  vaccinations Vaccination[]
+}
+
+model Vaccination {
+  id          Int       @id @default(autoincrement())
+  patientId   Int
+  patient     Patient?  @relation(fields: [patientId], references: [id])
+  vaccineId   Int
+  vaccine     Vaccine   @relation(fields: [vaccineId], references: [id])
+  dateGiven   DateTime
+  doseNumber  Int?
+  notes       String?
+  createdAt   DateTime  @default(now())
 }

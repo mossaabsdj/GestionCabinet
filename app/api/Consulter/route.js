@@ -48,40 +48,46 @@ export async function GET(req) {
 // ====================
 // POST: Create new consultation
 // ====================
+
 export async function POST(req) {
   try {
     const data = await req.json();
+
+    // Convert to numeric types safely
+    const taille = data.taille ? parseFloat(data.taille) : null;
+    const poids = data.poids ? parseFloat(data.poids) : null;
+    const tensionSystolique = data.tensionSystolique
+      ? parseInt(data.tensionSystolique)
+      : null;
+    const tensionDiastolique = data.tensionDiastolique
+      ? parseInt(data.tensionDiastolique)
+      : null;
+    const temperature = data.temperature ? parseFloat(data.temperature) : null;
+    const frequenceCardiaque = data.frequenceCardiaque
+      ? parseInt(data.frequenceCardiaque)
+      : null;
+    const frequenceRespiratoire = data.frequenceRespiratoire
+      ? parseInt(data.frequenceRespiratoire)
+      : null;
+    const saturationOxygene = data.saturationOxygene
+      ? parseInt(data.saturationOxygene)
+      : null;
+    const glycemie = data.glycemie ? parseFloat(data.glycemie) : null;
 
     const consultation = await prisma.consultation.create({
       data: {
         patientId: data.patientId,
         note: data.note,
-        taille: data.taille,
-        poids: data.poids,
-        tensionSystolique: data.tensionSystolique,
-        tensionDiastolique: data.tensionDiastolique,
-        temperature: data.temperature,
-        frequenceCardiaque: data.frequenceCardiaque,
-        frequenceRespiratoire: data.frequenceRespiratoire,
-        saturationOxygene: data.saturationOxygene,
-        glycemie: data.glycemie,
-
-        radios: {
-          create:
-            data.radios.map((r) => ({
-              description: r.description,
-              fichier: r.fichier,
-            })) || [],
-        },
-
-        bilansFiles: {
-          create:
-            data.bilansFiles.map((b) => ({
-              type: b.type,
-              resultat: b.resultat,
-              fichier: b.fichier,
-            })) || [],
-        },
+        taille,
+        poids,
+        tensionSystolique,
+        tensionDiastolique,
+        temperature,
+        frequenceCardiaque,
+        frequenceRespiratoire,
+        saturationOxygene,
+        glycemie,
+        developpementPsychomoteur: data.developpementPsychomoteur || null, // ✅ new field
 
         // ✅ Ordonnance
         ordonnance: data.ordonnance
@@ -94,7 +100,7 @@ export async function POST(req) {
                     dosage: item.dosage,
                     frequence: item.frequence,
                     duree: item.duree,
-                    quantite: item.quantite,
+                    quantite: parseInt(item.quantite) || 0,
                   })),
                 },
               },
@@ -118,8 +124,6 @@ export async function POST(req) {
           : undefined,
       },
       include: {
-        radios: true,
-        bilansFiles: true,
         ordonnance: { include: { items: true } },
         bilanRecip: { include: { items: true } },
       },
@@ -237,6 +241,17 @@ export async function DELETE(req) {
     }
 
     await prisma.$transaction([
+      prisma.ordonnanceItem.deleteMany({
+        where: {
+          ordonnance: { consultationId: Number(id) },
+        },
+      }),
+
+      prisma.bilanItem.deleteMany({
+        where: {
+          bilanRecip: { consultationId: Number(id) },
+        },
+      }),
       prisma.radio.deleteMany({ where: { consultationId: Number(id) } }),
       prisma.bilanFile.deleteMany({ where: { consultationId: Number(id) } }),
       prisma.ordonnance.deleteMany({ where: { consultationId: Number(id) } }),

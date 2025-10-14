@@ -26,6 +26,8 @@ export default function AddPatientModal({ open, onClose, onAdd }) {
     adresse: "",
     antecedents: "",
     groupeSanguin: "",
+    poidsDeNaissance: "", // 🆕 added
+    dateDeNaissance: "", // 🆕 added
   });
 
   function handleSubmit(e) {
@@ -33,7 +35,13 @@ export default function AddPatientModal({ open, onClose, onAdd }) {
     if (!form.nom) return alert("Le nom est requis");
     onAdd({
       ...form,
+      poidsDeNaissance: form.poidsDeNaissance
+        ? parseFloat(form.poidsDeNaissance)
+        : null,
       age: form.age ? Number(form.age) : null,
+      dateDeNaissance: form.dateDeNaissance
+        ? new Date(form.dateDeNaissance) // convert to Date object
+        : null,
       createdAt: new Date().toISOString(),
     });
     setForm({
@@ -43,6 +51,8 @@ export default function AddPatientModal({ open, onClose, onAdd }) {
       adresse: "",
       antecedents: "",
       groupeSanguin: "",
+      poidsDeNaissance: "", // 🆕 added
+      dateDeNaissance: "", // 🆕 added
     });
     onClose();
   }
@@ -137,6 +147,34 @@ export default function AddPatientModal({ open, onClose, onAdd }) {
                   <SelectItem value="O_NEG">O-</SelectItem>
                 </SelectContent>
               </Select>
+            </div>
+          </div>
+
+          {/* 🆕 Poids de naissance + Date de naissance */}
+          <div className="grid grid-cols-2 gap-6">
+            <div>
+              <Label className="text-gray-500">Poids de naissance (kg)</Label>
+              <Input
+                type="number"
+                placeholder="Ex: 3.2"
+                value={form.poidsDeNaissance}
+                onChange={(e) =>
+                  setForm({ ...form, poidsDeNaissance: e.target.value })
+                }
+                className="h-12 px-4 mt-1 rounded-xl bg-gray-50 text-gray-600 placeholder-gray-400"
+              />
+            </div>
+
+            <div>
+              <Label className="text-gray-500">Date de naissance</Label>
+              <Input
+                type="date"
+                value={form.dateDeNaissance}
+                onChange={(e) =>
+                  setForm({ ...form, dateDeNaissance: e.target.value })
+                }
+                className="h-12 px-4 mt-1 rounded-xl bg-gray-50 text-gray-600"
+              />
             </div>
           </div>
 

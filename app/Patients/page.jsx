@@ -21,6 +21,8 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import LoadingScreen from "../component/LoadingScreen/page";
+
 import { Label } from "@/components/ui/label";
 
 function formatDate(d) {
@@ -176,6 +178,7 @@ export default function PatientsPage() {
       alert("Erreur lors de la suppression du patient");
     }
   }
+  if (loading) return <LoadingScreen />;
 
   return (
     <div className="overflow-y-hidden min-h-screen bg-gradient-to-br from-purple-50 via-white to-purple-100">
