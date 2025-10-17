@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
-import { PrismaClient } from "@/app/generated/prisma";
-const prisma = new PrismaClient();
+import { prisma } from "@/lib/prisma";
+
 // ✅ Get one medicament
 export async function GET(req, { params }) {
   try {

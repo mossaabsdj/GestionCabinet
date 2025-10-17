@@ -72,7 +72,8 @@ export default function Vaccination({ patientId, refrech, setrefrech }) {
       </div>
     );
   }
-
+  if (!patientId)
+    return <p className="text-gray-500 text-center mt-10">Aucune Patient .</p>;
   if (loading) {
     return (
       <div className="p-4 text-center text-gray-500">

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
@@ -21,29 +21,34 @@ import {
   FileText,
   Pill,
   FlaskConical,
+  Edit3,
+  Save,
 } from "lucide-react";
 
 export default function PatientVisits({ patientId }) {
   const [visits, setVisits] = useState([]);
+  const printRef = useRef();
+  const bilanPrintRef = useRef();
+
   const [selectedVisit, setSelectedVisit] = useState(null);
   const [deleteConfirm, setDeleteConfirm] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+  const [editedData, setEditedData] = useState({});
+  const fetchConsultations = async () => {
+    try {
+      const res = await fetch(`/api/Consulter?patientId=${patientId}`);
+      const data = await res.json();
 
+      if (!res.ok) throw new Error(data.error || "Erreur de chargement");
+
+      setVisits(data);
+    } catch (err) {
+      console.error("❌ Erreur:", err);
+    }
+  };
   // ✅ Fetch consultations
   useEffect(() => {
     if (!patientId) return;
-
-    const fetchConsultations = async () => {
-      try {
-        const res = await fetch(`/api/Consulter?patientId=${patientId}`);
-        const data = await res.json();
-
-        if (!res.ok) throw new Error(data.error || "Erreur de chargement");
-
-        setVisits(data);
-      } catch (err) {
-        console.error("❌ Erreur:", err);
-      }
-    };
 
     fetchConsultations();
   }, [patientId]);
@@ -66,51 +71,120 @@ export default function PatientVisits({ patientId }) {
     }
   }
 
+  // ✅ Save modifications
+  async function handleSave() {
+    try {
+      // Convert specific fields to numeric types safely
+      const formattedData = {
+        ...editedData,
+        taille: editedData.taille ? parseFloat(editedData.taille) : null,
+        poids: editedData.poids ? parseFloat(editedData.poids) : null,
+        tensionSystolique: editedData.tensionSystolique
+          ? parseInt(editedData.tensionSystolique)
+          : null,
+        tensionDiastolique: editedData.tensionDiastolique
+          ? parseInt(editedData.tensionDiastolique)
+          : null,
+        temperature: editedData.temperature
+          ? parseFloat(editedData.temperature)
+          : null,
+        frequenceCardiaque: editedData.frequenceCardiaque
+          ? parseInt(editedData.frequenceCardiaque)
+          : null,
+        frequenceRespiratoire: editedData.frequenceRespiratoire
+          ? parseInt(editedData.frequenceRespiratoire)
+          : null,
+        saturationOxygene: editedData.saturationOxygene
+          ? parseInt(editedData.saturationOxygene)
+          : null,
+        glycemie: editedData.glycemie ? parseFloat(editedData.glycemie) : null,
+      };
+
+      const res = await fetch("/api/Consulter", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: selectedVisit.id, ...formattedData }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Erreur de mise à jour");
+      await fetchConsultations();
+      setSelectedVisit(null);
+      // ✅ Update UI with correct types
+      setIsEditing(false);
+    } catch (err) {
+      console.error("❌ Erreur lors de la mise à jour:", err);
+    }
+  }
+
+  const handleChange = (field, value) => {
+    setEditedData((prev) => ({ ...prev, [field]: value }));
+  };
+
   const renderMedicalInfo = (visit) => {
     const fields = [
-      { icon: User, label: "Taille", value: visit.taille, unite: "cm" },
-      { icon: User, label: "Poids", value: visit.poids, unite: "kg" },
+      {
+        icon: User,
+        label: "Taille",
+        value: visit.taille,
+        unite: "cm",
+        field: "taille",
+      },
+      {
+        icon: User,
+        label: "Poids",
+        value: visit.poids,
+        unite: "kg",
+        field: "poids",
+      },
       {
         icon: Activity,
         label: "TA Systolique",
         value: visit.tensionSystolique,
         unite: "mmHg",
+        field: "tensionSystolique",
       },
       {
         icon: Activity,
         label: "TA Diastolique",
         value: visit.tensionDiastolique,
         unite: "mmHg",
+        field: "tensionDiastolique",
       },
       {
         icon: Activity,
         label: "Température",
         value: visit.temperature,
         unite: "°C",
+        field: "temperature",
       },
       {
         icon: Heart,
         label: "Fréquence cardiaque",
         value: visit.frequenceCardiaque,
         unite: "bpm",
+        field: "frequenceCardiaque",
       },
       {
         icon: Activity,
         label: "Fréquence respiratoire",
         value: visit.frequenceRespiratoire,
         unite: "cpm",
+        field: "frequenceRespiratoire",
       },
       {
         icon: Activity,
         label: "Saturation O₂",
         value: visit.saturationOxygene,
         unite: "%",
+        field: "saturationOxygene",
       },
       {
         icon: Activity,
         label: "Glycémie",
         value: visit.glycemie,
         unite: "g/L",
+        field: "glycemie",
       },
     ];
 
@@ -123,14 +197,84 @@ export default function PatientVisits({ patientId }) {
               <span className="text-gray-600 text-sm">{info.label}</span>
             </div>
             <div className="text-right text-gray-800">
-              {info.value ?? "—"} {info.unite}
+              {isEditing ? (
+                <input
+                  type="number"
+                  className="border border-gray-300 rounded px-2 py-1 w-20 text-sm"
+                  value={editedData[info.field] ?? visit[info.field] ?? ""}
+                  onChange={(e) => handleChange(info.field, e.target.value)}
+                />
+              ) : (
+                <>
+                  {info.value ?? "—"} {info.unite}
+                </>
+              )}
             </div>
           </Card>
         ))}
       </div>
     );
   };
+  const handlePrintElectron = () => {
+    if (!printRef.current) return;
+    console.log("sbn");
+    const printContents = printRef.current.outerHTML;
 
+    window.electron.printOrdonnance({
+      title: "Ordonnance - Dr DIB Amel",
+      html: `
+      <html>
+        <head>
+          <style>
+            body { font-family: 'Segoe UI', Arial, sans-serif; background: #f8f8fa; margin: 0; }
+            .ord-print-header { text-align: center; padding: 24px 0 8px; border-bottom: 2px solid #7c3aed; }
+            .ord-print-title { font-size: 2rem; color: #7c3aed; font-weight: bold; margin-bottom: 4px; }
+            .ord-print-doc { font-size: 1.1rem; color: #444; margin-bottom: 2px; }
+            .ord-print-date { font-size: 0.95rem; color: #888; margin-bottom: 12px; }
+            .ord-print-list { margin: 24px 0; }
+            .ord-print-item { padding: 12px 18px; border-radius: 8px; background: #fff; margin-bottom: 12px; box-shadow: 0 2px 8px #e9e9f3; }
+            .ord-print-item-title { font-size: 1.1rem; color: #7c3aed; font-weight: 500; }
+            .ord-print-item-details { font-size: 0.98rem; color: #444; margin-top: 2px; }
+            .ord-print-footer { text-align: right; font-size: 1rem; color: #7c3aed; margin-top: 32px; border-top: 1px solid #e0e0e0; padding-top: 12px; }
+          </style>
+        </head>
+        <body>
+          ${printContents}
+        </body>
+      </html>
+    `,
+    });
+  };
+
+  // ✅ Print Bilan using Electron
+  const handlePrintBilanElectron = () => {
+    if (!bilanPrintRef.current) return;
+
+    const printContents = bilanPrintRef.current.outerHTML;
+
+    window.electron.printBilan({
+      title: "Bilans & Analyses - Dr DIB Amel",
+      html: `
+      <html>
+        <head>
+          <style>
+            body { font-family: 'Segoe UI', Arial, sans-serif; background: #f8f8fa; margin: 0; }
+            .bilan-print-header { text-align: center; padding: 24px 0 8px; border-bottom: 2px solid #7c3aed; }
+            .bilan-print-title { font-size: 2rem; color: #7c3aed; font-weight: bold; margin-bottom: 4px; }
+            .bilan-print-doc { font-size: 1.1rem; color: #444; margin-bottom: 2px; }
+            .bilan-print-date { font-size: 0.95rem; color: #888; margin-bottom: 12px; }
+            .bilan-print-list { margin: 24px 0; }
+            .bilan-print-item { padding: 12px 18px; border-radius: 8px; background: #fff; margin-bottom: 12px; box-shadow: 0 2px 8px #e9e9f3; }
+            .bilan-print-footer { text-align: right; font-size: 1rem; color: #7c3aed; margin-top: 32px; border-top: 1px solid #e0e0e0; padding-top: 12px; }
+          </style>
+        </head>
+        <body>
+          ${printContents}
+        </body>
+      </html>
+    `,
+    });
+  };
   return (
     <div className="p-4">
       {visits.length === 0 ? (
@@ -142,7 +286,11 @@ export default function PatientVisits({ patientId }) {
           {visits.map((visit) => (
             <Card
               key={visit.id}
-              onClick={() => setSelectedVisit(visit)}
+              onClick={() => {
+                setSelectedVisit(visit);
+                setEditedData(visit);
+                setIsEditing(false);
+              }}
               className="bg-purple-50 p-3 cursor-pointer hover:bg-purple-100 transition"
             >
               <CardContent>
@@ -173,85 +321,111 @@ export default function PatientVisits({ patientId }) {
         open={!!selectedVisit}
         onOpenChange={() => setSelectedVisit(null)}
       >
-        <DialogContent className="min-w-5xl w-full bg-purple-50 rounded-xl p-6 overflow-y-auto max-h-[90vh]">
+        <DialogContent className="min-w-7xl w-full bg-purple-50 rounded-xl p-6 overflow-y-auto max-h-[90vh]">
           {selectedVisit && (
             <>
               <DialogHeader>
-                <DialogTitle className="text-purple-700 text-lg font-semibold">
-                  Détails de la Consultation #{selectedVisit.id}
-                </DialogTitle>
+                <div className="flex flex-row justify-between ">
+                  <DialogTitle className="text-purple-700 text-lg font-semibold">
+                    Consultation #{selectedVisit.id}
+                  </DialogTitle>
+                  <div className="flex flex-row p-4">
+                    {isEditing ? (
+                      <Button
+                        onClick={handleSave}
+                        className="flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white"
+                      >
+                        <Save size={16} /> Enregistrer
+                      </Button>
+                    ) : (
+                      <Button
+                        onClick={() => setIsEditing(true)}
+                        className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white"
+                      >
+                        <Edit3 size={16} /> Modifier
+                      </Button>
+                    )}
+                    <Button
+                      variant="destructive"
+                      onClick={() => setDeleteConfirm(true)}
+                      className="flex items-center  mx-3 bg-red-500 hover:bg-red-600 text-white"
+                    >
+                      <Trash2 size={16} />
+                    </Button>
+                  </div>
+                </div>
               </DialogHeader>
 
               {/* Notes */}
               <div className="mt-3">
                 <label className="block text-sm font-medium mb-1">Notes</label>
-                <p className="text-gray-700 bg-white p-3 rounded-lg shadow-sm min-h-[60px]">
-                  {selectedVisit.note || "Aucune note enregistrée."}
-                </p>
+                {isEditing ? (
+                  <textarea
+                    rows={3}
+                    className="w-full border rounded-lg p-2 bg-white"
+                    value={editedData.note ?? ""}
+                    onChange={(e) => handleChange("note", e.target.value)}
+                  />
+                ) : (
+                  <p className="text-gray-700 bg-white p-3 rounded-lg shadow-sm min-h-[60px]">
+                    {selectedVisit.note || "Aucune note enregistrée."}
+                  </p>
+                )}
               </div>
+
               <div className="mt-3">
-                <label className="block text-sm font-medium mb-1">Notes</label>
-                <p className="text-gray-700 bg-white p-3 rounded-lg shadow-sm min-h-[60px]">
-                  {selectedVisit.developpementPsychomoteur ||
-                    "Aucune note enregistrée."}
-                </p>
+                <label className="block text-sm font-medium mb-1">
+                  Développement Psychomoteur
+                </label>
+                {isEditing ? (
+                  <textarea
+                    rows={3}
+                    className="w-full border rounded-lg p-2 bg-white"
+                    value={editedData.developpementPsychomoteur ?? ""}
+                    onChange={(e) =>
+                      handleChange("developpementPsychomoteur", e.target.value)
+                    }
+                  />
+                ) : (
+                  <p className="text-gray-700 bg-white p-3 rounded-lg shadow-sm min-h-[60px]">
+                    {selectedVisit.developpementPsychomoteur ||
+                      "Aucune note enregistrée."}
+                  </p>
+                )}
               </div>
 
               {/* Infos médicales */}
               {renderMedicalInfo(selectedVisit)}
 
-              {/* Ordonnance */}
-              {selectedVisit?.ordonnance?.items?.length > 0 && (
-                <div className="mt-6 bg-purple-50 border border-purple-200 rounded-xl p-4 shadow-sm">
-                  <div className="flex items-center gap-2 text-purple-700 mb-3">
-                    <FileText size={20} />
-                    <span className="font-semibold text-lg">Ordonnance</span>
-                  </div>
+              {/* Buttons */}
 
-                  <div className="overflow-x-auto">
+              {/* ====================== */}
+              {/* BILAN RECIP (Analyses) */}
+              {/* ====================== */}
+              {selectedVisit?.bilanRecip?.items?.length > 0 && (
+                <div ref={bilanPrintRef} className="mt-5">
+                  <h3 className="text-purple-700 font-semibold text-md flex items-center gap-2">
+                    <FlaskConical size={18} /> Bilans / Analyses #
+                    {selectedVisit.bilanRecip.id}
+                  </h3>
+                  <div className="mt-2 bg-white rounded-lg shadow-sm p-3">
                     <table className="w-full text-sm border-collapse">
-                      <thead className="bg-purple-200 text-purple-800">
-                        <tr>
-                          <th className="py-3 px-4 text-left font-semibold">
-                            Médicament
-                          </th>
-                          <th className="py-3 px-4 text-left font-semibold">
-                            Dosage
-                          </th>
-                          <th className="py-3 px-4 text-left font-semibold">
-                            Fréquence
-                          </th>
-                          <th className="py-3 px-4 text-left font-semibold">
-                            Durée
-                          </th>
-                          <th className="py-3 px-4 text-left font-semibold">
-                            Quantité
-                          </th>
+                      <thead>
+                        <tr className="border-b bg-purple-50">
+                          <th className="text-left p-2">Bilan</th>
+                          <th className="text-left p-2">Résultat</th>
+                          <th className="text-left p-2">Remarque</th>
                         </tr>
                       </thead>
-
                       <tbody>
-                        {selectedVisit.ordonnance.items.map((item, idx) => (
+                        {selectedVisit.bilanRecip.items.map((item) => (
                           <tr
-                            key={idx}
-                            className="border-b border-purple-100 hover:bg-purple-100 transition"
+                            key={item.id}
+                            className="border-b hover:bg-gray-50"
                           >
-                            <td className="py-3 px-4 font-medium text-gray-800 flex items-center gap-1">
-                              <Pill size={16} className="text-purple-600" />{" "}
-                              {item.medicament?.nom || "—"}
-                            </td>
-                            <td className="py-3 px-4 text-gray-700">
-                              {item.dosage || "—"}
-                            </td>
-                            <td className="py-3 px-4 text-gray-700">
-                              {item.frequence || "—"}
-                            </td>
-                            <td className="py-3 px-4 text-gray-700">
-                              {item.duree || "—"}
-                            </td>
-                            <td className="py-3 px-4 text-gray-700">
-                              {item.quantite || 0} unité(s)
-                            </td>
+                            <td className="p-2">{item.bilan?.nom || "—"}</td>
+                            <td className="p-2">{item.resultat || "—"}</td>
+                            <td className="p-2">{item.remarque || "—"}</td>
                           </tr>
                         ))}
                       </tbody>
@@ -260,79 +434,63 @@ export default function PatientVisits({ patientId }) {
                 </div>
               )}
 
-              {/* Bilan */}
-              {selectedVisit.bilanRecip &&
-                selectedVisit.bilanRecip.items?.length > 0 && (
-                  <div className="mt-6 bg-green-50 border border-green-100 rounded-xl p-4 shadow-sm">
-                    <div className="flex items-center gap-2 text-green-700 mb-2">
-                      <FlaskConical size={20} />
-                      <span className="font-semibold">Bilan</span>
-                    </div>
-                    {selectedVisit?.bilanRecip?.items?.length > 0 && (
-                      <div className="mt-6 bg-green-50 border border-green-200 rounded-xl p-4 shadow-sm">
-                        <div className="flex items-center gap-2 text-green-700 mb-3">
-                          <FileText size={20} />
-                          <span className="font-semibold text-lg">
-                            Bilan Reçu
-                          </span>
-                        </div>
-
-                        <div className="overflow-x-auto">
-                          <table className="w-full text-sm border-collapse">
-                            <thead className="bg-green-200 text-green-800">
-                              <tr>
-                                <th className="py-3 px-4 text-left font-semibold">
-                                  Nom du Bilan
-                                </th>
-                                <th className="py-3 px-4 text-left font-semibold">
-                                  Résultat
-                                </th>
-                                <th className="py-3 px-4 text-left font-semibold">
-                                  Remarque
-                                </th>
-                              </tr>
-                            </thead>
-
-                            <tbody>
-                              {selectedVisit.bilanRecip.items.map(
-                                (item, idx) => (
-                                  <tr
-                                    key={idx}
-                                    className="border-b border-green-100 hover:bg-green-100 transition"
-                                  >
-                                    <td className="py-3 px-4 font-medium text-gray-800">
-                                      {item.bilan?.nom || "—"}
-                                    </td>
-                                    <td className="py-3 px-4 text-gray-700">
-                                      {item.resultat || "—"}
-                                    </td>
-                                    <td className="py-3 px-4 text-gray-700">
-                                      {item.remarque || "—"}
-                                    </td>
-                                  </tr>
-                                )
-                              )}
-                            </tbody>
-                          </table>
-                        </div>
-                      </div>
-                    )}
+              {/* ====================== */}
+              {/* ORDONNANCE (Prescription) */}
+              {/* ====================== */}
+              {selectedVisit?.ordonnance?.items?.length > 0 && (
+                <div ref={printRef} className="mt-5">
+                  <div className="flex flex-row justify-between">
+                    <h3 className="text-purple-700 font-semibold text-md flex items-center gap-2">
+                      <Pill size={18} /> Ordonnance #
+                      {selectedVisit.ordonnance.id}
+                    </h3>
+                    <button
+                      onClick={() => {
+                        handlePrintElectron();
+                      }}
+                    >
+                      print
+                    </button>
                   </div>
-                )}
 
-              {/* Buttons */}
-              <DialogFooter className="mt-6 flex justify-between">
-                <Button
-                  variant="destructive"
-                  onClick={() => setDeleteConfirm(true)}
-                  className="flex items-center gap-2 bg-red-500 hover:bg-red-600 text-white"
-                >
-                  <Trash2 size={16} /> Supprimer
-                </Button>
-                <Button onClick={() => setSelectedVisit(null)}>Fermer</Button>
-              </DialogFooter>
+                  <div className="mt-2 bg-white rounded-lg shadow-sm p-3">
+                    <table className="w-full text-sm border-collapse">
+                      <thead>
+                        <tr className="border-b bg-purple-50">
+                          <th className="text-left p-2">Médicament</th>
+                          <th className="text-left p-2">Dosage</th>
+                          <th className="text-left p-2">Fréquence</th>
+                          <th className="text-left p-2">Durée</th>
+                          <th className="text-left p-2">Quantité</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {selectedVisit.ordonnance.items.map((item) => (
+                          <tr
+                            key={item.id}
+                            className="border-b hover:bg-gray-50"
+                          >
+                            <td className="p-2">
+                              {item.medicament?.nom || "—"}
+                            </td>
+                            <td className="p-2">{item.dosage || "—"}</td>
+                            <td className="p-2">{item.frequence || "—"}</td>
+                            <td className="p-2">{item.duree || "—"}</td>
+                            <td className="p-2">{item.quantite || "—"}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              )}
             </>
           )}
+          <DialogFooter className="mt-6 flex justify-between">
+            <div className="flex gap-2">
+              <Button onClick={() => setSelectedVisit(null)}>Fermer</Button>
+            </div>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
 

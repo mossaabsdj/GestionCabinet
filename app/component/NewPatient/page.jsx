@@ -88,12 +88,13 @@ export default function AddPatientModal({ open, onClose, onAdd }) {
           {/* Grid layout for Age + Téléphone */}
           <div className="grid grid-cols-2 gap-6">
             <div>
-              <Label className="text-purple-700 font-medium">Âge</Label>
+              <Label className="text-gray-500">Date de naissance</Label>
               <Input
-                type="number"
-                placeholder="Âge (optionnel)"
-                value={form.age}
-                onChange={(e) => setForm({ ...form, age: e.target.value })}
+                type="date"
+                value={form.dateDeNaissance}
+                onChange={(e) =>
+                  setForm({ ...form, dateDeNaissance: e.target.value })
+                }
                 className="h-12 px-4 mt-1 rounded-xl border-gray-300 focus:ring-2 focus:ring-purple-500"
               />
             </div>
@@ -162,18 +163,6 @@ export default function AddPatientModal({ open, onClose, onAdd }) {
                   setForm({ ...form, poidsDeNaissance: e.target.value })
                 }
                 className="h-12 px-4 mt-1 rounded-xl bg-gray-50 text-gray-600 placeholder-gray-400"
-              />
-            </div>
-
-            <div>
-              <Label className="text-gray-500">Date de naissance</Label>
-              <Input
-                type="date"
-                value={form.dateDeNaissance}
-                onChange={(e) =>
-                  setForm({ ...form, dateDeNaissance: e.target.value })
-                }
-                className="h-12 px-4 mt-1 rounded-xl bg-gray-50 text-gray-600"
               />
             </div>
           </div>

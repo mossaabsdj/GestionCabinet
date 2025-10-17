@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import {
   LineChart,
@@ -104,13 +104,62 @@ const formatTick = (value) => {
   return value;
 };
 
-export default function GrowthCharts() {
+export default function GrowthCharts({ patientID }) {
   const printRef = useRef();
+  const [childPoints, setchildPoints] = useState();
+  const [patientsData, setPatients] = useState([]);
+  const [selectedPatient, setSelectedPatient] = useState();
 
   const handlePrint = () => {
     window.print();
   };
+  async function fetchPatients() {
+    try {
+      const res = await fetch("/api/patients");
+      if (!res.ok) throw new Error("Failed to fetch patients");
+      const data = await res.json();
+      setPatients(data);
+      // setSelectedPatient(data[0]);
 
+      const updatedPatient = data.find((p) => p.id === patientID) || null;
+
+      setSelectedPatient(updatedPatient);
+
+      console.log(JSON.stringify(updatedPatient));
+      //console.log("data" + JSON.stringify(data));
+    } catch (error) {
+      console.error("❌ Error fetching patients:", error);
+    } finally {
+      // setLoading(false);
+    }
+  }
+  function calculateAgeInMonths(dateNaissance, consultationDate) {
+    const birth = new Date(dateNaissance);
+    const consult = new Date(consultationDate);
+    const years = consult.getFullYear() - birth.getFullYear();
+    const months = consult.getMonth() - birth.getMonth();
+    const totalMonths = years * 12 + months;
+    return totalMonths;
+  }
+
+  useEffect(() => {
+    fetchPatients();
+  }, [patientID]);
+  useEffect(() => {
+    if (!selectedPatient) return;
+    const value = {
+      age: 0,
+      poids: selectedPatient.poidsDeNaissance,
+      taille: selectedPatient.tailleDeNaissance || null,
+    };
+    const data = selectedPatient.consultations.map((c) => ({
+      age: calculateAgeInMonths(selectedPatient.dateDeNaissance, c.createdAt),
+      poids: c.poids,
+      taille: c.taille,
+    }));
+    data.push(value);
+    setchildPoints(data);
+  }, [selectedPatient]);
   return (
     <div>
       {/* --- Charts container --- */}

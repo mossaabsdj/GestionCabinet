@@ -8,11 +8,13 @@ import {
   Trash,
   ArrowUp,
   ArrowDown,
+  Eye,
 } from "lucide-react";
 import AjouteModal from "@/app/component/NewPatient/page";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import PatientModal from "../component/ViewPatient/page";
 import {
   Table,
   TableBody,
@@ -22,31 +24,51 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import LoadingScreen from "../component/LoadingScreen/page";
-
 import { Label } from "@/components/ui/label";
 
-function formatDate(d) {
-  if (!d) return "";
-  const dt = new Date(d);
-  return dt.toLocaleDateString();
+// ✅ Utility function to format all dates in French (dd/mm/yyyy)
+function formatDateFR(dateString) {
+  if (!dateString) return "-";
+  const date = new Date(dateString);
+  if (isNaN(date)) return "-";
+  console.log(dateString);
+  return date.toLocaleDateString("fr-FR", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+  });
+}
+
+// ✅ Converts dd/mm/yyyy to yyyy-mm-dd (for input[type="date"])
+function toInputDateFormat(dateString) {
+  if (!dateString) return "";
+  const [day, month, year] = dateString.split("/");
+  if (!day || !month || !year) return "";
+  return `${year}-${month}-${day}`;
+}
+
+// ✅ Converts yyyy-mm-dd (from input) to dd/mm/yyyy (for display/filter)
+function fromInputDateFormat(dateString) {
+  if (!dateString) return "";
+  const [year, month, day] = dateString.split("-");
+  return `${day}/${month}/${year}`;
 }
 
 export default function PatientsPage() {
   const [patients, setPatients] = useState([]);
   const [loading, setLoading] = useState(true);
-
+  const [viewpatient, setviewpatient] = useState(false);
   const [query, setQuery] = useState("");
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
-  const [ageExact, setAgeExact] = useState("");
+  const [dateDeNaissance, setdateDeNaissance] = useState("");
   const [filterDays, setFilterDays] = useState("none");
   const [sortBy, setSortBy] = useState(null);
   const [sortOrder, setSortOrder] = useState("asc");
-
+  const [selectedPatient, setselectedPatient] = useState();
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [newPatient, setNewPatient] = useState({
     nom: "",
-    age: "",
     telephone: "",
     adresse: "",
     antecedents: "",
@@ -82,13 +104,21 @@ export default function PatientsPage() {
         !p.telephone?.toLowerCase().includes(q)
       )
         return false;
+
       if (dateFrom && new Date(p.createdAt) < new Date(dateFrom)) return false;
       if (dateTo) {
         const to = new Date(dateTo);
         to.setHours(23, 59, 59, 999);
         if (new Date(p.createdAt) > to) return false;
       }
-      if (ageExact && p.age !== Number(ageExact)) return false;
+
+      if (
+        dateDeNaissance &&
+        new Date(p.dateDeNaissance).toLocaleDateString("fr-FR") !==
+          new Date(dateDeNaissance).toLocaleDateString("fr-FR")
+      )
+        return false;
+
       if (
         filterDays === "new-30" &&
         new Date(p.createdAt) < Date.now() - 30 * 24 * 60 * 60 * 1000
@@ -121,7 +151,7 @@ export default function PatientsPage() {
     query,
     dateFrom,
     dateTo,
-    ageExact,
+    dateDeNaissance,
     filterDays,
     sortBy,
     sortOrder,
@@ -153,7 +183,6 @@ export default function PatientsPage() {
       setPatients((prev) => [created, ...prev]);
       setNewPatient({
         nom: "",
-        age: "",
         telephone: "",
         adresse: "",
         antecedents: "",
@@ -178,7 +207,13 @@ export default function PatientsPage() {
       alert("Erreur lors de la suppression du patient");
     }
   }
+
   if (loading) return <LoadingScreen />;
+
+  const onclose = async () => {
+    setviewpatient(false);
+    await fetchPatients();
+  };
 
   return (
     <div className="overflow-y-hidden min-h-screen bg-gradient-to-br from-purple-50 via-white to-purple-100">
@@ -187,6 +222,13 @@ export default function PatientsPage() {
         open={isAddOpen}
         onClose={() => setIsAddOpen(false)}
       />
+      {viewpatient && (
+        <PatientModal
+          onClose={onclose}
+          open={viewpatient}
+          patient={selectedPatient}
+        />
+      )}
 
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
@@ -247,12 +289,16 @@ export default function PatientsPage() {
             </div>
 
             <div className="flex flex-col">
-              <Label className="mb-1">Âge exact</Label>
+              <Label className="mb-1">Date de naissance</Label>
               <Input
-                placeholder="ex: 30"
-                value={ageExact}
-                onChange={(e) => setAgeExact(e.target.value)}
-                className="w-28"
+                type="date"
+                value={
+                  dateDeNaissance ? toInputDateFormat(dateDeNaissance) : ""
+                }
+                onChange={(e) =>
+                  setdateDeNaissance(fromInputDateFormat(e.target.value))
+                }
+                className="w-48"
               />
             </div>
 
@@ -304,7 +350,7 @@ export default function PatientsPage() {
                         Nom
                       </TableHead>
                       <TableHead className="px-4 py-3 font-bold text-purple-800 text-sm border-b border-purple-200">
-                        Âge
+                        Date de Naissance
                       </TableHead>
                       <TableHead className="px-4 py-3 font-bold text-purple-800 text-sm border-b border-purple-200">
                         Téléphone
@@ -331,11 +377,23 @@ export default function PatientsPage() {
                       filteredPatients.map((p) => (
                         <TableRow key={p.id} className="hover:bg-purple-50/50">
                           <TableCell>{p.nom}</TableCell>
-                          <TableCell>{p.age ?? "-"}</TableCell>
+                          <TableCell>
+                            {formatDateFR(p.dateDeNaissance)}
+                          </TableCell>
                           <TableCell>{p.telephone ?? "-"}</TableCell>
                           <TableCell>{p.groupeSanguin ?? "-"}</TableCell>
-                          <TableCell>{formatDate(p.createdAt)}</TableCell>
+                          <TableCell>{formatDateFR(p.createdAt)}</TableCell>
                           <TableCell className="flex justify-center gap-2">
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={() => {
+                                setselectedPatient(p);
+                                setviewpatient(true);
+                              }}
+                            >
+                              <Eye className="w-4 h-4" />
+                            </Button>
                             <Button
                               size="sm"
                               variant="destructive"

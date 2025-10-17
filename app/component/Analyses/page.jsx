@@ -63,7 +63,7 @@ export default function Analyses({
         })),
         ...filteredBilans.map((b) => ({
           id: b.id,
-          name: b.type || "Bilan",
+          name: b.description || "Bilan",
           date: new Date(b.createdAt).toLocaleDateString("fr-FR"),
           type: "Bilan",
           fichier: b.fichier,
@@ -85,7 +85,7 @@ export default function Analyses({
 
   // ✅ Open file in new tab
   const openFile = (path) => {
-    if (path) window.open(path, "_blank");
+    if (path) window.open("/uploads/" + path, "_blank");
   };
 
   // ✅ Add new file
@@ -116,6 +116,31 @@ export default function Analyses({
       fetchFiles();
     } catch (err) {
       console.error("Erreur lors de l’ajout:", err);
+    }
+  };
+  const handleFileChange = (file) => {
+    if (file) {
+      console.log("Selected file:", file.name);
+      // setFileName(file.name);
+      const formData = new FormData();
+      formData.append("file", file);
+
+      fetch("/api/upload", {
+        method: "POST",
+        body: formData,
+      })
+        .then((response) => {
+          if (!response.ok) {
+            throw new Error("Network response was not ok");
+          }
+          return response.json();
+        })
+        .then((data) => {
+          console.log("File uploaded successfully:", data);
+        })
+        .catch((error) => {
+          console.error("Error uploading file:", error);
+        });
     }
   };
 
@@ -234,8 +259,9 @@ export default function Analyses({
               <Input
                 type="file"
                 onChange={(e) => {
-                  console.log(JSON.stringify(e.target.files[0]));
-                  setFormData({ ...formData, fichier: e.target.files[0] });
+                  console.log(e);
+                  setFormData({ ...formData, fichier: e.target.files[0].name });
+                  handleFileChange(e.target.files[0]);
                 }}
                 className="w-full border border-gray-300 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-purple-500"
               />

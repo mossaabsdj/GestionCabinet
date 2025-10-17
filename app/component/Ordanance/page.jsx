@@ -29,6 +29,7 @@ export default function OrdBilanPage({ patientId }) {
 
   // 🧾 Fetch ordonnances
   const fetchOrdonnances = async () => {
+    if (!patientId) return;
     try {
       const res = await fetch(`/api/Ordonnance?patientId=${patientId}`);
       const data = await res.json();
@@ -40,6 +41,8 @@ export default function OrdBilanPage({ patientId }) {
 
   // 🧪 Fetch bilans reçus
   const fetchBilans = async () => {
+    if (!patientId) return;
+
     try {
       const res = await fetch(`/api/BilanRecip?patientId=${patientId}`);
       const data = await res.json();
@@ -121,7 +124,8 @@ export default function OrdBilanPage({ patientId }) {
       console.error(error);
     }
   };
-
+  if (!patientId)
+    return <p className="text-gray-500 text-center mt-10">Aucune Patient .</p>;
   return (
     <div className="p-0 max-w-6xl mx-auto">
       <Tabs
@@ -147,13 +151,13 @@ export default function OrdBilanPage({ patientId }) {
 
         {/* 🧾 Ordonnances */}
         <TabsContent value="ord" className="mt-6">
-          {ordonnances.length === 0 ? (
+          {ordonnances?.length === 0 ? (
             <p className="text-gray-500 text-center mt-10">
               Aucune ordonnance trouvée.
             </p>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-              {ordonnances.map((ord) => (
+              {ordonnances?.map((ord) => (
                 <Dialog
                   key={ord.id}
                   open={selectedOrdonnance?.id === ord.id}
@@ -253,13 +257,13 @@ export default function OrdBilanPage({ patientId }) {
 
         {/* 🧪 Bilans reçus */}
         <TabsContent value="bilan" className="mt-6">
-          {bilans.length === 0 ? (
+          {bilans?.length === 0 ? (
             <p className="text-gray-500 text-center mt-10">
               Aucun bilan reçu trouvé.
             </p>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-              {bilans.map((bilan) => (
+              {bilans?.map((bilan) => (
                 <Dialog
                   key={bilan.id}
                   open={selectedBilan?.id === bilan.id}
