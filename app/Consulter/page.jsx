@@ -20,6 +20,8 @@ import {
   FilePlus,
 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
+import NewOrdanance from "@/app/component/NewOrdanance/page";
+
 import AddVaccinationButton from "../component/NewVaccination/page";
 import { useState, useMemo, useEffect } from "react";
 import VaccinationsPage from "@/app/component/Vaccination/page";
@@ -82,10 +84,27 @@ export default function PatientDashboard() {
   const [ShowAddDialogNewAnalyse, setShowAddDialogNewAnalyse] = useState(false);
   const [NewConsultationData, setNewConsultationData] = useState({});
   const [lastid, setlastid] = useState(null);
+  const [openNewordanance, setnewordanance] = useState(false);
   const filteredPatients = patientsData.filter((p) =>
     p.nom.toLowerCase().includes(search.toLowerCase())
   );
-
+  const handlesaveOrdanance = (data) => {
+    setNewConsultationData({
+      note: "",
+      ordonnance: data.ordonnance,
+      bilanRecip: data.bilanRecip,
+      taille: "",
+      poids: "",
+      tensionSystolique: "",
+      tensionDiastolique: "",
+      temperature: "",
+      frequenceCardiaque: "",
+      frequenceRespiratoire: "",
+      saturationOxygene: "",
+      glycemie: "",
+      developpementPsychomoteur: "",
+    });
+  };
   function handleFileAdd(e) {
     const file = e.target.files[0];
     if (file) {
@@ -105,7 +124,7 @@ export default function PatientDashboard() {
     setFiles((prev) => prev.filter((_, i) => i !== index));
   }
   async function addConsultation(formData) {
-    setlastid(selectedPatient.id);
+    setlastid(selectedPatient?.id);
     console.log(formData);
     try {
       const response = await fetch("/api/Consulter", {
@@ -114,7 +133,7 @@ export default function PatientDashboard() {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          patientId: selectedPatient.id,
+          patientId: selectedPatient?.id,
           note: formData.note || "",
           taille: formData.taille || null,
           poids: formData.poids || null,
@@ -162,7 +181,7 @@ export default function PatientDashboard() {
 
       const consultation = await response.json();
       await fetchPatients();
-
+      setnewordanance(false);
       console.log("✅ Consultation créée:", consultation);
       return consultation;
     } catch (error) {
@@ -184,6 +203,7 @@ export default function PatientDashboard() {
       const res = await fetch("/api/patients");
       if (!res.ok) throw new Error("Failed to fetch patients");
       const data = await res.json();
+      console.log(JSON.stringify(data[0]));
       setPatients(data);
       setSelectedPatient(data[0]);
 
@@ -215,9 +235,9 @@ export default function PatientDashboard() {
     },
     {
       icon: Calendar,
-      label: "Âge",
-      value: selectedPatient?.age
-        ? `${selectedPatient?.age} ans`
+      label: "poidsDeNaissance",
+      value: selectedPatient?.poidsDeNaissance
+        ? `${selectedPatient?.poidsDeNaissance} kg`
         : "Non spécifié",
     },
     {
@@ -272,7 +292,7 @@ export default function PatientDashboard() {
           <textarea
             rows={3} // number of visible lines
             readOnly
-            className="w-full border rounded-md p-2 text-sm bg-gray-50 text-gray-800"
+            className="w-full border rounded-md p-2 text-sm  text-gray-800"
             value={getInfo("note", lastIndex) || ""}
           />
         ),
@@ -285,7 +305,7 @@ export default function PatientDashboard() {
           <textarea
             rows={3}
             readOnly
-            className="w-full border rounded-md p-2 text-sm bg-gray-50 text-gray-800"
+            className="w-full border rounded-md p-2 text-sm  text-gray-800"
             value={getInfo("developpementPsychomoteur", lastIndex) || ""}
           />
         ),
@@ -372,9 +392,16 @@ export default function PatientDashboard() {
       alert("Erreur lors de la création du patient");
     }
   }
+
   if (loading) return <LoadingScreen />;
   return (
     <div className="flex min-h-screen bg-gradient-to-br from-purple-50 via-white to-purple-100">
+      <NewOrdanance
+        open={openNewordanance}
+        onOpenChange={setnewordanance}
+        onsave={handlesaveOrdanance}
+        selectedPatient={selectedPatient}
+      />
       <AjouteModal
         onAdd={handleAddPatient}
         open={isAddOpen}
@@ -447,31 +474,36 @@ export default function PatientDashboard() {
           </div>
           {selectedtab === "Vaccinations" ? (
             <AddVaccinationButton
-              patientId={selectedPatient.id}
+              patientId={selectedPatient?.id}
               setrefrech={setrefrech}
             />
           ) : selectedtab === "Analyses et Résultats" ? (
-            <>
-              <Button
-                onClick={() => setShowAddDialogNewAnalyse(true)}
-                className="flex items-center gap-2 bg-purple-600 hover:bg-purple-700 text-white font-medium px-5 py-2 rounded-xl shadow-md transition"
-              >
-                <Plus className="mr-2 h-4 w-4" /> Nouvelle analyse
-              </Button>
-            </>
-          ) : (
-            !NewConsultation && (
-              <Button
-                onClick={() => {
-                  setNewConsultation(true);
-                }}
-                className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg font-semibold"
-              >
-                <Plus size={18} />
-                Nouvelle Consultation
-              </Button>
-            )
-          )}
+            <Button
+              onClick={() => setShowAddDialogNewAnalyse(true)}
+              className="flex items-center gap-2 bg-purple-600 hover:bg-purple-700 text-white font-medium px-5 py-2 rounded-xl shadow-md transition"
+            >
+              <Plus className="mr-2 h-4 w-4" /> Nouvelle analyse
+            </Button>
+          ) : selectedtab === "Prescriptions et Bilans" ? (
+            <Button
+              onClick={() => setnewordanance(true)}
+              className="flex items-center gap-2 bg-purple-600 hover:bg-purple-700 text-white font-medium px-5 py-2 rounded-xl shadow-md transition"
+            >
+              <Plus className="mr-2 h-4 w-4" /> Nouvelle Prescription/Bilan
+            </Button>
+          ) : selectedtab === "Visites" ||
+            selectedtab === "Informations Patient" ? (
+            <Button
+              onClick={() => {
+                setNewConsultation(true);
+                setselectedtab("+ Nouvelle Consultation");
+              }}
+              className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg font-semibold flex items-center gap-2"
+            >
+              <Plus size={18} />
+              Nouvelle Consultation
+            </Button>
+          ) : null}
         </div>
         <div className="flex border-b border-purple-200 mb-6">
           {[
@@ -499,88 +531,96 @@ export default function PatientDashboard() {
             </button>
           ))}
         </div>
-
-        <div>
-          {selectedtab === "Informations Patient" && (
-            <>
-              {" "}
-              {[
-                {
-                  title: "Informations Générales",
-                  icon: User,
-                  data: generalInfo(selectedPatient),
-                },
-                {
-                  title: "Informations Médicales",
-                  icon: Stethoscope,
-                  data: medicalInfo(selectedPatient),
-                },
-                {
-                  title: "Informations de Contact",
-                  icon: Phone,
-                  data: contactInfo(selectedPatient),
-                },
-              ].map((section) => (
-                <div key={section.title} className="mb-6">
-                  <h3 className="text-xl font-semibold mb-4 text-purple-700 flex items-center gap-2">
-                    <section.icon size={20} /> {section.title}
-                  </h3>
-                  <div className="grid grid-cols-2 gap-4">
-                    {section?.data.map((info) => (
-                      <Card
-                        key={info.label}
-                        className="flex items-center gap-3 p-3"
-                      >
-                        <div className="flex justify-between w-full">
-                          <div className="flex flex-row items-center">
-                            <info.icon className="text-purple-500" size={20} />
-                            <span className="text-gray-500 ml-2">
-                              {info.label}
+        {!selectedPatient ? (
+          <p className="text-gray-500 text-center mt-10">Aucune Patient .</p>
+        ) : (
+          <div>
+            {selectedtab === "Informations Patient" && (
+              <>
+                {" "}
+                {[
+                  {
+                    title: "Informations Générales",
+                    icon: User,
+                    data: selectedPatient ? generalInfo(selectedPatient) : null,
+                  },
+                  {
+                    title: "Informations Médicales",
+                    icon: Stethoscope,
+                    data: selectedPatient ? medicalInfo(selectedPatient) : null,
+                  },
+                  {
+                    title: "Informations de Contact",
+                    icon: Phone,
+                    data: selectedPatient ? contactInfo(selectedPatient) : null,
+                  },
+                ].map((section) => (
+                  <div key={section.title} className="mb-6">
+                    <h3 className="text-xl font-semibold mb-4 text-purple-700 flex items-center gap-2">
+                      <section.icon size={20} /> {section.title}
+                    </h3>
+                    <div className="grid grid-cols-2 gap-4">
+                      {section?.data?.map((info) => (
+                        <Card
+                          key={info.label}
+                          className="flex items-center gap-3 p-3"
+                        >
+                          <div className="flex justify-between w-full">
+                            <div className="flex flex-row items-center">
+                              <info.icon
+                                className="text-purple-500"
+                                size={20}
+                              />
+                              <span className="text-gray-500 ml-2">
+                                {info.label}
+                              </span>
+                            </div>
+                            <span>
+                              {info.value} {info.unite}
                             </span>
                           </div>
-                          <span>
-                            {info.value} {info.unite}
-                          </span>
-                        </div>
-                      </Card>
-                    ))}
+                        </Card>
+                      ))}
+                    </div>
                   </div>
-                </div>
-              ))}
-              {/* Derniers Diagnostics */}
-            </>
-          )}
-          {selectedtab === "Courbe" && <CourbePage />}
-          {selectedtab === "+ Nouvelle Consultation" && (
-            <NewConsultationPage
-              onSave={setNewConsultationData}
-              selectedPatient={selectedPatient}
-            />
-          )}
-          {selectedtab === "Analyses et Résultats" && (
-            <Analyses
-              patientID={selectedPatient?.id}
-              ShowAddDialogNewAnalyse={ShowAddDialogNewAnalyse}
-              setShowAddDialogNewAnalyse={setShowAddDialogNewAnalyse}
-            />
-          )}
-          {selectedtab === "Vaccinations" && (
-            <VaccinationsPage
-              refrech={refrech}
-              setrefrech={setrefrech}
-              patientId={selectedPatient?.id}
-            />
-          )}
+                ))}
+                {/* Derniers Diagnostics */}
+              </>
+            )}
+            {selectedtab === "Courbe" && (
+              <CourbePage patientID={selectedPatient?.id} />
+            )}
+            {selectedtab === "+ Nouvelle Consultation" && (
+              <NewConsultationPage
+                onSave={setNewConsultationData}
+                selectedPatient={selectedPatient}
+              />
+            )}
+            {selectedtab === "Analyses et Résultats" && (
+              <Analyses
+                patientID={selectedPatient?.id}
+                ShowAddDialogNewAnalyse={ShowAddDialogNewAnalyse}
+                setShowAddDialogNewAnalyse={setShowAddDialogNewAnalyse}
+              />
+            )}
+            {selectedtab === "Vaccinations" && (
+              <VaccinationsPage
+                refrech={refrech}
+                setrefrech={setrefrech}
+                patientId={selectedPatient?.id}
+              />
+            )}
 
-          {selectedtab === "Visites" && (
-            <PatientVisits patientId={selectedPatient?.id} />
-          )}
-          {selectedtab === "Prescriptions et Bilans" && (
-            <Ordonnances patientId={selectedPatient?.id} />
-          )}
+            {selectedtab === "Visites" && (
+              <PatientVisits patientId={selectedPatient?.id} />
+            )}
+            {selectedtab === "Prescriptions et Bilans" && (
+              <Ordonnances patientId={selectedPatient?.id} />
+            )}
 
-          {/* Sections */}
-        </div>
+            {/* Sections */}
+          </div>
+        )}
       </div>
     </div>
   );

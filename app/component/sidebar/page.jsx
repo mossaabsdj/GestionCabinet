@@ -34,7 +34,6 @@ const items = [
   { title: "Tableau de bord", url: "Accueill", icon: Home }, // Vue d’ensemble
   { title: "Consulter", url: "Consulter", icon: Home }, // Vue d’ensemble
   { title: "Patients", url: "Patients", icon: Users }, // Gestion des patients
-  { title: "Rapports", url: "Rapports", icon: CalendarCheck }, // Comptes rendus / résultats
   { title: "Predifined", url: "Predifined", icon: FileText },
   { title: "Médicaments", url: "Medicament", icon: Pill }, // Gestion des médicaments
   { title: "Bilans", url: "Bilans", icon: TestTube }, // Gestion des bilans

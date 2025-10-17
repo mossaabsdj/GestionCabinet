@@ -3,8 +3,8 @@
 // ====================
 generator client {
   provider = "prisma-client-js"
-  output   = "../app/generated/prisma"
-}
+  output   = "@/app/generated/prisma"
+  }
 
 datasource db {
   provider = "mysql"
@@ -34,27 +34,26 @@ model Patient {
   id               Int              @id @default(autoincrement())
   nom              String           @unique
   age              Int?
-  dateDeNaissance  DateTime?        // 🆕 optional date of birth
+  dateDeNaissance  DateTime
   telephone        String?
   adresse          String?
   antecedents      String?
-  poidsDeNaissance Float?           // fixed naming consistency
+  poidsDeNaissance Float?
   groupeSanguin    GroupeSanguin?
-  consultations    Consultation[]
-  ordonnances      Ordonnance[]
-  bilans           BilanRecip[]
-  paiements        Paiement[]
-  radios           Radio[]
-  bilanFiles       BilanFile[]
-  vaccinations     Vaccination[]    // a patient can have many vaccinations
+  consultations    Consultation[]   
+  ordonnances      Ordonnance[]     
+  bilans           BilanRecip[]     
+  paiements        Paiement[]      
+  radios           Radio[]          
+  bilanFiles       BilanFile[]      
+  vaccinations     Vaccination[]   
   createdAt        DateTime         @default(now())
 }
-
 
 model Consultation {
   id                    Int           @id @default(autoincrement())
   patientId             Int
-  patient               Patient       @relation(fields: [patientId], references: [id])
+  patient               Patient       @relation(fields: [patientId], references: [id], onDelete: Cascade)
   note                  String?
   taille                Float?
   poids                 Float?
@@ -65,21 +64,20 @@ model Consultation {
   frequenceRespiratoire Int?
   saturationOxygene     Int?
   glycemie              Float?
-  radios                Radio[]
-  bilansFiles           BilanFile[]
+  radios                Radio[]       
+  bilansFiles           BilanFile[]   
   ordonnance            Ordonnance?
   bilanRecip            BilanRecip?
   createdAt             DateTime      @default(now())
-  developpementPsychomoteur String?  // e.g. "Normal", "Retard léger", "Avancé"
-
+  developpementPsychomoteur String?
 }
 
 model Radio {
   id              Int           @id @default(autoincrement())
   consultationId  Int?
-  consultation    Consultation?  @relation(fields: [consultationId], references: [id])
+  consultation    Consultation?  @relation(fields: [consultationId], references: [id], onDelete: Cascade)
   patientId       Int?
-  patient         Patient?      @relation(fields: [patientId], references: [id])
+  patient         Patient?      @relation(fields: [patientId], references: [id], onDelete: Cascade)
   description     String?
   fichier         String?
   createdAt       DateTime      @default(now())
@@ -88,40 +86,40 @@ model Radio {
 model BilanFile {
   id              Int           @id @default(autoincrement())
   consultationId  Int?
-  consultation    Consultation?  @relation(fields: [consultationId], references: [id])
+  consultation    Consultation?  @relation(fields: [consultationId], references: [id], onDelete: Cascade)
   patientId       Int?
-  patient         Patient?      @relation(fields: [patientId], references: [id])
+  patient         Patient?      @relation(fields: [patientId], references: [id], onDelete: Cascade)
   type            String?
-  description        String?
+  description     String?
   fichier         String?
   createdAt       DateTime      @default(now())
 }
+
 // ====================
-// Ordonnances (Prescriptions)
+// Ordonnances
 // ====================
 
 model Ordonnance {
   id              Int              @id @default(autoincrement())
   patientId       Int
-  patient         Patient          @relation(fields: [patientId], references: [id])
+  patient         Patient          @relation(fields: [patientId], references: [id], onDelete: Cascade)
   consultationId  Int              @unique
-  consultation    Consultation?    @relation(fields: [consultationId], references: [id])
-  items           OrdonnanceItem[]
+  consultation    Consultation?    @relation(fields: [consultationId], references: [id], onDelete: Cascade)
+  items           OrdonnanceItem[] 
   createdAt       DateTime         @default(now())
 }
 
 model OrdonnanceItem {
   id            Int         @id @default(autoincrement())
   ordonnanceId  Int
-  ordonnance    Ordonnance  @relation(fields: [ordonnanceId], references: [id])
+  ordonnance    Ordonnance  @relation(fields: [ordonnanceId], references: [id], onDelete: Cascade)
   medicamentId  Int
   medicament    Medicament  @relation(fields: [medicamentId], references: [id])
-  dosage        String?     // ex: "500 mg"
-  frequence     String?     // ex: "2 fois par jour"
-  duree         String?     // ex: "7 jours"
-  quantite      Int?        // nombre de boîtes (ex: 2)
+  dosage        String?
+  frequence     String?
+  duree         String?
+  quantite      Int?
 }
-
 
 // ====================
 // Médicaments
@@ -136,7 +134,7 @@ model Medicament {
 }
 
 // ====================
-// Bilans (Tests / Analyses)
+// Bilans
 // ====================
 
 model Bilan {
@@ -150,21 +148,21 @@ model Bilan {
 model BilanRecip {
   id               Int             @id @default(autoincrement())
   patientId        Int
-  patient          Patient         @relation(fields: [patientId], references: [id])
+  patient          Patient         @relation(fields: [patientId], references: [id], onDelete: Cascade)
   consultationId   Int             @unique
-  consultation     Consultation?   @relation(fields: [consultationId], references: [id])
-  items            BilanItem[]
+  consultation     Consultation?   @relation(fields: [consultationId], references: [id], onDelete: Cascade)
+  items            BilanItem[]     
   createdAt        DateTime        @default(now())
 }
 
 model BilanItem {
   id            Int          @id @default(autoincrement())
   bilanRecipId  Int
-  bilanRecip    BilanRecip   @relation(fields: [bilanRecipId], references: [id])
+  bilanRecip    BilanRecip   @relation(fields: [bilanRecipId], references: [id], onDelete: Cascade)
   bilanId       Int
   bilan         Bilan        @relation(fields: [bilanId], references: [id])
-  resultat      String?      // résultat du test
-  remarque      String?      // remarque ou observation
+  resultat      String?
+  remarque      String?
 }
 
 // ====================
@@ -180,34 +178,33 @@ model BilanType {
 model BilanTypeItem {
   id          Int         @id @default(autoincrement())
   bilanTypeId Int
-  bilanType   BilanType   @relation(fields: [bilanTypeId], references: [id])
+  bilanType   BilanType   @relation(fields: [bilanTypeId], references: [id], onDelete: Cascade)
   bilanId     Int
   bilan       Bilan       @relation(fields: [bilanId], references: [id])
   remarque    String?
 }
 
 // ====================
-// Recettes Types (Ordonnances types)
+// Recettes Types
 // ====================
 
 model RecetteType {
   id        Int               @id @default(autoincrement())
   nom       String
-  items     RecetteTypeItem[]
+  items     RecetteTypeItem[] 
 }
 
 model RecetteTypeItem {
   id           Int          @id @default(autoincrement())
   recetteId    Int
-  recette      RecetteType  @relation(fields: [recetteId], references: [id])
+  recette      RecetteType  @relation(fields: [recetteId], references: [id], onDelete: Cascade)
   medicamentId Int
   medicament   Medicament   @relation(fields: [medicamentId], references: [id])
   dosage       String?
   frequence    String?
   duree        String?
-  quantite     Int?         // nombre de boîtes pour cette recette type
+  quantite     Int?
 }
-
 
 // ====================
 // Paiements
@@ -216,22 +213,26 @@ model RecetteTypeItem {
 model Paiement {
   id        Int       @id @default(autoincrement())
   patientId Int
-  patient   Patient   @relation(fields: [patientId], references: [id])
+  patient   Patient   @relation(fields: [patientId], references: [id], onDelete: Cascade)
   montant   Float
   date      DateTime  @default(now())
 }
-model Vaccine {
-  id        Int          @id @default(autoincrement())
-  name      String        @unique
-  createdAt DateTime      @default(now())
 
+// ====================
+// Vaccinations
+// ====================
+
+model Vaccine {
+  id           Int           @id @default(autoincrement())
+  name         String        @unique
+  createdAt    DateTime      @default(now())
   vaccinations Vaccination[]
 }
 
 model Vaccination {
   id          Int       @id @default(autoincrement())
   patientId   Int
-  patient     Patient?  @relation(fields: [patientId], references: [id])
+  patient     Patient?  @relation(fields: [patientId], references: [id], onDelete: Cascade)
   vaccineId   Int
   vaccine     Vaccine   @relation(fields: [vaccineId], references: [id])
   dateGiven   DateTime

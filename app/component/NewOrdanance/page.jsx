@@ -26,99 +26,8 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 // --- Liste exemple médicaments ---
-const MEDS = [
-  {
-    id: "paracetamol",
-    name: "Paracétamol",
-    form: "Comprimé",
-    strengths: ["500 mg", "1000 mg"],
-  },
-  {
-    id: "ibuprofen",
-    name: "Ibuprofène",
-    form: "Comprimé",
-    strengths: ["200 mg", "400 mg"],
-  },
-  {
-    id: "amoxicillin",
-    name: "Amoxicilline",
-    form: "Capsule",
-    strengths: ["500 mg"],
-  },
-  {
-    id: "omeprazole",
-    name: "Oméprazole",
-    form: "Gélule",
-    strengths: ["20 mg"],
-  },
-];
 
 // --- Liste exemple examens ---
-const bilans = [
-  "Hémogramme",
-  "Glycémie",
-  "Cholestérol total",
-  "Triglycérides",
-  "Créatinine",
-  "Uricémie",
-  "Bilan hépatique",
-  "Ionogramme sanguin",
-  "CRP",
-  "TSH",
-];
-
-const BILAN_PRESET_TYPES = [
-  { id: "diabete", label: "Bilan Diabète" },
-  { id: "hta", label: "Bilan Hypertension" },
-  { id: "infectieux", label: "Bilan Infectieux" },
-  { id: "autre", label: "Autre" },
-];
-
-const BILAN_TYPE_EXAMS = {
-  sanguin: [
-    "Hémogramme",
-    "Glycémie",
-    "Cholestérol total",
-    "Triglycérides",
-    "Créatinine",
-    "Ionogramme sanguin",
-  ],
-  urinaire: [
-    "Protéinurie",
-    "Glycosurie",
-    "Examen cytobactériologique des urines",
-  ],
-  imagerie: [
-    "Radiographie thoracique",
-    "Échographie abdominale",
-    "IRM cérébrale",
-  ],
-  autre: [],
-};
-
-const BILAN_TYPE_EXAMS_EXT = {
-  diabete: [
-    "Glycémie à jeun",
-    "HbA1c",
-    "Bilan lipidique",
-    "Créatinine",
-    "Protéinurie",
-  ],
-  hta: [
-    "Ionogramme sanguin",
-    "Créatinine",
-    "ECG",
-    "Protéinurie",
-    "Bilan lipidique",
-  ],
-  infectieux: [
-    "CRP",
-    "Hémogramme",
-    "Examen cytobactériologique des urines",
-    "Radiographie thoracique",
-  ],
-  autre: [],
-};
 
 const JUSTIF_PRESET_TYPES = [
   { id: "arret7", label: "Arrêt de travail 7 jours" },
@@ -331,7 +240,7 @@ export default function PrescriptionModal({
       nom: selectedMed.nom,
       form: selectedMed.form,
       dosage: tmpDose,
-      frequency: tmpfreq,
+      frequence: tmpfreq,
       duree: tmpDuration,
       quantite: tmpQuantite,
     };
@@ -387,7 +296,7 @@ export default function PrescriptionModal({
         medicamentId: med.id,
         nom: med.nom, // match your first dataset key naming
         dosage: med.dosage || "—", // use first available strength
-        frequency: med.frequence,
+        frequence: med.frequence,
         duree: med.duree,
         quantite: med.quantite,
       }));
@@ -422,14 +331,17 @@ export default function PrescriptionModal({
     }
   }, [justifType]);
 
-  const handlePrint = () => {
+  // ✅ Print Ordonnance using Electron
+  const handlePrintElectron = () => {
     if (!printRef.current) return;
-    const printContents = printRef.current.innerHTML;
-    const win = window.open("", "PRINT", "height=700,width=900");
-    win.document.write(`
+    console.log("sbn");
+    const printContents = printRef.current.outerHTML;
+
+    window.electron.printOrdonnance({
+      title: "Ordonnance - Dr DIB Amel",
+      html: `
       <html>
         <head>
-          <title>Ordonnance - Dr DIB Amel</title>
           <style>
             body { font-family: 'Segoe UI', Arial, sans-serif; background: #f8f8fa; margin: 0; }
             .ord-print-header { text-align: center; padding: 24px 0 8px; border-bottom: 2px solid #7c3aed; }
@@ -447,21 +359,21 @@ export default function PrescriptionModal({
           ${printContents}
         </body>
       </html>
-    `);
-    win.document.close();
-    win.focus();
-    win.print();
-    win.close();
+    `,
+    });
   };
 
-  function handlePrintBilan() {
+  // ✅ Print Bilan using Electron
+  const handlePrintBilanElectron = () => {
     if (!bilanPrintRef.current) return;
-    const printContents = bilanPrintRef.current.innerHTML;
-    const win = window.open("", "PRINT", "height=700,width=900");
-    win.document.write(`
+
+    const printContents = bilanPrintRef.current.outerHTML;
+
+    window.electron.printBilan({
+      title: "Bilans & Analyses - Dr DIB Amel",
+      html: `
       <html>
         <head>
-          <title>Bilans & Analyses - Dr DIB Amel</title>
           <style>
             body { font-family: 'Segoe UI', Arial, sans-serif; background: #f8f8fa; margin: 0; }
             .bilan-print-header { text-align: center; padding: 24px 0 8px; border-bottom: 2px solid #7c3aed; }
@@ -477,12 +389,9 @@ export default function PrescriptionModal({
           ${printContents}
         </body>
       </html>
-    `);
-    win.document.close();
-    win.focus();
-    win.print();
-    win.close();
-  }
+    `,
+    });
+  };
 
   function handlePrintJustif() {
     if (!justifPrintRef.current) return;
@@ -518,7 +427,7 @@ export default function PrescriptionModal({
       // Ctrl+P for print
       if (e.ctrlKey && e.key.toLowerCase() === "p") {
         e.preventDefault();
-        handlePrint();
+        handlePrintElectron();
       }
       // Ctrl+S for save
       if (e.ctrlKey && e.key.toLowerCase() === "s") {
@@ -528,7 +437,7 @@ export default function PrescriptionModal({
     }
     window.addEventListener("keydown", handleShortcut);
     return () => window.removeEventListener("keydown", handleShortcut);
-  }, [handlePrint, handleSave]);
+  }, [handlePrintElectron, handleSave]);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -557,7 +466,7 @@ export default function PrescriptionModal({
                   </div>
                   <Button
                     className="bg-purple-500 hover:bg-purple-700"
-                    onClick={handlePrint}
+                    onClick={handlePrintElectron}
                     size="sm"
                   >
                     🖨️ Imprimer
@@ -898,7 +807,7 @@ export default function PrescriptionModal({
                   </CardTitle>
                   <Button
                     className="bg-purple-500 hover:bg-purple-700"
-                    onClick={handlePrintBilan}
+                    onClick={handlePrintBilanElectron}
                     size="sm"
                   >
                     🖨️ Imprimer

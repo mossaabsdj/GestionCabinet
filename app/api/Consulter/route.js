@@ -1,7 +1,5 @@
 import { NextResponse } from "next/server";
-import { PrismaClient } from "@/app/generated/prisma";
-
-const prisma = new PrismaClient();
+import { prisma } from "@/lib/prisma";
 
 // ====================
 // GET consultations (all or by patientId)
@@ -139,90 +137,87 @@ export async function POST(req) {
   }
 }
 
-// ====================
-// PUT: Update consultation
-// ====================
 export async function PUT(req) {
   try {
     const data = await req.json();
-    const { id, ordonnance, bilanRecip, ...consultationData } = data;
+    const {
+      id,
+      patientId,
+      note,
+      taille,
+      poids,
+      tensionSystolique,
+      tensionDiastolique,
+      temperature,
+      frequenceCardiaque,
+      frequenceRespiratoire,
+      saturationOxygene,
+      glycemie,
+      developpementPsychomoteur,
+    } = data;
 
+    if (!id) {
+      return NextResponse.json(
+        { error: "L'ID de la consultation est requis" },
+        { status: 400 }
+      );
+    }
+
+    // 🧠 Prepare data for update — only defined fields
+    const updateData = {
+      ...(patientId !== undefined && { patientId: Number(patientId) }),
+      ...(note !== undefined && { note }),
+      ...(taille !== undefined && {
+        taille: taille ? parseFloat(taille) : null,
+      }),
+      ...(poids !== undefined && { poids: poids ? parseFloat(poids) : null }),
+      ...(tensionSystolique !== undefined && {
+        tensionSystolique: tensionSystolique
+          ? parseInt(tensionSystolique)
+          : null,
+      }),
+      ...(tensionDiastolique !== undefined && {
+        tensionDiastolique: tensionDiastolique
+          ? parseInt(tensionDiastolique)
+          : null,
+      }),
+      ...(temperature !== undefined && {
+        temperature: temperature ? parseFloat(temperature) : null,
+      }),
+      ...(frequenceCardiaque !== undefined && {
+        frequenceCardiaque: frequenceCardiaque
+          ? parseInt(frequenceCardiaque)
+          : null,
+      }),
+      ...(frequenceRespiratoire !== undefined && {
+        frequenceRespiratoire: frequenceRespiratoire
+          ? parseInt(frequenceRespiratoire)
+          : null,
+      }),
+      ...(saturationOxygene !== undefined && {
+        saturationOxygene: saturationOxygene
+          ? parseInt(saturationOxygene)
+          : null,
+      }),
+      ...(glycemie !== undefined && {
+        glycemie: glycemie ? parseFloat(glycemie) : null,
+      }),
+      ...(developpementPsychomoteur !== undefined && {
+        developpementPsychomoteur,
+      }),
+    };
+
+    // 💾 Update only the consultation record
     const updated = await prisma.consultation.update({
       where: { id: Number(id) },
-      data: {
-        ...consultationData,
-
-        // ✅ Update ordonnance (upsert)
-        ordonnance: ordonnance
-          ? {
-              upsert: {
-                create: {
-                  patientId: consultationData.patientId,
-                  items: {
-                    create: ordonnance.items.map((item) => ({
-                      medicamentId: item.medicamentId,
-                      dosage: item.dosage,
-                      frequence: item.frequence,
-                      duree: item.duree,
-                      quantite: item.quantite,
-                    })),
-                  },
-                },
-                update: {
-                  items: {
-                    deleteMany: {},
-                    create: ordonnance.items.map((item) => ({
-                      medicamentId: item.medicamentId,
-                      dosage: item.dosage,
-                      frequence: item.frequence,
-                      duree: item.duree,
-                      quantite: item.quantite,
-                    })),
-                  },
-                },
-              },
-            }
-          : undefined,
-
-        // ✅ Update bilanRecip (upsert)
-        bilanRecip: bilanRecip
-          ? {
-              upsert: {
-                create: {
-                  patientId: consultationData.patientId,
-                  items: {
-                    create: bilanRecip.items.map((item) => ({
-                      bilanId: item.bilanId,
-                      resultat: item.resultat,
-                      remarque: item.remarque,
-                    })),
-                  },
-                },
-                update: {
-                  items: {
-                    deleteMany: {},
-                    create: bilanRecip.items.map((item) => ({
-                      bilanId: item.bilanId,
-                      resultat: item.resultat,
-                      remarque: item.remarque,
-                    })),
-                  },
-                },
-              },
-            }
-          : undefined,
-      },
-      include: {
-        ordonnance: { include: { items: true } },
-        bilanRecip: { include: { items: true } },
-      },
+      data: updateData,
     });
 
     return NextResponse.json(updated);
   } catch (error) {
-    console.error("PUT consultation error:", error);
+    console.error("❌ PUT consultation error:", error);
     return NextResponse.json(
-      { error: "Failed to update consultation" },
+      { error: "Échec de la mise à jour de la consultation" },
       { status: 500 }
     );
   }

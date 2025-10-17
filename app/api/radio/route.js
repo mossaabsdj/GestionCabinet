@@ -1,7 +1,5 @@
 import { NextResponse } from "next/server";
-import { PrismaClient } from "@/app/generated/prisma";
-
-const prisma = new PrismaClient();
+import { prisma } from "@/lib/prisma";
 
 // ✅ Get all Radios (with consultation + patient info)
 export async function GET() {
@@ -30,7 +28,7 @@ export async function POST(req) {
         consultationId: consultationId || null, // ✅ set null if undefined or empty
         patientId: patientId, // Auto-link to patient
         description,
-        fichier: "/app",
+        fichier: fichier,
       },
     });
 

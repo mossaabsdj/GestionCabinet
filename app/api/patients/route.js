@@ -1,7 +1,5 @@
 import { NextResponse } from "next/server";
-import { PrismaClient } from "@/app/generated/prisma";
-
-const prisma = new PrismaClient();
+import { prisma } from "@/lib/prisma";
 
 // =====================
 // GET /api/patients
@@ -77,8 +75,17 @@ export async function POST(req) {
 export async function PUT(req) {
   try {
     const body = await req.json();
-    const { id, nom, age, telephone, adresse, antecedents, groupeSanguinId } =
-      body;
+    const {
+      id,
+      nom,
+      age,
+      telephone,
+      poidsDeNaissance,
+      dateDeNaissance,
+      adresse,
+      antecedents,
+      groupeSanguin,
+    } = body;
 
     if (!id || !nom || nom.trim() === "") {
       return NextResponse.json(
@@ -95,9 +102,13 @@ export async function PUT(req) {
         telephone: telephone || null,
         adresse: adresse || null,
         antecedents: antecedents || null,
-        groupeSanguin: groupeSanguinId
-          ? { connect: { id: Number(groupeSanguinId) } }
-          : undefined,
+        dateDeNaissance: body.dateDeNaissance
+          ? new Date(body.dateDeNaissance).toISOString()
+          : null,
+        poidsDeNaissance: poidsDeNaissance
+          ? parseFloat(poidsDeNaissance)
+          : null,
+        groupeSanguin: groupeSanguin || null,
       },
     });
 
