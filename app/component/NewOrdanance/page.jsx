@@ -12,7 +12,14 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
-import { Trash2, Plus, Search } from "lucide-react";
+import {
+  Trash2,
+  Plus,
+  Search,
+  Pill,
+  FileText,
+  FlaskConical,
+} from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Dialog,
@@ -21,13 +28,8 @@ import {
   DialogHeader,
   DialogTitle,
   DialogFooter,
-  DialogClose,
 } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-
-// --- Liste exemple médicaments ---
-
-// --- Liste exemple examens ---
 
 const JUSTIF_PRESET_TYPES = [
   { id: "arret7", label: "Arrêt de travail 7 jours" },
@@ -65,7 +67,7 @@ export default function PrescriptionModal({
   const [tmpDose, setTmpDose] = useState("1 fois/jour");
   const [tmpDuration, setTmpDuration] = useState("5 jours");
   const [tmpQuantite, setTmpQuantite] = useState(1);
-  const [loading, setLoading] = useState();
+  const [loading, setLoading] = useState(false);
   const [labQuery, setLabQuery] = useState("");
   const [labSuggestions, setLabSuggestions] = useState([]);
   const [labItems, setLabItems] = useState([]);
@@ -84,12 +86,16 @@ export default function PrescriptionModal({
   const bilanPrintRef = useRef();
   const justifPrintRef = useRef();
 
+  // Refs for auto-focus
+  const medSearchRef = useRef(null);
+  const labSearchRef = useRef(null);
+
   async function fetchBilanTypes() {
     try {
       const response = await fetch("/api/BilansType", {
         method: "GET",
         headers: { "Content-Type": "application/json" },
-        cache: "no-store", // ensures fresh data
+        cache: "no-store",
       });
 
       if (!response.ok) {
@@ -103,9 +109,9 @@ export default function PrescriptionModal({
       setBilanTypes(data);
     } catch (err) {
       console.error("❌ fetchBilanTypes error:", err);
-    } finally {
     }
   }
+
   async function fetchRecettes() {
     try {
       const response = await fetch("/api/OrdanaceType", {
@@ -130,16 +136,16 @@ export default function PrescriptionModal({
       throw err;
     }
   }
+
   const loadRecettes = async () => {
     try {
       const data = await fetchRecettes();
-      console.log("ordertypes" + JSON.stringify(data));
       setOrdTypes(data);
     } catch (err) {
       console.error(err);
-      // Optionally: toast.error(err.message);
     }
   };
+
   useEffect(() => {
     setLoading(true);
     loadRecettes();
@@ -168,7 +174,15 @@ export default function PrescriptionModal({
     setLoading(false);
   }, []);
 
-  // --- Search Médicaments ---
+  // Auto-focus on medication search when dialog opens
+  useEffect(() => {
+    if (open && medSearchRef.current) {
+      setTimeout(() => {
+        medSearchRef.current?.focus();
+      }, 100);
+    }
+  }, [open]);
+
   useEffect(() => {
     if (!query.trim()) {
       setSuggestions([]);
@@ -179,9 +193,8 @@ export default function PrescriptionModal({
     const filtered = medicaments.filter((m) => m.nom.toLowerCase().includes(q));
     setSuggestions(filtered);
     setHighlightedMedIdx(filtered.length > 0 ? 0 : -1);
-  }, [query]);
+  }, [query, medicaments]);
 
-  // --- Search Examens ---
   useEffect(() => {
     if (!labQuery.trim()) {
       setLabSuggestions([]);
@@ -194,37 +207,42 @@ export default function PrescriptionModal({
     );
     setLabSuggestions(filtered);
     setHighlightedLabIdx(filtered.length > 0 ? 0 : -1);
-  }, [labQuery, labItems]);
+  }, [labQuery, labItems, bilans]);
 
-  // --- Keyboard navigation for meds ---
   function handleMedKeyDown(e) {
     if (!suggestions.length) return;
     if (e.key === "ArrowDown") {
+      e.preventDefault();
       setHighlightedMedIdx((idx) =>
         idx + 1 < suggestions.length ? idx + 1 : idx
       );
     } else if (e.key === "ArrowUp") {
+      e.preventDefault();
       setHighlightedMedIdx((idx) => (idx - 1 >= 0 ? idx - 1 : idx));
     } else if (e.key === "Enter" && highlightedMedIdx >= 0) {
+      e.preventDefault();
       const s = suggestions[highlightedMedIdx];
       setSelectedMed(s);
       setOpenMedDialog(true);
     }
   }
 
-  // --- Keyboard navigation for labs ---
   function handleLabKeyDown(e) {
     if (!labSuggestions.length) return;
     if (e.key === "ArrowDown") {
+      e.preventDefault();
       setHighlightedLabIdx((idx) =>
         idx + 1 < labSuggestions.length ? idx + 1 : idx
       );
     } else if (e.key === "ArrowUp") {
+      e.preventDefault();
       setHighlightedLabIdx((idx) => (idx - 1 >= 0 ? idx - 1 : idx));
     } else if (e.key === "Enter" && highlightedLabIdx >= 0) {
+      e.preventDefault();
       addLab(labSuggestions[highlightedLabIdx]);
     }
   }
+
   function addMedication() {
     if (!selectedMed) return;
     const exists = prescriptionItems.some(
@@ -245,24 +263,36 @@ export default function PrescriptionModal({
       quantite: tmpQuantite,
     };
     setPrescriptionItems([...prescriptionItems, item]);
+
+    // Reset all fields
     setSelectedMed(null);
     setQuery("");
     setOpenMedDialog(false);
     setTmpQuantite(1);
+    setTmpDose("1 fois/jour");
+    setTmpfreq("");
+    setTmpDuration("5 jours");
+
+    // Return focus to search field
+    setTimeout(() => {
+      medSearchRef.current?.focus();
+    }, 100);
   }
 
   function removeItem(id) {
-    console.log(id);
-    console.log(JSON.stringify(PrescriptionModal));
     setPrescriptionItems(
       prescriptionItems.filter((i) => i.medicamentId !== id)
     );
   }
 
   function addLab(exam) {
-    console.log("hiiiiiiiiiiii" + JSON.stringify(exam) + labItems);
     if (!labItems.includes(exam)) setLabItems([...labItems, exam]);
     setLabQuery("");
+
+    // Return focus to lab search
+    setTimeout(() => {
+      labSearchRef.current?.focus();
+    }, 100);
   }
 
   function removeLab(exam) {
@@ -290,40 +320,36 @@ export default function PrescriptionModal({
   useEffect(() => {
     if (type && type !== "autre") {
       const selectedtyoe = ordTypes.filter((o) => o.id === type);
-      console.log(JSON.stringify(selectedtyoe) + type);
-      // Avoid duplicates and map medications correctly
-      const meds = selectedtyoe[0].items.map((med) => ({
-        medicamentId: med.id,
-        nom: med.nom, // match your first dataset key naming
-        dosage: med.dosage || "—", // use first available strength
-        frequence: med.frequence,
-        duree: med.duree,
-        quantite: med.quantite,
-      }));
+      const meds =
+        selectedtyoe[0]?.items.map((med) => ({
+          medicamentId: med.id,
+          nom: med.nom,
+          dosage: med.dosage || "—",
+          frequence: med.frequence,
+          duree: med.duree,
+          quantite: med.quantite,
+        })) || [];
 
       setPrescriptionItems(meds);
     } else {
-      // Clear items if "autre" or invalid type
       setPrescriptionItems([]);
     }
-  }, [type]);
+  }, [type, ordTypes]);
 
   useEffect(() => {
     if (SelectedbilanType && SelectedbilanType !== "autre") {
       const selectedtyoe = bilanTypes.filter((o) => o.id === SelectedbilanType);
-      console.log(JSON.stringify(selectedtyoe) + SelectedbilanType);
-      // Avoid duplicates and map medications correctly
-      const labs = selectedtyoe[0].items.map((lab) => ({
-        id: lab.id,
-        nom: lab.nom, // match your first dataset key naming
-      }));
+      const labs =
+        selectedtyoe[0]?.items.map((lab) => ({
+          id: lab.id,
+          nom: lab.nom,
+        })) || [];
 
       setLabItems(labs);
     } else {
-      // Clear items if "autre" or invalid type
       setLabItems([]);
     }
-  }, [SelectedbilanType]);
+  }, [SelectedbilanType, bilanTypes]);
 
   useEffect(() => {
     if (justifType && JUSTIF_TYPE_TEXTS[justifType] !== undefined) {
@@ -331,13 +357,11 @@ export default function PrescriptionModal({
     }
   }, [justifType]);
 
-  // ✅ Print Ordonnance using Electron
   const handlePrintElectron = () => {
     if (!printRef.current) return;
-    console.log("sbn");
     const printContents = printRef.current.outerHTML;
 
-    window.electron.printOrdonnance({
+    window.electron?.printOrdonnance({
       title: "Ordonnance - Dr DIB Amel",
       html: `
       <html>
@@ -363,13 +387,12 @@ export default function PrescriptionModal({
     });
   };
 
-  // ✅ Print Bilan using Electron
   const handlePrintBilanElectron = () => {
     if (!bilanPrintRef.current) return;
 
     const printContents = bilanPrintRef.current.outerHTML;
 
-    window.electron.printBilan({
+    window.electron?.printBilan({
       title: "Bilans & Analyses - Dr DIB Amel",
       html: `
       <html>
@@ -424,149 +447,213 @@ export default function PrescriptionModal({
 
   useEffect(() => {
     function handleShortcut(e) {
-      // Ctrl+P for print
       if (e.ctrlKey && e.key.toLowerCase() === "p") {
-        e.preventDefault();
-        handlePrintElectron();
+        // e.preventDefault();
+        //handlePrintElectron();
       }
-      // Ctrl+S for save
       if (e.ctrlKey && e.key.toLowerCase() === "s") {
-        e.preventDefault();
-        handleSave();
+        //  e.preventDefault();
+        // handleSave();
       }
     }
     window.addEventListener("keydown", handleShortcut);
     return () => window.removeEventListener("keydown", handleShortcut);
-  }, [handlePrintElectron, handleSave]);
+  }, [prescriptionItems, labItems]);
+
+  // Enhanced animation variants
+  const cardVariants = {
+    hidden: { opacity: 0, y: 20 },
+    visible: {
+      opacity: 1,
+      y: 0,
+      transition: { duration: 0.4, ease: "easeOut" },
+    },
+  };
+
+  const itemVariants = {
+    hidden: { opacity: 0, x: -20 },
+    visible: {
+      opacity: 1,
+      x: 0,
+      transition: { duration: 0.3 },
+    },
+    exit: {
+      opacity: 0,
+      x: 20,
+      transition: { duration: 0.2 },
+    },
+  };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      {/* Optional: Close button */}
-
-      <DialogContent className="max-w-4xl min-w-4xl p-0">
-        <div className="p-6">
+      <DialogContent className="max-w-4xl min-w-4xl p-0 overflow-hidden">
+        <motion.div
+          className="p-6"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.3 }}
+        >
           <Tabs defaultValue="ordonnance">
-            <TabsList className="grid grid-cols-3 bg-purple-100 text-purple-700 rounded-lg">
-              <TabsTrigger value="ordonnance">📝 Ordonnance</TabsTrigger>
-              <TabsTrigger value="labs">🧪 Bilans & Analyses</TabsTrigger>
-              <TabsTrigger disabled value="justif">
-                📄 Justification médicale
+            <TabsList className="grid grid-cols-3 bg-gradient-to-r from-purple-100 to-purple-50 text-purple-700 rounded-xl p-1 shadow-sm">
+              <TabsTrigger
+                value="ordonnance"
+                className="rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-md transition-all duration-200"
+              >
+                <Pill className="w-4 h-4 mr-2" />
+                Ordonnance
+              </TabsTrigger>
+              <TabsTrigger
+                value="labs"
+                className="rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-md transition-all duration-200"
+              >
+                <FlaskConical className="w-4 h-4 mr-2" />
+                Bilans & Analyses
+              </TabsTrigger>
+              <TabsTrigger
+                disabled
+                value="justif"
+                className="rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-md transition-all duration-200"
+              >
+                <FileText className="w-4 h-4 mr-2" />
+                Justification
               </TabsTrigger>
             </TabsList>
 
             {/* Ordonnance */}
             <TabsContent value="ordonnance">
-              <Card className="mt-4 border-purple-300 shadow-md ">
-                <CardHeader className="flex flex-row items-center justify-between">
-                  <div className="flex items-center gap-2">
+              <motion.div
+                variants={cardVariants}
+                initial="hidden"
+                animate="visible"
+              >
+                <Card className="mt-4 border-purple-300 shadow-lg hover:shadow-xl transition-shadow duration-300">
+                  <CardHeader className="flex flex-row items-center justify-between bg-gradient-to-r from-purple-50 to-white rounded-t-lg">
                     <CardTitle className="text-purple-700 flex items-center gap-2">
                       <Plus size={20} className="text-purple-500" /> Rédiger une
                       ordonnance
                     </CardTitle>
-                  </div>
-                  <Button
-                    className="bg-purple-500 hover:bg-purple-700"
-                    onClick={handlePrintElectron}
-                    size="sm"
-                  >
-                    🖨️ Imprimer
-                  </Button>
-                </CardHeader>
-                <CardContent>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
-                    <div className="md:col-span-2 relative">
-                      <Label htmlFor="med-search">Médicament</Label>
-                      <div className="relative">
-                        <Input
-                          id="med-search"
-                          placeholder="Tapez le nom du médicament..."
-                          value={query}
-                          onChange={(e) => setQuery(e.target.value)}
-                          onKeyDown={handleMedKeyDown}
-                          className="focus:ring-2 focus:ring-purple-400"
-                          autoComplete="off"
-                        />
-                        <div className="absolute right-3 top-3 pointer-events-none text-purple-500">
-                          <Search size={16} />
+                    <Button
+                      className="bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 shadow-md hover:shadow-lg transition-all duration-200"
+                      onClick={handlePrintElectron}
+                      size="sm"
+                    >
+                      🖨️ Imprimer
+                    </Button>
+                  </CardHeader>
+                  <CardContent className="pt-6">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
+                      <div className="md:col-span-2 relative">
+                        <Label
+                          htmlFor="med-search"
+                          className="text-purple-700 font-medium"
+                        >
+                          Médicament
+                        </Label>
+                        <div className="relative">
+                          <Input
+                            ref={medSearchRef}
+                            id="med-search"
+                            placeholder="Tapez le nom du médicament..."
+                            value={query}
+                            onChange={(e) => setQuery(e.target.value)}
+                            onKeyDown={handleMedKeyDown}
+                            className="focus:ring-2 focus:ring-purple-400 border-purple-200 transition-all duration-200"
+                            autoComplete="off"
+                          />
+                          <motion.div
+                            className="absolute right-3 top-3 pointer-events-none text-purple-500"
+                            animate={{ scale: query ? 1.1 : 1 }}
+                            transition={{ duration: 0.2 }}
+                          >
+                            <Search size={16} />
+                          </motion.div>
                         </div>
+
+                        <AnimatePresence>
+                          {query && (
+                            <motion.ul
+                              initial={{ opacity: 0, y: -10, scale: 0.95 }}
+                              animate={{ opacity: 1, y: 0, scale: 1 }}
+                              exit={{ opacity: 0, y: -10, scale: 0.95 }}
+                              transition={{ duration: 0.2 }}
+                              className="absolute z-50 w-full mt-2 bg-white border border-purple-200 rounded-xl shadow-2xl max-h-56 overflow-auto"
+                            >
+                              {suggestions.length > 0 ? (
+                                suggestions.map((s, idx) => (
+                                  <motion.li
+                                    key={s.id}
+                                    initial={{ opacity: 0, x: -10 }}
+                                    animate={{ opacity: 1, x: 0 }}
+                                    transition={{ delay: idx * 0.03 }}
+                                    className={`px-4 py-3 flex justify-between items-center cursor-pointer transition-all duration-150 ${
+                                      idx === highlightedMedIdx
+                                        ? "bg-purple-100 border-l-4 border-purple-500"
+                                        : "hover:bg-purple-50"
+                                    }`}
+                                    onMouseEnter={() =>
+                                      setHighlightedMedIdx(idx)
+                                    }
+                                    onClick={() => {
+                                      setSelectedMed(s);
+                                      setOpenMedDialog(true);
+                                    }}
+                                    ref={(el) => {
+                                      if (idx === highlightedMedIdx && el)
+                                        el.scrollIntoView({ block: "nearest" });
+                                    }}
+                                  >
+                                    <div>
+                                      <div className="font-semibold text-purple-700">
+                                        {s.nom}
+                                      </div>
+                                    </div>
+                                    <div className="text-xs text-purple-500 font-medium bg-purple-50 px-2 py-1 rounded">
+                                      sélectionner
+                                    </div>
+                                  </motion.li>
+                                ))
+                              ) : (
+                                <li className="px-3 py-2 text-sm text-gray-500 text-center">
+                                  Aucun médicament trouvé
+                                </li>
+                              )}
+                            </motion.ul>
+                          )}
+                        </AnimatePresence>
                       </div>
 
-                      <AnimatePresence>
-                        {query && (
-                          <motion.ul
-                            initial={{ opacity: 0, y: -6 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            exit={{ opacity: 0, y: -6 }}
-                            className="absolute z-50 w-full mt-1 bg-white border rounded-md shadow-lg max-h-56 overflow-auto"
-                          >
-                            {suggestions.length > 0 ? (
-                              suggestions.map((s, idx) => (
-                                <li
-                                  key={s.id}
-                                  className={`px-3 py-2 flex justify-between items-center cursor-pointer ${
-                                    idx === highlightedMedIdx
-                                      ? "bg-purple-100"
-                                      : "hover:bg-purple-50"
-                                  }`}
-                                  onMouseEnter={() => setHighlightedMedIdx(idx)}
-                                  onClick={() => {
-                                    setSelectedMed(s);
-                                    setOpenMedDialog(true);
-                                  }}
-                                  ref={(el) => {
-                                    if (idx === highlightedMedIdx && el)
-                                      el.scrollIntoView({ block: "nearest" });
-                                  }}
-                                >
-                                  <div>
-                                    <div className="font-medium text-purple-700">
-                                      {s.nom}
-                                    </div>
-                                  </div>
-                                  <div className="text-xs text-purple-500 font-medium">
-                                    sélectionner
-                                  </div>
-                                </li>
-                              ))
-                            ) : (
-                              <li className="px-3 py-2 text-sm text-gray-500 text-center">
-                                Aucun médicament trouvé
-                              </li>
-                            )}
-                          </motion.ul>
-                        )}
-                      </AnimatePresence>
+                      <div>
+                        <Label className="text-purple-700 font-medium">
+                          Type d'ordonnance
+                        </Label>
+                        <Select
+                          onValueChange={(v) => setType(v)}
+                          defaultValue={type}
+                        >
+                          <SelectTrigger className="w-full border-purple-300 focus:ring-2 focus:ring-purple-400">
+                            <SelectValue placeholder="Choisir" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {ordTypes.map((t) => (
+                              <SelectItem key={t.id} value={t.id}>
+                                {t.nom}
+                              </SelectItem>
+                            ))}
+                            <SelectItem value="autre">Autre type</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
                     </div>
-
-                    <div>
-                      <Label>Type d'ordonnance</Label>
-                      <Select
-                        onValueChange={(v) => setType(v)}
-                        defaultValue={type}
-                      >
-                        <SelectTrigger className="w-full  border-purple-300">
-                          <SelectValue placeholder="Choisir" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {ordTypes.map((t) => (
-                            <SelectItem key={t.id} value={t.id}>
-                              {t.nom}
-                            </SelectItem>
-                          ))}
-                          <SelectItem value="autre">Autre type</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
+                  </CardContent>
+                </Card>
+              </motion.div>
 
               {/* Modal Médicament */}
               <Dialog open={openMedDialog} onOpenChange={setOpenMedDialog}>
                 <DialogContent className="sm:max-w-2xl">
                   <DialogHeader>
-                    <DialogTitle className="text-purple-700">
-                      {selectedMed?.name}{" "}
+                    <DialogTitle className="text-purple-700 text-xl">
+                      {selectedMed?.nom}{" "}
                       {selectedMed && `(${selectedMed.form})`}
                     </DialogTitle>
                     <p className="text-sm text-gray-500">
@@ -576,97 +663,71 @@ export default function PrescriptionModal({
                   </DialogHeader>
 
                   {selectedMed && (
-                    <div className="grid gap-3">
+                    <div className="grid gap-4">
                       <div>
-                        {/* === Dosage === */}
-                        <div>
-                          <Label>Dosage</Label>
-                          <select
-                            value={tmpDose}
-                            onChange={(e) => setTmpDose(e.target.value)}
-                            className="border rounded-md p-2 w-full"
-                          >
-                            <option value="">-- Sélectionner --</option>
-                            <option value="5 mg">5 mg</option>
-                            <option value="10 mg">10 mg</option>
-                            <option value="20 mg">20 mg</option>
-                            <option value="50 mg">50 mg</option>
-                            <option value="100 mg">100 mg</option>
-                            <option value="250 mg">250 mg</option>
-                            <option value="500 mg">500 mg</option>
-                            <option value="1 g">1 g</option>
-                          </select>
-
-                          {tmpDose === "custom" && (
-                            <input
-                              type="text"
-                              className="mt-2 w-full rounded-md border px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                              placeholder="Entrer un dosage personnalisé..."
-                              onChange={(e) => setTmpStrength(e.target.value)}
-                            />
-                          )}
-                        </div>
-
-                        {/* === Posologie === */}
-                        <div>
-                          <Label>Posologie (rythme de prise)</Label>
-                          <select
-                            className="w-full rounded-md border px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                            value={tmpfreq}
-                            onChange={(e) => setTmpfreq(e.target.value)}
-                          >
-                            <option value="">-- Sélectionner --</option>
-                            <option value="1 fois / jour">1 fois / jour</option>
-                            <option value="2 fois / jour">2 fois / jour</option>
-                            <option value="3 fois / jour">3 fois / jour</option>
-                            <option value="Toutes les 8 heures">
-                              Toutes les 8 heures
-                            </option>
-                            <option value="Selon besoin">Selon besoin</option>
-                            <option value="custom">Autre...</option>
-                          </select>
-
-                          {tmpfreq === "custom" && (
-                            <input
-                              type="text"
-                              className="mt-2 w-full rounded-md border px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                              placeholder="Entrer une posologie personnalisée..."
-                              onChange={(e) => setTmpDose(e.target.value)}
-                            />
-                          )}
-                        </div>
-
-                        {/* === Durée === */}
-                        <div>
-                          <Label>Durée</Label>
-                          <select
-                            className="w-full rounded-md border px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                            value={tmpDuration}
-                            onChange={(e) => setTmpDuration(e.target.value)}
-                          >
-                            <option value="">-- Sélectionner --</option>
-                            <option value="3 jours">3 jours</option>
-                            <option value="5 jours">5 jours</option>
-                            <option value="7 jours">7 jours</option>
-                            <option value="10 jours">10 jours</option>
-                            <option value="14 jours">14 jours</option>
-                            <option value="1 mois">1 mois</option>
-                            <option value="custom">Autre...</option>
-                          </select>
-
-                          {tmpDuration === "custom" && (
-                            <input
-                              type="text"
-                              className="mt-2 w-full rounded-md border px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                              placeholder="Entrer une durée personnalisée..."
-                              onChange={(e) => setTmpDuration(e.target.value)}
-                            />
-                          )}
-                        </div>
+                        <Label className="text-purple-700 font-medium">
+                          Dosage
+                        </Label>
+                        <select
+                          value={tmpDose}
+                          onChange={(e) => setTmpDose(e.target.value)}
+                          className="border border-purple-200 rounded-lg p-2 w-full focus:ring-2 focus:ring-purple-400 transition-all"
+                        >
+                          <option value="">-- Sélectionner --</option>
+                          <option value="5 mg">5 mg</option>
+                          <option value="10 mg">10 mg</option>
+                          <option value="20 mg">20 mg</option>
+                          <option value="50 mg">50 mg</option>
+                          <option value="100 mg">100 mg</option>
+                          <option value="250 mg">250 mg</option>
+                          <option value="500 mg">500 mg</option>
+                          <option value="1 g">1 g</option>
+                        </select>
                       </div>
 
                       <div>
-                        <Label>Quantité (boîtes)</Label>
+                        <Label className="text-purple-700 font-medium">
+                          Posologie (rythme de prise)
+                        </Label>
+                        <select
+                          className="w-full rounded-lg border border-purple-200 px-3 py-2 focus:ring-2 focus:ring-purple-400 transition-all"
+                          value={tmpfreq}
+                          onChange={(e) => setTmpfreq(e.target.value)}
+                        >
+                          <option value="">-- Sélectionner --</option>
+                          <option value="1 fois / jour">1 fois / jour</option>
+                          <option value="2 fois / jour">2 fois / jour</option>
+                          <option value="3 fois / jour">3 fois / jour</option>
+                          <option value="Toutes les 8 heures">
+                            Toutes les 8 heures
+                          </option>
+                          <option value="Selon besoin">Selon besoin</option>
+                        </select>
+                      </div>
+
+                      <div>
+                        <Label className="text-purple-700 font-medium">
+                          Durée
+                        </Label>
+                        <select
+                          className="w-full rounded-lg border border-purple-200 px-3 py-2 focus:ring-2 focus:ring-purple-400 transition-all"
+                          value={tmpDuration}
+                          onChange={(e) => setTmpDuration(e.target.value)}
+                        >
+                          <option value="">-- Sélectionner --</option>
+                          <option value="3 jours">3 jours</option>
+                          <option value="5 jours">5 jours</option>
+                          <option value="7 jours">7 jours</option>
+                          <option value="10 jours">10 jours</option>
+                          <option value="14 jours">14 jours</option>
+                          <option value="1 mois">1 mois</option>
+                        </select>
+                      </div>
+
+                      <div>
+                        <Label className="text-purple-700 font-medium">
+                          Quantité (boîtes)
+                        </Label>
                         <Input
                           type="number"
                           min={1}
@@ -674,6 +735,7 @@ export default function PrescriptionModal({
                           onChange={(e) =>
                             setTmpQuantite(Number(e.target.value))
                           }
+                          className="border-purple-200 focus:ring-2 focus:ring-purple-400"
                         />
                       </div>
                     </div>
@@ -683,11 +745,12 @@ export default function PrescriptionModal({
                     <Button
                       variant="outline"
                       onClick={() => setOpenMedDialog(false)}
+                      className="border-purple-300 text-purple-700 hover:bg-purple-50"
                     >
                       Annuler
                     </Button>
                     <Button
-                      className="bg-purple-600 hover:bg-purple-700"
+                      className="bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 shadow-md"
                       onClick={addMedication}
                     >
                       <Plus size={16} className="mr-2" /> Ajouter
@@ -696,54 +759,87 @@ export default function PrescriptionModal({
                 </DialogContent>
               </Dialog>
 
-              <Card className="mt-2 border-purple-300 h-[465px] flex flex-col">
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-purple-700">
-                    Ordonnance — Aperçu ({totalMeds})
+              <Card className="mt-4 border-purple-300 h-[465px] flex flex-col shadow-lg">
+                <CardHeader className="pb-2 bg-gradient-to-r from-purple-50 to-white">
+                  <CardTitle className="text-purple-700 flex items-center justify-between">
+                    <span>Ordonnance — Aperçu</span>
+                    <span className="text-sm bg-purple-100 text-purple-700 px-3 py-1 rounded-full">
+                      {totalMeds} médicament{totalMeds > 1 ? "s" : ""}
+                    </span>
                   </CardTitle>
                 </CardHeader>
 
                 <CardContent className="flex-1 overflow-hidden">
                   {prescriptionItems.length === 0 ? (
-                    <div className="h-full flex items-center justify-center text-gray-500">
-                      Aucun médicament ajouté.
-                    </div>
+                    <motion.div
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      className="h-full flex flex-col items-center justify-center text-gray-400"
+                    >
+                      <Pill size={48} className="mb-4 opacity-30" />
+                      <p className="text-lg">Aucun médicament ajouté</p>
+                      <p className="text-sm mt-2">
+                        Recherchez et ajoutez des médicaments ci-dessus
+                      </p>
+                    </motion.div>
                   ) : (
                     <ul className="space-y-3 h-full overflow-y-auto p-2">
-                      {prescriptionItems.map((it) => (
-                        <li
-                          key={it.uid || it.id}
-                          className="flex items-center justify-between bg-white border border-purple-100 rounded-2xl p-4 shadow-sm hover:shadow-md transition-all duration-300 hover:bg-purple-50/60"
-                        >
-                          <div className="flex flex-col">
-                            <div className="flex items-center gap-2">
-                              <span className="text-base font-semibold text-purple-700">
-                                {it.nom}
-                              </span>
-                              <span className="text-sm text-gray-500 font-medium">
-                                {it.dosage}
-                              </span>
-                            </div>
-
-                            <div className="text-sm text-gray-600 mt-1">
-                              {it.frequency || "—"} pendant {it.duree || "—"} •
-                              <span className="ml-2 text-purple-700 font-semibold">
-                                {it.quantite || 1} boîte
-                                {it.quantite > 1 ? "s" : ""}
-                              </span>
-                            </div>
-                          </div>
-
-                          <Button
-                            size="icon"
-                            variant="ghost"
-                            className="hover:bg-red-100 transition"
-                            onClick={() => removeItem(it.medicamentId)}
+                      <AnimatePresence>
+                        {prescriptionItems.map((it, index) => (
+                          <motion.li
+                            key={it.medicamentId}
+                            variants={itemVariants}
+                            initial="hidden"
+                            animate="visible"
+                            exit="exit"
+                            layout
+                            className="flex items-center justify-between bg-white border-2 border-purple-100 rounded-2xl p-4 shadow-sm hover:shadow-lg hover:border-purple-300 transition-all duration-300"
                           >
-                            <Trash2 size={18} className="text-red-500" />
-                          </Button>
-                        </li>
-                      ))}
+                            <div className="flex flex-col flex-1">
+                              <div className="flex items-center gap-3">
+                                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-purple-400 to-purple-600 flex items-center justify-center text-white font-bold text-sm">
+                                  {index + 1}
+                                </div>
+                                <div>
+                                  <span className="text-base font-semibold text-purple-700">
+                                    {it.nom}
+                                  </span>
+                                  <span className="text-sm text-gray-500 font-medium ml-2">
+                                    {it.dosage}
+                                  </span>
+                                </div>
+                              </div>
+
+                              <div className="text-sm text-gray-600 mt-2 ml-11">
+                                <span className="bg-purple-50 px-2 py-1 rounded mr-2">
+                                  {it.frequence || "—"}
+                                </span>
+                                <span className="bg-blue-50 px-2 py-1 rounded mr-2">
+                                  pendant {it.duree || "—"}
+                                </span>
+                                <span className="bg-green-50 px-2 py-1 rounded text-green-700 font-semibold">
+                                  {it.quantite || 1} boîte
+                                  {it.quantite > 1 ? "s" : ""}
+                                </span>
+                              </div>
+                            </div>
+
+                            <motion.div
+                              whileHover={{ scale: 1.1 }}
+                              whileTap={{ scale: 0.9 }}
+                            >
+                              <Button
+                                size="icon"
+                                variant="ghost"
+                                className="hover:bg-red-100 transition rounded-full"
+                                onClick={() => removeItem(it.medicamentId)}
+                              >
+                                <Trash2 size={18} className="text-red-500" />
+                              </Button>
+                            </motion.div>
+                          </motion.li>
+                        ))}
+                      </AnimatePresence>
                     </ul>
                   )}
                 </CardContent>
@@ -771,17 +867,17 @@ export default function PrescriptionModal({
                     <ul className="space-y-3">
                       {prescriptionItems.map((it) => (
                         <li
-                          key={it.uid}
+                          key={it.medicamentId}
                           className="flex flex-col p-3 border rounded-md hover:bg-purple-50 transition-colors ord-print-item"
                         >
                           <div className="font-medium text-purple-700 ord-print-item-title">
-                            {it.name}{" "}
+                            {it.nom}{" "}
                             <span className="text-gray-600 font-normal">
-                              {it.strength}
+                              {it.dosage}
                             </span>
                           </div>
                           <div className="text-sm text-gray-700 mt-1 ord-print-item-details">
-                            {it.dose} • {it.frequency} • {it.duration} •{" "}
+                            {it.frequence} • {it.duree} •{" "}
                             <span className="text-purple-700 font-bold">
                               {it.quantite} boîte{it.quantite > 1 ? "s" : ""}
                             </span>
@@ -799,259 +895,336 @@ export default function PrescriptionModal({
 
             {/* Bilans & Analyses */}
             <TabsContent value="labs">
-              <Card className="mt-4 border-purple-300 shadow-md">
-                <CardHeader className="flex flex-row items-center justify-between">
-                  <CardTitle className="text-purple-700 flex items-center gap-2">
-                    <Plus size={20} className="text-purple-500" /> Rédiger un
-                    bilan ou une analyse
-                  </CardTitle>
-                  <Button
-                    className="bg-purple-500 hover:bg-purple-700"
-                    onClick={handlePrintBilanElectron}
-                    size="sm"
-                  >
-                    🖨️ Imprimer
-                  </Button>
-                </CardHeader>
-                <CardContent>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
-                    {/* Search Exam */}
-                    <div className="md:col-span-2 relative">
-                      <Label htmlFor="lab-search">Examen / Analyse</Label>
-                      <div className="relative">
-                        <Input
-                          id="lab-search"
-                          placeholder="Tapez le nom de l'examen..."
-                          value={labQuery}
-                          onChange={(e) => setLabQuery(e.target.value)}
-                          onKeyDown={handleLabKeyDown}
-                          className="focus:ring-2 focus:ring-purple-400"
-                          autoComplete="off"
-                        />
-                        <div className="absolute right-3 top-3 pointer-events-none text-purple-500">
-                          <Search size={16} />
-                        </div>
-                      </div>
-                      <AnimatePresence>
-                        {labQuery && (
-                          <motion.ul
-                            initial={{ opacity: 0, y: -6 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            exit={{ opacity: 0, y: -6 }}
-                            className="absolute z-50 w-full mt-1 bg-white border rounded-md shadow-lg max-h-56 overflow-auto"
+              <motion.div
+                variants={cardVariants}
+                initial="hidden"
+                animate="visible"
+              >
+                <Card className="mt-4 border-purple-300 shadow-lg hover:shadow-xl transition-shadow duration-300">
+                  <CardHeader className="flex flex-row items-center justify-between bg-gradient-to-r from-purple-50 to-white rounded-t-lg">
+                    <CardTitle className="text-purple-700 flex items-center gap-2">
+                      <Plus size={20} className="text-purple-500" /> Rédiger un
+                      bilan ou une analyse
+                    </CardTitle>
+                    <Button
+                      className="bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 shadow-md hover:shadow-lg transition-all duration-200"
+                      onClick={handlePrintBilanElectron}
+                      size="sm"
+                    >
+                      🖨️ Imprimer
+                    </Button>
+                  </CardHeader>
+                  <CardContent className="pt-6">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
+                      <div className="md:col-span-2 relative">
+                        <Label
+                          htmlFor="lab-search"
+                          className="text-purple-700 font-medium"
+                        >
+                          Examen / Analyse
+                        </Label>
+                        <div className="relative">
+                          <Input
+                            ref={labSearchRef}
+                            id="lab-search"
+                            placeholder="Tapez le nom de l'examen..."
+                            value={labQuery}
+                            onChange={(e) => setLabQuery(e.target.value)}
+                            onKeyDown={handleLabKeyDown}
+                            className="focus:ring-2 focus:ring-purple-400 border-purple-200 transition-all duration-200"
+                            autoComplete="off"
+                          />
+                          <motion.div
+                            className="absolute right-3 top-3 pointer-events-none text-purple-500"
+                            animate={{ scale: labQuery ? 1.1 : 1 }}
+                            transition={{ duration: 0.2 }}
                           >
-                            {labSuggestions.length > 0 ? (
-                              labSuggestions.map((exam, idx) => (
-                                <li
-                                  key={exam.id}
-                                  className={`px-3 py-2 flex justify-between items-center cursor-pointer ${
-                                    idx === highlightedLabIdx
-                                      ? "bg-purple-100"
-                                      : "hover:bg-purple-50"
-                                  }`}
-                                  onMouseEnter={() => setHighlightedLabIdx(idx)}
-                                  onClick={() => addLab(exam)}
-                                  ref={(el) => {
-                                    if (idx === highlightedLabIdx && el)
-                                      el.scrollIntoView({ block: "nearest" });
-                                  }}
-                                >
-                                  <span className="font-medium text-purple-700">
-                                    {exam.nom}
-                                  </span>
-                                  <span className="text-xs text-purple-500 font-medium">
-                                    ajouter
-                                  </span>
-                                </li>
-                              ))
-                            ) : (
-                              <li className="px-3 py-2 text-sm text-gray-500 text-center">
-                                Aucun examen trouvé
-                              </li>
-                            )}
-                          </motion.ul>
-                        )}
-                      </AnimatePresence>
-                    </div>
-                    {/* Select Type */}
-                    <div>
-                      <Label>Type de bilan</Label>
-                      <Select
-                        onValueChange={(v) => setSelectedBilanType(v)}
-                        defaultValue={SelectedbilanType || "autre"}
-                      >
-                        <SelectTrigger className="w-full border-purple-300">
-                          <SelectValue placeholder="Choisir le type" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {bilanTypes.map((t) => (
-                            <SelectItem key={t.id} value={t.id}>
-                              {t.nom}
-                            </SelectItem>
-                          ))}
-
-                          {/* Add "autre type" manually */}
-                          <SelectItem value="autre">Autre type</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  </div>
-                  {/* Preview List */}
-                  <Card className="mt-6 border-purple-200">
-                    <CardHeader>
-                      <CardTitle className="text-purple-700">
-                        Bilans & Analyses — Aperçu ({labItems.length})
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      {labItems.length === 0 ? (
-                        <div className="text-gray-500 h-88">
-                          Aucun examen ajouté.
+                            <Search size={16} />
+                          </motion.div>
                         </div>
-                      ) : (
-                        <ul className="space-y-3 h-88 overflow-auto">
-                          {labItems.map((exam) => (
-                            <li
-                              key={exam.id}
-                              className="flex items-center justify-between border rounded p-3 hover:bg-purple-50"
+                        <AnimatePresence>
+                          {labQuery && (
+                            <motion.ul
+                              initial={{ opacity: 0, y: -10, scale: 0.95 }}
+                              animate={{ opacity: 1, y: 0, scale: 1 }}
+                              exit={{ opacity: 0, y: -10, scale: 0.95 }}
+                              transition={{ duration: 0.2 }}
+                              className="absolute z-50 w-full mt-2 bg-white border border-purple-200 rounded-xl shadow-2xl max-h-56 overflow-auto"
                             >
-                              <div>
-                                <div className="font-medium text-purple-700">
-                                  {exam.nom}
-                                </div>
-                                <div className="text-sm text-gray-500">
-                                  Type : {bilanType ? bilanType : "Non précisé"}
-                                </div>
-                              </div>
-                              <Button
-                                size="sm"
-                                variant="ghost"
-                                onClick={() => removeLab(exam)}
-                              >
-                                <Trash2 size={16} className="text-red-500" />
-                              </Button>
-                            </li>
-                          ))}
-                        </ul>
-                      )}
-                    </CardContent>
-                  </Card>
-                  {/* Print Section (hidden) */}
-                  <div className="hidden" ref={bilanPrintRef}>
-                    <div className="bilan-print-header">
-                      <div className="bilan-print-title">Bilans & Analyses</div>
-                      <div className="bilan-print-doc">Dr DIB Amel</div>
-                      <div className="bilan-print-date">
-                        {new Date().toLocaleDateString("fr-FR", {
-                          year: "numeric",
-                          month: "long",
-                          day: "numeric",
-                        })}
+                              {labSuggestions.length > 0 ? (
+                                labSuggestions.map((exam, idx) => (
+                                  <motion.li
+                                    key={exam.id}
+                                    initial={{ opacity: 0, x: -10 }}
+                                    animate={{ opacity: 1, x: 0 }}
+                                    transition={{ delay: idx * 0.03 }}
+                                    className={`px-4 py-3 flex justify-between items-center cursor-pointer transition-all duration-150 ${
+                                      idx === highlightedLabIdx
+                                        ? "bg-purple-100 border-l-4 border-purple-500"
+                                        : "hover:bg-purple-50"
+                                    }`}
+                                    onMouseEnter={() =>
+                                      setHighlightedLabIdx(idx)
+                                    }
+                                    onClick={() => addLab(exam)}
+                                    ref={(el) => {
+                                      if (idx === highlightedLabIdx && el)
+                                        el.scrollIntoView({ block: "nearest" });
+                                    }}
+                                  >
+                                    <span className="font-semibold text-purple-700">
+                                      {exam.nom}
+                                    </span>
+                                    <span className="text-xs text-purple-500 font-medium bg-purple-50 px-2 py-1 rounded">
+                                      ajouter
+                                    </span>
+                                  </motion.li>
+                                ))
+                              ) : (
+                                <li className="px-3 py-2 text-sm text-gray-500 text-center">
+                                  Aucun examen trouvé
+                                </li>
+                              )}
+                            </motion.ul>
+                          )}
+                        </AnimatePresence>
+                      </div>
+                      <div>
+                        <Label className="text-purple-700 font-medium">
+                          Type de bilan
+                        </Label>
+                        <Select
+                          onValueChange={(v) => setSelectedBilanType(v)}
+                          defaultValue={SelectedbilanType || "autre"}
+                        >
+                          <SelectTrigger className="w-full border-purple-300 focus:ring-2 focus:ring-purple-400">
+                            <SelectValue placeholder="Choisir le type" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {bilanTypes.map((t) => (
+                              <SelectItem key={t.id} value={t.id}>
+                                {t.nom}
+                              </SelectItem>
+                            ))}
+                            <SelectItem value="autre">Autre type</SelectItem>
+                          </SelectContent>
+                        </Select>
                       </div>
                     </div>
-                    <div className="bilan-print-list">
-                      {labItems.length === 0 ? (
-                        <div className="text-gray-500 px-4 py-8">
-                          Aucun examen ajouté.
+
+                    <Card className="mt-6 border-purple-200 shadow-md">
+                      <CardHeader className="bg-gradient-to-r from-purple-50 to-white">
+                        <CardTitle className="text-purple-700 flex items-center justify-between">
+                          <span>Bilans & Analyses — Aperçu</span>
+                          <span className="text-sm bg-purple-100 text-purple-700 px-3 py-1 rounded-full">
+                            {labItems.length} examen
+                            {labItems.length > 1 ? "s" : ""}
+                          </span>
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent className="pt-4">
+                        {labItems.length === 0 ? (
+                          <motion.div
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            className="text-gray-400 h-40 flex flex-col items-center justify-center"
+                          >
+                            <FlaskConical
+                              size={48}
+                              className="mb-4 opacity-30"
+                            />
+                            <p className="text-lg">Aucun examen ajouté</p>
+                            <p className="text-sm mt-2">
+                              Recherchez et ajoutez des examens ci-dessus
+                            </p>
+                          </motion.div>
+                        ) : (
+                          <ul className="space-y-3 max-h-96 overflow-auto">
+                            <AnimatePresence>
+                              {labItems.map((exam, index) => (
+                                <motion.li
+                                  key={exam.id}
+                                  variants={itemVariants}
+                                  initial="hidden"
+                                  animate="visible"
+                                  exit="exit"
+                                  layout
+                                  className="flex items-center justify-between border-2 border-purple-100 rounded-xl p-4 hover:bg-purple-50 hover:border-purple-300 transition-all duration-300 bg-white shadow-sm"
+                                >
+                                  <div className="flex items-center gap-3 flex-1">
+                                    <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center text-white font-bold text-sm">
+                                      {index + 1}
+                                    </div>
+                                    <div>
+                                      <div className="font-semibold text-purple-700">
+                                        {exam.nom}
+                                      </div>
+                                      <div className="text-sm text-gray-500">
+                                        Type : {bilanType || "Non précisé"}
+                                      </div>
+                                    </div>
+                                  </div>
+                                  <motion.div
+                                    whileHover={{ scale: 1.1 }}
+                                    whileTap={{ scale: 0.9 }}
+                                  >
+                                    <Button
+                                      size="icon"
+                                      variant="ghost"
+                                      className="hover:bg-red-100 transition rounded-full"
+                                      onClick={() => removeLab(exam)}
+                                    >
+                                      <Trash2
+                                        size={16}
+                                        className="text-red-500"
+                                      />
+                                    </Button>
+                                  </motion.div>
+                                </motion.li>
+                              ))}
+                            </AnimatePresence>
+                          </ul>
+                        )}
+                      </CardContent>
+                    </Card>
+
+                    {/* Print Section (hidden) */}
+                    <div className="hidden" ref={bilanPrintRef}>
+                      <div className="bilan-print-header">
+                        <div className="bilan-print-title">
+                          Bilans & Analyses
                         </div>
-                      ) : (
-                        labItems.map((exam) => (
-                          <div key={exam.id} className="bilan-print-item">
-                            <div className="font-medium text-purple-700">
-                              {exam.nom}
-                            </div>
-                            <div className="text-sm text-gray-500">
-                              Type : {bilanType ? bilanType : "Non précisé"}
-                            </div>
+                        <div className="bilan-print-doc">Dr DIB Amel</div>
+                        <div className="bilan-print-date">
+                          {new Date().toLocaleDateString("fr-FR", {
+                            year: "numeric",
+                            month: "long",
+                            day: "numeric",
+                          })}
+                        </div>
+                      </div>
+                      <div className="bilan-print-list">
+                        {labItems.length === 0 ? (
+                          <div className="text-gray-500 px-4 py-8">
+                            Aucun examen ajouté.
                           </div>
-                        ))
-                      )}
+                        ) : (
+                          labItems.map((exam) => (
+                            <div key={exam.id} className="bilan-print-item">
+                              <div className="font-medium text-purple-700">
+                                {exam.nom}
+                              </div>
+                              <div className="text-sm text-gray-500">
+                                Type : {bilanType || "Non précisé"}
+                              </div>
+                            </div>
+                          ))
+                        )}
+                      </div>
+                      <div className="bilan-print-footer">
+                        Signature : ................................
+                      </div>
                     </div>
-                    <div className="bilan-print-footer">
-                      Signature : ................................
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
+                  </CardContent>
+                </Card>
+              </motion.div>
             </TabsContent>
 
             {/* Justification médicale */}
             <TabsContent value="justif">
-              <Card className="mt-4 border-purple-300">
-                <CardHeader className="flex flex-row items-center justify-between">
-                  <CardTitle className="text-purple-700">
-                    📄 Justification médicale / Arrêt de travail
-                  </CardTitle>
-                  <Button
-                    className="bg-purple-500 hover:bg-purple-700"
-                    onClick={handlePrintJustif}
-                    size="sm"
-                  >
-                    🖨️ Imprimer
-                  </Button>
-                </CardHeader>
-                <CardContent>
-                  <div className="grid grid-cols-1 md:grid-cols-1 gap-4">
-                    <div>
-                      <Label>Type de justification</Label>
-                      <Select
-                        onValueChange={(v) => setJustifType(v)}
-                        defaultValue={justifType}
-                      >
-                        <SelectTrigger className="w-full border-purple-300">
-                          <SelectValue placeholder="Choisir le type" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {JUSTIF_PRESET_TYPES.map((t) => (
-                            <SelectItem key={t.id} value={t.id}>
-                              {t.label}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div className="h-114">
-                      <Label htmlFor="justif-text">Texte</Label>
-                      <textarea
-                        id="justif-text"
-                        rows={5}
-                        value={justifText}
-                        onChange={(e) => setJustifText(e.target.value)}
-                        className="w-full border rounded-lg p-3 mt-2 focus:ring-2 focus:ring-purple-400"
-                        placeholder="Ex : Arrêt de travail de 7 jours..."
-                      />
-                    </div>
-                  </div>
-                  {/* Print Section (hidden) */}
-                  <div className="hidden" ref={justifPrintRef}>
-                    <div className="justif-print-header">
-                      <div className="justif-print-title">
-                        Justification médicale
+              <motion.div
+                variants={cardVariants}
+                initial="hidden"
+                animate="visible"
+              >
+                <Card className="mt-4 border-purple-300 shadow-lg">
+                  <CardHeader className="flex flex-row items-center justify-between bg-gradient-to-r from-purple-50 to-white rounded-t-lg">
+                    <CardTitle className="text-purple-700">
+                      📄 Justification médicale / Arrêt de travail
+                    </CardTitle>
+                    <Button
+                      className="bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 shadow-md hover:shadow-lg transition-all duration-200"
+                      onClick={handlePrintJustif}
+                      size="sm"
+                    >
+                      🖨️ Imprimer
+                    </Button>
+                  </CardHeader>
+                  <CardContent className="pt-6">
+                    <div className="grid grid-cols-1 gap-4">
+                      <div>
+                        <Label className="text-purple-700 font-medium">
+                          Type de justification
+                        </Label>
+                        <Select
+                          onValueChange={(v) => setJustifType(v)}
+                          defaultValue={justifType}
+                        >
+                          <SelectTrigger className="w-full border-purple-300 focus:ring-2 focus:ring-purple-400">
+                            <SelectValue placeholder="Choisir le type" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {JUSTIF_PRESET_TYPES.map((t) => (
+                              <SelectItem key={t.id} value={t.id}>
+                                {t.label}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
                       </div>
-                      <div className="justif-print-doc">Dr DIB Amel</div>
-                      <div className="justif-print-date">
-                        {new Date().toLocaleDateString("fr-FR", {
-                          year: "numeric",
-                          month: "long",
-                          day: "numeric",
-                        })}
+                      <div>
+                        <Label
+                          htmlFor="justif-text"
+                          className="text-purple-700 font-medium"
+                        >
+                          Texte
+                        </Label>
+                        <textarea
+                          id="justif-text"
+                          rows={8}
+                          value={justifText}
+                          onChange={(e) => setJustifText(e.target.value)}
+                          className="w-full border-2 border-purple-200 rounded-xl p-4 mt-2 focus:ring-2 focus:ring-purple-400 focus:border-purple-400 transition-all"
+                          placeholder="Ex : Arrêt de travail de 7 jours..."
+                        />
                       </div>
                     </div>
-                    <div className="justif-print-text">{justifText}</div>
-                    <div className="justif-print-footer">
-                      Signature : ................................
+                    {/* Print Section (hidden) */}
+                    <div className="hidden" ref={justifPrintRef}>
+                      <div className="justif-print-header">
+                        <div className="justif-print-title">
+                          Justification médicale
+                        </div>
+                        <div className="justif-print-doc">Dr DIB Amel</div>
+                        <div className="justif-print-date">
+                          {new Date().toLocaleDateString("fr-FR", {
+                            year: "numeric",
+                            month: "long",
+                            day: "numeric",
+                          })}
+                        </div>
+                      </div>
+                      <div className="justif-print-text">{justifText}</div>
+                      <div className="justif-print-footer">
+                        Signature : ................................
+                      </div>
                     </div>
-                  </div>
-                </CardContent>
-              </Card>
+                  </CardContent>
+                </Card>
+              </motion.div>
             </TabsContent>
           </Tabs>
 
           {/* Footer Save */}
-          <div className="mt-6 flex justify-end gap-2">
+          <motion.div
+            className="mt-6 flex justify-end gap-3"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2 }}
+          >
             <Button
               variant="ghost"
-              className="text-red-500"
+              className="text-red-500 hover:bg-red-50 transition-all duration-200"
               onClick={() => {
                 setPrescriptionItems([]);
                 setLabItems([]);
@@ -1061,13 +1234,14 @@ export default function PrescriptionModal({
               Tout réinitialiser
             </Button>
             <Button
-              className="bg-purple-600 hover:bg-purple-700"
+              className="bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 shadow-lg hover:shadow-xl transition-all duration-200"
               onClick={handleSave}
             >
               Sauvegarder tout
             </Button>
-          </div>
-        </div>
+          </motion.div>
+        </motion.div>
+
         <Dialog open={existDialog} onOpenChange={setExistDialog}>
           <DialogContent className="max-w-sm rounded-2xl">
             <DialogHeader>
@@ -1075,7 +1249,7 @@ export default function PrescriptionModal({
                 Médicament existant
               </DialogTitle>
               <DialogDescription className="text-gray-600">
-                Ce médicament est déjà ajouté dans l’ordonnance.
+                Ce médicament est déjà ajouté dans l'ordonnance.
               </DialogDescription>
             </DialogHeader>
             <DialogFooter>

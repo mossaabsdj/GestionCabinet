@@ -40,24 +40,26 @@ function formatDateDisplay(dateString) {
   });
 }
 
-export default function PatientModal({ open, onClose, patient }) {
+export default function PatientModal({ open, onClose, patient = {} }) {
   const [formData, setFormData] = useState({
-    id: patient.id || "",
-    nom: patient.nom || "",
-    telephone: patient.telephone || "",
-    adresse: patient.adresse || "",
-    groupeSanguin: patient.groupeSanguin || "",
-    dateDeNaissance: patient.dateDeNaissance
+    id: patient?.id || "",
+    nom: patient?.nom || "",
+    sexe: patient?.sexe || "",
+    telephone: patient?.telephone || "",
+    adresse: patient?.adresse || "",
+    groupeSanguin: patient?.groupeSanguin || "",
+    dateDeNaissance: patient?.dateDeNaissance
       ? formatDateForInput(patient.dateDeNaissance)
       : "",
-    poidsDeNaissance: patient.poidsDeNaissance || "",
-    antecedents: patient.antecedents || "",
+    poidsDeNaissance: patient?.poidsDeNaissance || "",
+    antecedents: patient?.antecedents || "",
   });
 
   const handleChange = (key, value) => {
     setFormData((prev) => ({ ...prev, [key]: value }));
   };
   async function updateInfoPatient(patientData) {
+    console.log(patientData);
     try {
       const response = await fetch("/api/patients", {
         method: "PUT",
@@ -131,6 +133,17 @@ export default function PatientModal({ open, onClose, patient }) {
               value={formData.nom}
               onChange={(e) => handleChange("nom", e.target.value)}
             />
+
+            <Label>Sexe</Label>
+            <select
+              className="border rounded-md p-2 w-full"
+              value={formData.sexe}
+              onChange={(e) => handleChange("sexe", e.target.value)}
+            >
+              <option value="">Sélectionner...</option>
+              <option value="garçon">garçon</option>
+              <option value="fille">fille</option>
+            </select>
 
             <Label>Date de naissance</Label>
             <Input

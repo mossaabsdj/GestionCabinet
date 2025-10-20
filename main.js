@@ -5,13 +5,185 @@ const { exec } = require("child_process");
 const { Menu } = require("electron");
 
 let mainWindow;
+let splashWindow;
 let serverProcess;
+
+function createSplashScreen() {
+  splashWindow = new BrowserWindow({
+    width: 500,
+    height: 400,
+    transparent: true,
+    frame: false,
+    alwaysOnTop: true,
+    center: true,
+    webPreferences: {
+      nodeIntegration: false,
+      contextIsolation: true,
+    },
+  });
+
+  const splashHtml = `
+    <!DOCTYPE html>
+    <html>
+      <head>
+        <style>
+          * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+          }
+          
+          body {
+            font-family: 'Segoe UI', 'Roboto', sans-serif;
+            background: transparent;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            overflow: hidden;
+          }
+          
+          .splash-container {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 60px rgba(102, 126, 234, 0.4);
+            text-align: center;
+            width: 500px;
+            height: 400px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+            overflow: hidden;
+          }
+          
+          .splash-container::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+            animation: pulse 3s ease-in-out infinite;
+          }
+          
+          @keyframes pulse {
+            0%, 100% { transform: scale(1); opacity: 0.5; }
+            50% { transform: scale(1.1); opacity: 0.8; }
+          }
+          
+          .content {
+            position: relative;
+            z-index: 1;
+          }
+          
+          .icon {
+            width: 100px;
+            height: 100px;
+            background: white;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin: 0 auto 25px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            animation: bounce 2s ease-in-out infinite;
+          }
+          
+          @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+          }
+          
+          .icon svg {
+            width: 60px;
+            height: 60px;
+            fill: #764ba2;
+          }
+          
+          h1 {
+            color: white;
+            font-size: 32px;
+            font-weight: 700;
+            margin-bottom: 8px;
+            text-shadow: 0 2px 10px rgba(0,0,0,0.2);
+          }
+          
+          .subtitle {
+            color: rgba(255,255,255,0.95);
+            font-size: 18px;
+            font-weight: 500;
+            margin-bottom: 35px;
+          }
+          
+          .loader {
+            width: 200px;
+            height: 6px;
+            background: rgba(255,255,255,0.2);
+            border-radius: 10px;
+            overflow: hidden;
+            margin: 0 auto;
+          }
+          
+          .loader-bar {
+            height: 100%;
+            background: white;
+            border-radius: 10px;
+            animation: loading 2s ease-in-out infinite;
+            box-shadow: 0 0 15px rgba(255,255,255,0.5);
+          }
+          
+          @keyframes loading {
+            0% { width: 0%; }
+            50% { width: 70%; }
+            100% { width: 100%; }
+          }
+          
+          .version {
+            color: rgba(255,255,255,0.7);
+            font-size: 12px;
+            margin-top: 20px;
+            font-weight: 400;
+          }
+        </style>
+      </head>
+      <body>
+        <div class="splash-container">
+          <div class="content">
+            <div class="icon">
+              <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z"/>
+              </svg>
+            </div>
+            <h1>Dr. Amel</h1>
+            <div class="subtitle">Pédiatre</div>
+            <div class="loader">
+              <div class="loader-bar"></div>
+            </div>
+            <div class="version">Version 1.0.0</div>
+          </div>
+        </div>
+      </body>
+    </html>
+  `;
+
+  splashWindow.loadURL(
+    "data:text/html;charset=utf-8," + encodeURIComponent(splashHtml)
+  );
+
+  splashWindow.on("closed", () => {
+    splashWindow = null;
+  });
+}
 
 function createWindow() {
   mainWindow = new BrowserWindow({
-    fullscreen: false, // open fullscreen immediately
+    fullscreen: false,
     resizable: true,
-
+    show: false, // Don't show until ready
     webPreferences: {
       contextIsolation: true,
       nodeIntegration: false,
@@ -30,6 +202,17 @@ function createWindow() {
       })
       .catch(() => console.log("Waiting for server..."));
   }, 1000);
+
+  // Show main window and close splash when ready
+  mainWindow.once("ready-to-show", () => {
+    setTimeout(() => {
+      if (splashWindow) {
+        splashWindow.close();
+      }
+      mainWindow.show();
+      mainWindow.maximize();
+    }, 2000); // Show splash for at least 2 seconds
+  });
 }
 
 function createMenu() {
@@ -40,34 +223,32 @@ function createMenu() {
         const addProductWin = new BrowserWindow({
           width: 1080,
           height: 720,
-          resizable: false, // fixed size
-          parent: mainWindow, // attach to main window
-          modal: true, // modal behavior
-          autoHideMenuBar: true, // no menu bar
-          backgroundColor: "#f4f6f9", // light modern background
-          frame: true, // keep OS frame (set to false if you want fully custom)
+          resizable: false,
+          parent: mainWindow,
+          modal: true,
+          autoHideMenuBar: true,
+          backgroundColor: "#f4f6f9",
+          frame: true,
           webPreferences: {
             contextIsolation: true,
             nodeIntegration: false,
           },
         });
 
-        // Center the window
         addProductWin.center();
 
-        // Inject custom CSS after load
         addProductWin.webContents.on("did-finish-load", () => {
           addProductWin.webContents.insertCSS(`
           body {
             font-family: "Segoe UI", "Roboto", sans-serif;
-            font-weight: 600; /* semi-bold */
+            font-weight: 600;
             background-color: #f4f6f9;
             margin: 0;
             padding: 20px;
             color: #333;
           }
           h1, h2, h3, label {
-            font-weight: 600; /* semi-bold headings */
+            font-weight: 600;
             color: #222;
           }
           button {
@@ -91,12 +272,10 @@ function createMenu() {
         );
       },
     },
-
     {
       label: "View",
       submenu: [{ role: "reload" }, { role: "toggledevtools" }],
     },
-
     {
       label: "🚪 Exit",
       click: () => app.quit(),
@@ -106,14 +285,20 @@ function createMenu() {
   const menu = Menu.buildFromTemplate(template);
   Menu.setApplicationMenu(menu);
 }
-createMenu();
 
 app.whenReady().then(() => {
+  // Show splash screen first
+  createSplashScreen();
+
   // Start Next.js server
   const serverScript = path.join(__dirname, "server.js");
   serverProcess = fork(serverScript);
 
+  // Create main window (hidden initially)
   createWindow();
+
+  // Create menu
+  createMenu();
 
   app.on("activate", () => {
     if (BrowserWindow.getAllWindows().length === 0) {
@@ -131,7 +316,7 @@ app.on("window-all-closed", () => {
   }
 });
 
-// Optionally handle print or file operations in the main process
+// Print handlers
 ipcMain.on("print-barcode", (event, data) => {
   console.log(data);
 
@@ -149,7 +334,6 @@ ipcMain.on("print-barcode", (event, data) => {
     return items.map(({ Sum }) => Sum).reduce((sum, i) => sum + i, 0);
   }
 
-  // Use "hello" as the content for testing
   const printHtml = `
   <html>
     <head>
@@ -213,13 +397,10 @@ ipcMain.on("print-barcode", (event, data) => {
     <body>
       <div class="ticket">
         <div class="header">Library El-Badr Bariout</div>
-
         <div class="date-client">
           <div>${new Date().toLocaleDateString("en-US")}</div>
         </div>
-
         <div class="separator">- - - - - - - - - - - - - - - -</div>
-
         <div class="items">
           <div class="item">
             <span>No</span>
@@ -242,9 +423,7 @@ ipcMain.on("print-barcode", (event, data) => {
             )
             .join("")}
         </div>
-
         <div class="separator">- - - - - - - - - - - - - - - -</div>
-
         <div class="total">Total: ${subtotal(data)}.00 DA</div>
       </div>
     </body>
@@ -262,7 +441,7 @@ ipcMain.on("print-barcode", (event, data) => {
       } else {
         console.log("Printing failed:", failureReason);
       }
-      printWindow.close(); // Close after printing
+      printWindow.close();
     });
   });
 });
@@ -280,8 +459,6 @@ ipcMain.on("print-barcode2", (event, data) => {
     },
   });
 
-  // Use "hello" as the content for testing
-
   printWindow.loadURL(
     "data:text/html;charset=utf-8," + encodeURIComponent(data)
   );
@@ -293,13 +470,15 @@ ipcMain.on("print-barcode2", (event, data) => {
       } else {
         console.log("Printing failed:", failureReason);
       }
-      printWindow.close(); // Close after printing
+      printWindow.close();
     });
   });
 });
+
 ipcMain.handle("get-app-path", () => {
   return path.dirname(path.dirname(app.getAppPath()));
 });
+
 ipcMain.on("printOrdonnance", (event, data) => {
   let printWindow = new BrowserWindow({
     show: true,
@@ -339,7 +518,6 @@ ipcMain.on("printOrdonnance", (event, data) => {
   );
 
   printWindow.webContents.on("did-finish-load", () => {
-    // Wait briefly for full render
     setTimeout(() => {
       printWindow.webContents.print({}, (success, failureReason) => {
         if (success) console.log("🖨️ Ordonnance printed successfully");
@@ -400,14 +578,12 @@ ipcMain.on("printBilan", (event, data) => {
 ipcMain.handle("electron.backup", async () => {
   console.log("path" + path.dirname(app.getAppPath()));
   try {
-    // Resolve the path to the 'backup.bat' file located in the 'myapp' folder
     const backupScriptPath = path.join(
       path.dirname(app.getAppPath()),
       "Backup.bat"
-    ); // Backup.bat is in the root folder
+    );
     console.log("backupScriptPath" + backupScriptPath);
 
-    // Execute the backup.bat script
     await new Promise((resolve, reject) => {
       exec(backupScriptPath, (error, stdout, stderr) => {
         if (error) {
@@ -418,10 +594,8 @@ ipcMain.handle("electron.backup", async () => {
       });
     });
 
-    // Return a success response if the backup succeeds
     return { success: true };
   } catch (error) {
-    // Handle any errors that occur during the backup process
     console.error("Backup error:", error);
     return { success: false, message: error.message };
   }
