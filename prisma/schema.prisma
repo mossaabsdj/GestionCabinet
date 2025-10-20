@@ -3,7 +3,7 @@
 // ====================
 generator client {
   provider = "prisma-client-js"
-  output   = "@/app/generated/prisma"
+  output   = "../app/generated/prisma"
   }
 
 datasource db {
@@ -35,6 +35,7 @@ model Patient {
   nom              String           @unique
   age              Int?
   dateDeNaissance  DateTime
+  sexe             String
   telephone        String?
   adresse          String?
   antecedents      String?

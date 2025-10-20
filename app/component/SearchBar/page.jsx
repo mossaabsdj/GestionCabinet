@@ -1,7 +1,12 @@
 import { motion } from "framer-motion";
 
 import { Trash2, Plus, Search, Pill, TestTube } from "lucide-react";
-export default function ModernSearchBar({ value, onChange, placeholder }) {
+export default function ModernSearchBar({
+  value,
+  onChange,
+  placeholder,
+  filed,
+}) {
   return (
     <motion.div
       initial={{ opacity: 0, y: -10 }}
@@ -13,7 +18,7 @@ export default function ModernSearchBar({ value, onChange, placeholder }) {
       <input
         type="text"
         value={value}
-        onChange={onChange}
+        onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
         className="w-full pl-10 pr-4 py-2 rounded-full border border-purple-300 
                    focus:ring-2 focus:ring-purple-400 focus:outline-none

@@ -2591,6 +2591,7 @@ export namespace Prisma {
     nom: string | null
     age: number | null
     dateDeNaissance: Date | null
+    sexe: string | null
     telephone: string | null
     adresse: string | null
     antecedents: string | null
@@ -2604,6 +2605,7 @@ export namespace Prisma {
     nom: string | null
     age: number | null
     dateDeNaissance: Date | null
+    sexe: string | null
     telephone: string | null
     adresse: string | null
     antecedents: string | null
@@ -2617,6 +2619,7 @@ export namespace Prisma {
     nom: number
     age: number
     dateDeNaissance: number
+    sexe: number
     telephone: number
     adresse: number
     antecedents: number
@@ -2644,6 +2647,7 @@ export namespace Prisma {
     nom?: true
     age?: true
     dateDeNaissance?: true
+    sexe?: true
     telephone?: true
     adresse?: true
     antecedents?: true
@@ -2657,6 +2661,7 @@ export namespace Prisma {
     nom?: true
     age?: true
     dateDeNaissance?: true
+    sexe?: true
     telephone?: true
     adresse?: true
     antecedents?: true
@@ -2670,6 +2675,7 @@ export namespace Prisma {
     nom?: true
     age?: true
     dateDeNaissance?: true
+    sexe?: true
     telephone?: true
     adresse?: true
     antecedents?: true
@@ -2770,6 +2776,7 @@ export namespace Prisma {
     nom: string
     age: number | null
     dateDeNaissance: Date
+    sexe: string
     telephone: string | null
     adresse: string | null
     antecedents: string | null
@@ -2802,6 +2809,7 @@ export namespace Prisma {
     nom?: boolean
     age?: boolean
     dateDeNaissance?: boolean
+    sexe?: boolean
     telephone?: boolean
     adresse?: boolean
     antecedents?: boolean
@@ -2825,6 +2833,7 @@ export namespace Prisma {
     nom?: boolean
     age?: boolean
     dateDeNaissance?: boolean
+    sexe?: boolean
     telephone?: boolean
     adresse?: boolean
     antecedents?: boolean
@@ -2833,7 +2842,7 @@ export namespace Prisma {
     createdAt?: boolean
   }
 
-  export type PatientOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "nom" | "age" | "dateDeNaissance" | "telephone" | "adresse" | "antecedents" | "poidsDeNaissance" | "groupeSanguin" | "createdAt", ExtArgs["result"]["patient"]>
+  export type PatientOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "nom" | "age" | "dateDeNaissance" | "sexe" | "telephone" | "adresse" | "antecedents" | "poidsDeNaissance" | "groupeSanguin" | "createdAt", ExtArgs["result"]["patient"]>
   export type PatientInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     consultations?: boolean | Patient$consultationsArgs<ExtArgs>
     ordonnances?: boolean | Patient$ordonnancesArgs<ExtArgs>
@@ -2861,6 +2870,7 @@ export namespace Prisma {
       nom: string
       age: number | null
       dateDeNaissance: Date
+      sexe: string
       telephone: string | null
       adresse: string | null
       antecedents: string | null
@@ -3247,6 +3257,7 @@ export namespace Prisma {
     readonly nom: FieldRef<"Patient", 'String'>
     readonly age: FieldRef<"Patient", 'Int'>
     readonly dateDeNaissance: FieldRef<"Patient", 'DateTime'>
+    readonly sexe: FieldRef<"Patient", 'String'>
     readonly telephone: FieldRef<"Patient", 'String'>
     readonly adresse: FieldRef<"Patient", 'String'>
     readonly antecedents: FieldRef<"Patient", 'String'>
@@ -19882,6 +19893,7 @@ export namespace Prisma {
     nom: 'nom',
     age: 'age',
     dateDeNaissance: 'dateDeNaissance',
+    sexe: 'sexe',
     telephone: 'telephone',
     adresse: 'adresse',
     antecedents: 'antecedents',
@@ -20089,6 +20101,7 @@ export namespace Prisma {
 
   export const PatientOrderByRelevanceFieldEnum: {
     nom: 'nom',
+    sexe: 'sexe',
     telephone: 'telephone',
     adresse: 'adresse',
     antecedents: 'antecedents'
@@ -20248,6 +20261,7 @@ export namespace Prisma {
     nom?: StringFilter<"Patient"> | string
     age?: IntNullableFilter<"Patient"> | number | null
     dateDeNaissance?: DateTimeFilter<"Patient"> | Date | string
+    sexe?: StringFilter<"Patient"> | string
     telephone?: StringNullableFilter<"Patient"> | string | null
     adresse?: StringNullableFilter<"Patient"> | string | null
     antecedents?: StringNullableFilter<"Patient"> | string | null
@@ -20268,6 +20282,7 @@ export namespace Prisma {
     nom?: SortOrder
     age?: SortOrderInput | SortOrder
     dateDeNaissance?: SortOrder
+    sexe?: SortOrder
     telephone?: SortOrderInput | SortOrder
     adresse?: SortOrderInput | SortOrder
     antecedents?: SortOrderInput | SortOrder
@@ -20292,6 +20307,7 @@ export namespace Prisma {
     NOT?: PatientWhereInput | PatientWhereInput[]
     age?: IntNullableFilter<"Patient"> | number | null
     dateDeNaissance?: DateTimeFilter<"Patient"> | Date | string
+    sexe?: StringFilter<"Patient"> | string
     telephone?: StringNullableFilter<"Patient"> | string | null
     adresse?: StringNullableFilter<"Patient"> | string | null
     antecedents?: StringNullableFilter<"Patient"> | string | null
@@ -20312,6 +20328,7 @@ export namespace Prisma {
     nom?: SortOrder
     age?: SortOrderInput | SortOrder
     dateDeNaissance?: SortOrder
+    sexe?: SortOrder
     telephone?: SortOrderInput | SortOrder
     adresse?: SortOrderInput | SortOrder
     antecedents?: SortOrderInput | SortOrder
@@ -20333,6 +20350,7 @@ export namespace Prisma {
     nom?: StringWithAggregatesFilter<"Patient"> | string
     age?: IntNullableWithAggregatesFilter<"Patient"> | number | null
     dateDeNaissance?: DateTimeWithAggregatesFilter<"Patient"> | Date | string
+    sexe?: StringWithAggregatesFilter<"Patient"> | string
     telephone?: StringNullableWithAggregatesFilter<"Patient"> | string | null
     adresse?: StringNullableWithAggregatesFilter<"Patient"> | string | null
     antecedents?: StringNullableWithAggregatesFilter<"Patient"> | string | null
@@ -21331,6 +21349,7 @@ export namespace Prisma {
     nom: string
     age?: number | null
     dateDeNaissance: Date | string
+    sexe: string
     telephone?: string | null
     adresse?: string | null
     antecedents?: string | null
@@ -21351,6 +21370,7 @@ export namespace Prisma {
     nom: string
     age?: number | null
     dateDeNaissance: Date | string
+    sexe: string
     telephone?: string | null
     adresse?: string | null
     antecedents?: string | null
@@ -21370,6 +21390,7 @@ export namespace Prisma {
     nom?: StringFieldUpdateOperationsInput | string
     age?: NullableIntFieldUpdateOperationsInput | number | null
     dateDeNaissance?: DateTimeFieldUpdateOperationsInput | Date | string
+    sexe?: StringFieldUpdateOperationsInput | string
     telephone?: NullableStringFieldUpdateOperationsInput | string | null
     adresse?: NullableStringFieldUpdateOperationsInput | string | null
     antecedents?: NullableStringFieldUpdateOperationsInput | string | null
@@ -21390,6 +21411,7 @@ export namespace Prisma {
     nom?: StringFieldUpdateOperationsInput | string
     age?: NullableIntFieldUpdateOperationsInput | number | null
     dateDeNaissance?: DateTimeFieldUpdateOperationsInput | Date | string
+    sexe?: StringFieldUpdateOperationsInput | string
     telephone?: NullableStringFieldUpdateOperationsInput | string | null
     adresse?: NullableStringFieldUpdateOperationsInput | string | null
     antecedents?: NullableStringFieldUpdateOperationsInput | string | null
@@ -21410,6 +21432,7 @@ export namespace Prisma {
     nom: string
     age?: number | null
     dateDeNaissance: Date | string
+    sexe: string
     telephone?: string | null
     adresse?: string | null
     antecedents?: string | null
@@ -21422,6 +21445,7 @@ export namespace Prisma {
     nom?: StringFieldUpdateOperationsInput | string
     age?: NullableIntFieldUpdateOperationsInput | number | null
     dateDeNaissance?: DateTimeFieldUpdateOperationsInput | Date | string
+    sexe?: StringFieldUpdateOperationsInput | string
     telephone?: NullableStringFieldUpdateOperationsInput | string | null
     adresse?: NullableStringFieldUpdateOperationsInput | string | null
     antecedents?: NullableStringFieldUpdateOperationsInput | string | null
@@ -21435,6 +21459,7 @@ export namespace Prisma {
     nom?: StringFieldUpdateOperationsInput | string
     age?: NullableIntFieldUpdateOperationsInput | number | null
     dateDeNaissance?: DateTimeFieldUpdateOperationsInput | Date | string
+    sexe?: StringFieldUpdateOperationsInput | string
     telephone?: NullableStringFieldUpdateOperationsInput | string | null
     adresse?: NullableStringFieldUpdateOperationsInput | string | null
     antecedents?: NullableStringFieldUpdateOperationsInput | string | null
@@ -22504,6 +22529,7 @@ export namespace Prisma {
     nom?: SortOrder
     age?: SortOrder
     dateDeNaissance?: SortOrder
+    sexe?: SortOrder
     telephone?: SortOrder
     adresse?: SortOrder
     antecedents?: SortOrder
@@ -22523,6 +22549,7 @@ export namespace Prisma {
     nom?: SortOrder
     age?: SortOrder
     dateDeNaissance?: SortOrder
+    sexe?: SortOrder
     telephone?: SortOrder
     adresse?: SortOrder
     antecedents?: SortOrder
@@ -22536,6 +22563,7 @@ export namespace Prisma {
     nom?: SortOrder
     age?: SortOrder
     dateDeNaissance?: SortOrder
+    sexe?: SortOrder
     telephone?: SortOrder
     adresse?: SortOrder
     antecedents?: SortOrder
@@ -25224,6 +25252,7 @@ export namespace Prisma {
     nom: string
     age?: number | null
     dateDeNaissance: Date | string
+    sexe: string
     telephone?: string | null
     adresse?: string | null
     antecedents?: string | null
@@ -25243,6 +25272,7 @@ export namespace Prisma {
     nom: string
     age?: number | null
     dateDeNaissance: Date | string
+    sexe: string
     telephone?: string | null
     adresse?: string | null
     antecedents?: string | null
@@ -25365,6 +25395,7 @@ export namespace Prisma {
     nom?: StringFieldUpdateOperationsInput | string
     age?: NullableIntFieldUpdateOperationsInput | number | null
     dateDeNaissance?: DateTimeFieldUpdateOperationsInput | Date | string
+    sexe?: StringFieldUpdateOperationsInput | string
     telephone?: NullableStringFieldUpdateOperationsInput | string | null
     adresse?: NullableStringFieldUpdateOperationsInput | string | null
     antecedents?: NullableStringFieldUpdateOperationsInput | string | null
@@ -25384,6 +25415,7 @@ export namespace Prisma {
     nom?: StringFieldUpdateOperationsInput | string
     age?: NullableIntFieldUpdateOperationsInput | number | null
     dateDeNaissance?: DateTimeFieldUpdateOperationsInput | Date | string
+    sexe?: StringFieldUpdateOperationsInput | string
     telephone?: NullableStringFieldUpdateOperationsInput | string | null
     adresse?: NullableStringFieldUpdateOperationsInput | string | null
     antecedents?: NullableStringFieldUpdateOperationsInput | string | null
@@ -25526,6 +25558,7 @@ export namespace Prisma {
     nom: string
     age?: number | null
     dateDeNaissance: Date | string
+    sexe: string
     telephone?: string | null
     adresse?: string | null
     antecedents?: string | null
@@ -25545,6 +25578,7 @@ export namespace Prisma {
     nom: string
     age?: number | null
     dateDeNaissance: Date | string
+    sexe: string
     telephone?: string | null
     adresse?: string | null
     antecedents?: string | null
@@ -25629,6 +25663,7 @@ export namespace Prisma {
     nom?: StringFieldUpdateOperationsInput | string
     age?: NullableIntFieldUpdateOperationsInput | number | null
     dateDeNaissance?: DateTimeFieldUpdateOperationsInput | Date | string
+    sexe?: StringFieldUpdateOperationsInput | string
     telephone?: NullableStringFieldUpdateOperationsInput | string | null
     adresse?: NullableStringFieldUpdateOperationsInput | string | null
     antecedents?: NullableStringFieldUpdateOperationsInput | string | null
@@ -25648,6 +25683,7 @@ export namespace Prisma {
     nom?: StringFieldUpdateOperationsInput | string
     age?: NullableIntFieldUpdateOperationsInput | number | null
     dateDeNaissance?: DateTimeFieldUpdateOperationsInput | Date | string
+    sexe?: StringFieldUpdateOperationsInput | string
     telephone?: NullableStringFieldUpdateOperationsInput | string | null
     adresse?: NullableStringFieldUpdateOperationsInput | string | null
     antecedents?: NullableStringFieldUpdateOperationsInput | string | null
@@ -25710,6 +25746,7 @@ export namespace Prisma {
     nom: string
     age?: number | null
     dateDeNaissance: Date | string
+    sexe: string
     telephone?: string | null
     adresse?: string | null
     antecedents?: string | null
@@ -25729,6 +25766,7 @@ export namespace Prisma {
     nom: string
     age?: number | null
     dateDeNaissance: Date | string
+    sexe: string
     telephone?: string | null
     adresse?: string | null
     antecedents?: string | null
@@ -25813,6 +25851,7 @@ export namespace Prisma {
     nom?: StringFieldUpdateOperationsInput | string
     age?: NullableIntFieldUpdateOperationsInput | number | null
     dateDeNaissance?: DateTimeFieldUpdateOperationsInput | Date | string
+    sexe?: StringFieldUpdateOperationsInput | string
     telephone?: NullableStringFieldUpdateOperationsInput | string | null
     adresse?: NullableStringFieldUpdateOperationsInput | string | null
     antecedents?: NullableStringFieldUpdateOperationsInput | string | null
@@ -25832,6 +25871,7 @@ export namespace Prisma {
     nom?: StringFieldUpdateOperationsInput | string
     age?: NullableIntFieldUpdateOperationsInput | number | null
     dateDeNaissance?: DateTimeFieldUpdateOperationsInput | Date | string
+    sexe?: StringFieldUpdateOperationsInput | string
     telephone?: NullableStringFieldUpdateOperationsInput | string | null
     adresse?: NullableStringFieldUpdateOperationsInput | string | null
     antecedents?: NullableStringFieldUpdateOperationsInput | string | null
@@ -25850,6 +25890,7 @@ export namespace Prisma {
     nom: string
     age?: number | null
     dateDeNaissance: Date | string
+    sexe: string
     telephone?: string | null
     adresse?: string | null
     antecedents?: string | null
@@ -25869,6 +25910,7 @@ export namespace Prisma {
     nom: string
     age?: number | null
     dateDeNaissance: Date | string
+    sexe: string
     telephone?: string | null
     adresse?: string | null
     antecedents?: string | null
@@ -25974,6 +26016,7 @@ export namespace Prisma {
     nom?: StringFieldUpdateOperationsInput | string
     age?: NullableIntFieldUpdateOperationsInput | number | null
     dateDeNaissance?: DateTimeFieldUpdateOperationsInput | Date | string
+    sexe?: StringFieldUpdateOperationsInput | string
     telephone?: NullableStringFieldUpdateOperationsInput | string | null
     adresse?: NullableStringFieldUpdateOperationsInput | string | null
     antecedents?: NullableStringFieldUpdateOperationsInput | string | null
@@ -25993,6 +26036,7 @@ export namespace Prisma {
     nom?: StringFieldUpdateOperationsInput | string
     age?: NullableIntFieldUpdateOperationsInput | number | null
     dateDeNaissance?: DateTimeFieldUpdateOperationsInput | Date | string
+    sexe?: StringFieldUpdateOperationsInput | string
     telephone?: NullableStringFieldUpdateOperationsInput | string | null
     adresse?: NullableStringFieldUpdateOperationsInput | string | null
     antecedents?: NullableStringFieldUpdateOperationsInput | string | null
@@ -26370,6 +26414,7 @@ export namespace Prisma {
     nom: string
     age?: number | null
     dateDeNaissance: Date | string
+    sexe: string
     telephone?: string | null
     adresse?: string | null
     antecedents?: string | null
@@ -26389,6 +26434,7 @@ export namespace Prisma {
     nom: string
     age?: number | null
     dateDeNaissance: Date | string
+    sexe: string
     telephone?: string | null
     adresse?: string | null
     antecedents?: string | null
@@ -26490,6 +26536,7 @@ export namespace Prisma {
     nom?: StringFieldUpdateOperationsInput | string
     age?: NullableIntFieldUpdateOperationsInput | number | null
     dateDeNaissance?: DateTimeFieldUpdateOperationsInput | Date | string
+    sexe?: StringFieldUpdateOperationsInput | string
     telephone?: NullableStringFieldUpdateOperationsInput | string | null
     adresse?: NullableStringFieldUpdateOperationsInput | string | null
     antecedents?: NullableStringFieldUpdateOperationsInput | string | null
@@ -26509,6 +26556,7 @@ export namespace Prisma {
     nom?: StringFieldUpdateOperationsInput | string
     age?: NullableIntFieldUpdateOperationsInput | number | null
     dateDeNaissance?: DateTimeFieldUpdateOperationsInput | Date | string
+    sexe?: StringFieldUpdateOperationsInput | string
     telephone?: NullableStringFieldUpdateOperationsInput | string | null
     adresse?: NullableStringFieldUpdateOperationsInput | string | null
     antecedents?: NullableStringFieldUpdateOperationsInput | string | null
@@ -26909,6 +26957,7 @@ export namespace Prisma {
     nom: string
     age?: number | null
     dateDeNaissance: Date | string
+    sexe: string
     telephone?: string | null
     adresse?: string | null
     antecedents?: string | null
@@ -26928,6 +26977,7 @@ export namespace Prisma {
     nom: string
     age?: number | null
     dateDeNaissance: Date | string
+    sexe: string
     telephone?: string | null
     adresse?: string | null
     antecedents?: string | null
@@ -26962,6 +27012,7 @@ export namespace Prisma {
     nom?: StringFieldUpdateOperationsInput | string
     age?: NullableIntFieldUpdateOperationsInput | number | null
     dateDeNaissance?: DateTimeFieldUpdateOperationsInput | Date | string
+    sexe?: StringFieldUpdateOperationsInput | string
     telephone?: NullableStringFieldUpdateOperationsInput | string | null
     adresse?: NullableStringFieldUpdateOperationsInput | string | null
     antecedents?: NullableStringFieldUpdateOperationsInput | string | null
@@ -26981,6 +27032,7 @@ export namespace Prisma {
     nom?: StringFieldUpdateOperationsInput | string
     age?: NullableIntFieldUpdateOperationsInput | number | null
     dateDeNaissance?: DateTimeFieldUpdateOperationsInput | Date | string
+    sexe?: StringFieldUpdateOperationsInput | string
     telephone?: NullableStringFieldUpdateOperationsInput | string | null
     adresse?: NullableStringFieldUpdateOperationsInput | string | null
     antecedents?: NullableStringFieldUpdateOperationsInput | string | null
@@ -27042,6 +27094,7 @@ export namespace Prisma {
     nom: string
     age?: number | null
     dateDeNaissance: Date | string
+    sexe: string
     telephone?: string | null
     adresse?: string | null
     antecedents?: string | null
@@ -27061,6 +27114,7 @@ export namespace Prisma {
     nom: string
     age?: number | null
     dateDeNaissance: Date | string
+    sexe: string
     telephone?: string | null
     adresse?: string | null
     antecedents?: string | null
@@ -27111,6 +27165,7 @@ export namespace Prisma {
     nom?: StringFieldUpdateOperationsInput | string
     age?: NullableIntFieldUpdateOperationsInput | number | null
     dateDeNaissance?: DateTimeFieldUpdateOperationsInput | Date | string
+    sexe?: StringFieldUpdateOperationsInput | string
     telephone?: NullableStringFieldUpdateOperationsInput | string | null
     adresse?: NullableStringFieldUpdateOperationsInput | string | null
     antecedents?: NullableStringFieldUpdateOperationsInput | string | null
@@ -27130,6 +27185,7 @@ export namespace Prisma {
     nom?: StringFieldUpdateOperationsInput | string
     age?: NullableIntFieldUpdateOperationsInput | number | null
     dateDeNaissance?: DateTimeFieldUpdateOperationsInput | Date | string
+    sexe?: StringFieldUpdateOperationsInput | string
     telephone?: NullableStringFieldUpdateOperationsInput | string | null
     adresse?: NullableStringFieldUpdateOperationsInput | string | null
     antecedents?: NullableStringFieldUpdateOperationsInput | string | null

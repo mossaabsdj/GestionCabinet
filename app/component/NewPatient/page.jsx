@@ -25,6 +25,7 @@ export default function AddPatientModal({ open, onClose, onAdd }) {
     telephone: "",
     adresse: "",
     antecedents: "",
+    sexe: "",
     groupeSanguin: "",
     poidsDeNaissance: "", // 🆕 added
     dateDeNaissance: "", // 🆕 added
@@ -46,6 +47,8 @@ export default function AddPatientModal({ open, onClose, onAdd }) {
     });
     setForm({
       nom: "",
+      sexe: "",
+
       age: "",
       telephone: "",
       adresse: "",
@@ -88,7 +91,7 @@ export default function AddPatientModal({ open, onClose, onAdd }) {
           {/* Grid layout for Age + Téléphone */}
           <div className="grid grid-cols-2 gap-6">
             <div>
-              <Label className="text-gray-500">Date de naissance</Label>
+              <Label className="text-purple-700">Date de naissance</Label>
               <Input
                 type="date"
                 value={form.dateDeNaissance}
@@ -98,33 +101,43 @@ export default function AddPatientModal({ open, onClose, onAdd }) {
                 className="h-12 px-4 mt-1 rounded-xl border-gray-300 focus:ring-2 focus:ring-purple-500"
               />
             </div>
-
             <div>
-              <Label className="text-gray-500">Téléphone</Label>
+              <Label className="text-purple-700 font-medium">
+                {" "}
+                Sexe de l’enfant
+              </Label>
+              <Select
+                value={form.sexe}
+                onValueChange={(val) => {
+                  setForm({ ...form, sexe: val });
+                  console.log("Sexe sélectionné:", val, "Formulaire:", form);
+                }}
+              >
+                <SelectTrigger className="h-12 px-4 mt-1 rounded-xl bg-white text-black">
+                  <SelectValue placeholder="Sélectionner le sexe" />
+                </SelectTrigger>
+
+                <SelectContent>
+                  <SelectItem value="garçon">Garçon</SelectItem>
+                  <SelectItem value="fille">Fille</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          {/* 🆕 Poids de naissance + Date de naissance */}
+          <div className="grid grid-cols-2 gap-6">
+            <div>
+              <Label className="text-gray-500">Poids de naissance (kg)</Label>
               <Input
-                placeholder="---"
-                type="tel"
-                value={form.telephone}
+                type="number"
+                placeholder="Ex: 3.2"
+                value={form.poidsDeNaissance}
                 onChange={(e) =>
-                  setForm({ ...form, telephone: e.target.value })
+                  setForm({ ...form, poidsDeNaissance: e.target.value })
                 }
                 className="h-12 px-4 mt-1 rounded-xl bg-gray-50 text-gray-600 placeholder-gray-400"
               />
             </div>
-          </div>
-
-          {/* Grid layout for Adresse + Groupe sanguin */}
-          <div className="grid grid-cols-2 gap-6">
-            <div>
-              <Label className="text-gray-500">Adresse</Label>
-              <Input
-                placeholder="---"
-                value={form.adresse}
-                onChange={(e) => setForm({ ...form, adresse: e.target.value })}
-                className="h-12 px-4 mt-1 rounded-xl bg-gray-50 text-gray-600 placeholder-gray-400"
-              />
-            </div>
-
             <div>
               <Label className="text-gray-500">Groupe sanguin</Label>
               <Select
@@ -150,17 +163,26 @@ export default function AddPatientModal({ open, onClose, onAdd }) {
               </Select>
             </div>
           </div>
-
-          {/* 🆕 Poids de naissance + Date de naissance */}
+          {/* Grid layout for Adresse + Groupe sanguin */}
           <div className="grid grid-cols-2 gap-6">
             <div>
-              <Label className="text-gray-500">Poids de naissance (kg)</Label>
+              <Label className="text-gray-500">Adresse</Label>
               <Input
-                type="number"
-                placeholder="Ex: 3.2"
-                value={form.poidsDeNaissance}
+                placeholder="---"
+                value={form.adresse}
+                onChange={(e) => setForm({ ...form, adresse: e.target.value })}
+                className="h-12 px-4 mt-1 rounded-xl bg-gray-50 text-gray-600 placeholder-gray-400"
+              />
+            </div>
+            <div>
+              {" "}
+              <Label className="text-gray-500">Téléphone</Label>
+              <Input
+                placeholder="---"
+                type="tel"
+                value={form.telephone}
                 onChange={(e) =>
-                  setForm({ ...form, poidsDeNaissance: e.target.value })
+                  setForm({ ...form, telephone: e.target.value })
                 }
                 className="h-12 px-4 mt-1 rounded-xl bg-gray-50 text-gray-600 placeholder-gray-400"
               />

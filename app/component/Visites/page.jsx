@@ -25,15 +25,21 @@ import {
   Save,
 } from "lucide-react";
 
-export default function PatientVisits({ patientId }) {
+export default function PatientVisits({ patientId, query }) {
   const [visits, setVisits] = useState([]);
   const printRef = useRef();
   const bilanPrintRef = useRef();
-
+  const [filtredData, setfiltredData] = useState();
   const [selectedVisit, setSelectedVisit] = useState(null);
   const [deleteConfirm, setDeleteConfirm] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [editedData, setEditedData] = useState({});
+  const [search, setsearch] = useState("");
+  useEffect(() => {
+    console.log(query);
+    const filtred = visits?.filter((v) => v.id.toString().includes(query));
+    setfiltredData(filtred);
+  }, [query]);
   const fetchConsultations = async () => {
     try {
       const res = await fetch(`/api/Consulter?patientId=${patientId}`);
@@ -42,6 +48,7 @@ export default function PatientVisits({ patientId }) {
       if (!res.ok) throw new Error(data.error || "Erreur de chargement");
 
       setVisits(data);
+      setfiltredData(data);
     } catch (err) {
       console.error("❌ Erreur:", err);
     }
@@ -277,13 +284,13 @@ export default function PatientVisits({ patientId }) {
   };
   return (
     <div className="p-4">
-      {visits.length === 0 ? (
+      {filtredData?.length === 0 ? (
         <p className="text-center text-gray-500">
           Aucune consultation trouvée.
         </p>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-          {visits.map((visit) => (
+          {filtredData?.map((visit) => (
             <Card
               key={visit.id}
               onClick={() => {

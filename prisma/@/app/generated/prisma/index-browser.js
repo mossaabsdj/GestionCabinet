@@ -125,6 +125,7 @@ exports.Prisma.PatientScalarFieldEnum = {
   nom: 'nom',
   age: 'age',
   dateDeNaissance: 'dateDeNaissance',
+  sexe: 'sexe',
   telephone: 'telephone',
   adresse: 'adresse',
   antecedents: 'antecedents',
@@ -275,6 +276,7 @@ exports.Prisma.NullsOrder = {
 
 exports.Prisma.PatientOrderByRelevanceFieldEnum = {
   nom: 'nom',
+  sexe: 'sexe',
   telephone: 'telephone',
   adresse: 'adresse',
   antecedents: 'antecedents'

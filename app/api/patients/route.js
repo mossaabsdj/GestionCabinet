@@ -40,16 +40,17 @@ export async function POST(req) {
       groupeSanguin,
       poidsDeNaissance,
       dateDeNaissance,
+      sexe,
     } = body;
 
     if (!nom || nom.trim() === "") {
       return NextResponse.json({ error: "Nom est requis" }, { status: 400 });
     }
-
     const patient = await prisma.patient.create({
       data: {
         nom,
         age: age || null,
+        sexe: sexe || null,
         telephone: telephone || null,
         adresse: adresse || null,
         antecedents: antecedents || null,
@@ -82,6 +83,7 @@ export async function PUT(req) {
       telephone,
       poidsDeNaissance,
       dateDeNaissance,
+      sexe,
       adresse,
       antecedents,
       groupeSanguin,
@@ -99,6 +101,7 @@ export async function PUT(req) {
       data: {
         nom,
         age: age || null,
+        sexe: sexe || null,
         telephone: telephone || null,
         adresse: adresse || null,
         antecedents: antecedents || null,
