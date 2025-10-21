@@ -22,6 +22,7 @@ const Sidebar = ({
   collapsed = false,
   onToggleCollapse,
   userInfo = { name: "Dr. Amel", role: "Médecin" },
+  handleparam,
 }) => {
   const [activeItem, setActiveItem] = useState(items[0]?.url || "");
   const [hoveredItem, setHoveredItem] = useState(null);
@@ -37,7 +38,7 @@ const Sidebar = ({
     <motion.div
       animate={{ width: collapsed ? 80 : 280 }}
       transition={{ duration: 0.3, ease: "easeInOut" }}
-      className="h-screen bg-gradient-to-b from-purple-900 via-purple-800 to-purple-900 text-white shadow-2xl flex flex-col relative overflow-x-hidden"
+      className="h-screen bg-gradient-to-b from-purple-600 via-purple-700 to-purple-900 text-white shadow-2xl flex flex-col relative overflow-x-hidden"
     >
       {/* Header */}
       <div className="p-6 border-b border-purple-700/50">
@@ -141,7 +142,10 @@ const Sidebar = ({
       <div className="p-4 border-t border-purple-700/50">
         {/* Settings & Logout */}
         <div className="flex gap-2 mt-3">
-          <button className="flex-1 p-3 rounded-lg bg-purple-700/30 hover:bg-purple-700/50 transition-colors">
+          <button
+            onClick={handleparam}
+            className="flex-1 p-3 rounded-lg bg-purple-700/30 hover:bg-purple-700/50 transition-colors"
+          >
             <Settings className="w-5 h-5 mx-auto" />
           </button>
 
@@ -183,7 +187,11 @@ export default function App() {
     // Auto-close sidebar after navigation
     setCollapsed(true);
   };
-
+  const handleParam = () => {
+    router.push(`/Params`);
+    // Auto-close sidebar after navigation
+    setCollapsed(true);
+  };
   return (
     <div className="flex h-screen bg-gradient-to-br from-purple-50 to-white overflow-hidden">
       <Sidebar
@@ -191,6 +199,7 @@ export default function App() {
         collapsed={collapsed}
         onToggleCollapse={() => setCollapsed(!collapsed)}
         onNavigate={handleNavigate}
+        handleparam={handleParam}
         userInfo={{ name: "Dr. Dib Amel", role: "Médecin Pédiatre" }}
       />
     </div>

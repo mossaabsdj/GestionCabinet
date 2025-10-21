@@ -216,7 +216,7 @@ export default function PatientsPage() {
   };
 
   return (
-    <div className="overflow-y-hidden min-h-screen bg-gradient-to-br from-purple-50 via-white to-purple-100">
+    <div className="overflow-y-hidden min-h-screen bg-gradient-to-br from-purple-50 via-white to-purple-100 p-6">
       <AjouteModal
         onAdd={handleAddPatient}
         open={isAddOpen}

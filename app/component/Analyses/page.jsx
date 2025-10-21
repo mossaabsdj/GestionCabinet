@@ -30,7 +30,14 @@ export default function Analyses({
     description: "",
     fichier: "",
   });
+  const [basePath, setBasePath] = useState("");
 
+  useEffect(() => {
+    // Get Electron path only once
+    window.electron.getAppPath().then((path) => {
+      setBasePath(path);
+    });
+  }, []);
   // ✅ Fetch files (filtered by patient)
   const fetchFiles = async () => {
     setLoading(true);
@@ -84,8 +91,12 @@ export default function Analyses({
   }, [patientID]);
 
   // ✅ Open file in new tab
-  const openFile = (path) => {
-    if (path) window.open("/uploads/" + path, "_blank");
+  const openFile = (fullPath) => {
+    if (window.electron?.openFile) {
+      window.electron.openFile(fullPath);
+    } else {
+      console.error("openFile not available in electronAPI");
+    }
   };
 
   // ✅ Add new file
@@ -201,7 +212,9 @@ export default function Analyses({
                 </span>
               </button>
 
-              <CardContent onClick={() => openFile(file.fichier)}>
+              <CardContent
+                onClick={() => openFile(`${basePath}/${file.fichier}`)}
+              >
                 <p className="font-medium text-purple-700 text-lg">
                   {file.name}
                 </p>

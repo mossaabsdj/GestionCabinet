@@ -571,12 +571,6 @@ export default function PatientDashboard() {
         transition={{ duration: 0.5, ease: "easeOut" }}
         className="w-70 h-screen bg-purple-100 rounded-tr-4xl p-6 pl-2 pr-2  pr-0flex flex-col border-r border-purple-200 fixed "
       >
-        <div
-          className="absolute  bg-no-repeat bg-cover bg-center opacity-15 pointer-events-none "
-          style={{
-            backgroundImage: "url('/background.png')",
-          }}
-        ></div>
         <div className="flex justify-between items-center mb-6">
           <motion.h2
             initial={{ scale: 0.8, opacity: 0 }}
@@ -624,7 +618,7 @@ export default function PatientDashboard() {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.4 }}
-          className="overflow-y-auto flex-1 h-[calc(100vh-120px)]"
+          className="overflow-y-auto p-1 flex-1 h-[calc(100vh-120px)]"
         >
           <AnimatePresence>
             {filteredPatients.map((patient, index) => (
