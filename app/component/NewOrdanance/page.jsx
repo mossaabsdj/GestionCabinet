@@ -358,61 +358,41 @@ export default function PrescriptionModal({
   }, [justifType]);
 
   const handlePrintElectron = () => {
-    if (!printRef.current) return;
-    const printContents = printRef.current.outerHTML;
+    if (!prescriptionItems || prescriptionItems.length === 0) {
+      alert("Aucune donnée à imprimer");
+      return;
+    }
+
+    // The ordonnance ID (for example if saved in DB or generated)
+    const ordonnanceId = selectedPatient?.id || Date.now().toString();
 
     window.electron?.printOrdonnance({
-      title: "Ordonnance - Dr DIB Amel",
-      html: `
-      <html>
-        <head>
-          <style>
-            body { font-family: 'Segoe UI', Arial, sans-serif; background: #f8f8fa; margin: 0; }
-            .ord-print-header { text-align: center; padding: 24px 0 8px; border-bottom: 2px solid #7c3aed; }
-            .ord-print-title { font-size: 2rem; color: #7c3aed; font-weight: bold; margin-bottom: 4px; }
-            .ord-print-doc { font-size: 1.1rem; color: #444; margin-bottom: 2px; }
-            .ord-print-date { font-size: 0.95rem; color: #888; margin-bottom: 12px; }
-            .ord-print-list { margin: 24px 0; }
-            .ord-print-item { padding: 12px 18px; border-radius: 8px; background: #fff; margin-bottom: 12px; box-shadow: 0 2px 8px #e9e9f3; }
-            .ord-print-item-title { font-size: 1.1rem; color: #7c3aed; font-weight: 500; }
-            .ord-print-item-details { font-size: 0.98rem; color: #444; margin-top: 2px; }
-            .ord-print-footer { text-align: right; font-size: 1rem; color: #7c3aed; margin-top: 32px; border-top: 1px solid #e0e0e0; padding-top: 12px; }
-          </style>
-        </head>
-        <body>
-          ${printContents}
-        </body>
-      </html>
-    `,
+      id: ordonnanceId,
+      items: prescriptionItems.map((it) => ({
+        name: it.nom,
+        dosage: it.dosage,
+        duration: it.duree,
+        frequency: it.frequence,
+        quantity: it.quantite,
+      })),
     });
   };
 
   const handlePrintBilanElectron = () => {
-    if (!bilanPrintRef.current) return;
+    if (!labItems || labItems.length === 0) {
+      alert("Aucun examen à imprimer");
+      return;
+    }
 
-    const printContents = bilanPrintRef.current.outerHTML;
+    // Use patient ID if available, otherwise timestamp
+    const bilanId = selectedPatient?.id || Date.now().toString();
 
     window.electron?.printBilan({
-      title: "Bilans & Analyses - Dr DIB Amel",
-      html: `
-      <html>
-        <head>
-          <style>
-            body { font-family: 'Segoe UI', Arial, sans-serif; background: #f8f8fa; margin: 0; }
-            .bilan-print-header { text-align: center; padding: 24px 0 8px; border-bottom: 2px solid #7c3aed; }
-            .bilan-print-title { font-size: 2rem; color: #7c3aed; font-weight: bold; margin-bottom: 4px; }
-            .bilan-print-doc { font-size: 1.1rem; color: #444; margin-bottom: 2px; }
-            .bilan-print-date { font-size: 0.95rem; color: #888; margin-bottom: 12px; }
-            .bilan-print-list { margin: 24px 0; }
-            .bilan-print-item { padding: 12px 18px; border-radius: 8px; background: #fff; margin-bottom: 12px; box-shadow: 0 2px 8px #e9e9f3; }
-            .bilan-print-footer { text-align: right; font-size: 1rem; color: #7c3aed; margin-top: 32px; border-top: 1px solid #e0e0e0; padding-top: 12px; }
-          </style>
-        </head>
-        <body>
-          ${printContents}
-        </body>
-      </html>
-    `,
+      id: bilanId,
+      items: labItems.map((exam) => ({
+        id: exam.id,
+        nom: exam.nom,
+      })),
     });
   };
 

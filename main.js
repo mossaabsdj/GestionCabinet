@@ -2,8 +2,10 @@ const { app, BrowserWindow, ipcMain } = require("electron");
 const path = require("path");
 const { fork } = require("child_process");
 const { exec } = require("child_process");
+const shell = require("electron");
 const { Menu } = require("electron");
-
+const { backupDatabase } = require("./backup");
+const { restoreDatabase } = require("./restore");
 let mainWindow;
 let splashWindow;
 let serverProcess;
@@ -317,199 +319,170 @@ app.on("window-all-closed", () => {
 });
 
 // Print handlers
-ipcMain.on("print-barcode", (event, data) => {
-  console.log(data);
-
-  let printWindow = new BrowserWindow({
-    show: true,
-    width: 800,
-    height: 600,
-    webPreferences: {
-      nodeIntegration: false,
-      contextIsolation: true,
-    },
-  });
-
-  function subtotal(items) {
-    return items.map(({ Sum }) => Sum).reduce((sum, i) => sum + i, 0);
-  }
-
-  const printHtml = `
-  <html>
-    <head>
-      <style>
-        body {
-          font-family: 'Tahoma', 'Arial', sans-serif;
-          margin: 0;
-          padding: 0;
-          direction: ltr;
-        }
-        .ticket {
-          width: 100%;
-          padding: 0;
-          box-sizing: border-box;
-        }
-        h1 {
-          font-size: 2em; 
-          text-align: center;
-          margin-bottom: 10px;
-        }
-        .header {
-          font-size: 1.8em;
-          text-align: center;
-          margin-bottom: 10px;
-        }
-        .separator {
-          text-align: center;
-          font-size: 1.5em;
-          margin: 10px 0;
-        }
-        .date-client {
-          font-size: 1.5em;
-          display: flex;
-          justify-content: space-between;
-          margin-bottom: 20px;
-          padding: 0 10px;
-        }
-        .items {
-          font-size: 1.4em;
-          margin-bottom: 10px;
-          padding: 0 10px;
-        }
-        .item {
-          padding: 5px 0;
-          display: flex;
-          justify-content: space-between;
-        }
-        .item span {
-          text-align: center;
-          width: 20%;
-        }
-        .total {
-          font-weight: bold;
-          font-size: 2em;
-          padding-top: 10px;
-          margin-top: 10px;
-          text-align: center;
-        }
-      </style>
-    </head>
-    <body>
-      <div class="ticket">
-        <div class="header">Library El-Badr Bariout</div>
-        <div class="date-client">
-          <div>${new Date().toLocaleDateString("en-US")}</div>
-        </div>
-        <div class="separator">- - - - - - - - - - - - - - - -</div>
-        <div class="items">
-          <div class="item">
-            <span>No</span>
-            <span>Product</span>
-            <span>Price</span>
-            <span>Qty</span>
-            <span>Total</span>
-          </div>
-          ${data
-            .map(
-              (row, index) => `
-                <div class="item">
-                  <span>${index + 1}</span>
-                  <span>${row.Nom}</span>
-                  <span>${row.Prix_Vente || row.Prix_Achat} DA</span>
-                  <span>${row.Quantite}</span>
-                  <span>${row.Sum} DA</span>
-                </div>
-              `
-            )
-            .join("")}
-        </div>
-        <div class="separator">- - - - - - - - - - - - - - - -</div>
-        <div class="total">Total: ${subtotal(data)}.00 DA</div>
-      </div>
-    </body>
-  </html>
-`;
-
-  printWindow.loadURL(
-    "data:text/html;charset=utf-8," + encodeURIComponent(printHtml)
-  );
-
-  printWindow.webContents.on("did-finish-load", () => {
-    printWindow.webContents.print({}, (success, failureReason) => {
-      if (success) {
-        console.log("Printing successful");
-      } else {
-        console.log("Printing failed:", failureReason);
-      }
-      printWindow.close();
-    });
-  });
-});
-
-ipcMain.on("print-barcode2", (event, data) => {
-  console.log(data);
-
-  let printWindow = new BrowserWindow({
-    show: true,
-    width: 800,
-    height: 600,
-    webPreferences: {
-      nodeIntegration: false,
-      contextIsolation: true,
-    },
-  });
-
-  printWindow.loadURL(
-    "data:text/html;charset=utf-8," + encodeURIComponent(data)
-  );
-
-  printWindow.webContents.on("did-finish-load", () => {
-    printWindow.webContents.print({}, (success, failureReason) => {
-      if (success) {
-        console.log("Printing successful");
-      } else {
-        console.log("Printing failed:", failureReason);
-      }
-      printWindow.close();
-    });
-  });
-});
 
 ipcMain.handle("get-app-path", () => {
   return path.dirname(path.dirname(app.getAppPath()));
 });
-
 ipcMain.on("printOrdonnance", (event, data) => {
-  let printWindow = new BrowserWindow({
+  const { id, items = [] } = data;
+
+  const printWindow = new BrowserWindow({
     show: true,
-    width: 900,
+    width: 1000,
     height: 700,
     autoHideMenuBar: true,
-    webPreferences: {
-      nodeIntegration: false,
-      contextIsolation: true,
-    },
+    webPreferences: { nodeIntegration: false, contextIsolation: true },
   });
 
+  // Generate medicines list
+  const medListHtml = items
+    .map(
+      (m, i) => `
+      <div class="med-item">
+        <div class="med-name">${i + 1}. ${m.name || ""} ${m.dosage || ""}</div>
+        <div class="med-details">
+          ${m.frequency || ""}${m.duration ? " • " + m.duration : ""}
+          ${
+            m.quantity
+              ? ` • ${m.quantity} boîte${m.quantity > 1 ? "s" : ""}`
+              : ""
+          }
+        </div>
+      </div>`
+    )
+    .join("");
+
   const printHtml = `
-  <html>
-    <head>
-      <style>
-        body { font-family: 'Segoe UI', Arial, sans-serif; background: #f8f8fa; margin: 0; }
-        .ord-print-header { text-align: center; padding: 24px 0 8px; border-bottom: 2px solid #7c3aed; }
-        .ord-print-title { font-size: 2rem; color: #7c3aed; font-weight: bold; margin-bottom: 4px; }
-        .ord-print-doc { font-size: 1.1rem; color: #444; margin-bottom: 2px; }
-        .ord-print-date { font-size: 0.95rem; color: #888; margin-bottom: 12px; }
-        .ord-print-list { margin: 24px 0; }
-        .ord-print-item { padding: 12px 18px; border-radius: 8px; background: #fff; margin-bottom: 12px; box-shadow: 0 2px 8px #e9e9f3; }
-        .ord-print-item-title { font-size: 1.1rem; color: #7c3aed; font-weight: 500; }
-        .ord-print-item-details { font-size: 0.98rem; color: #444; margin-top: 2px; }
-        .ord-print-footer { text-align: right; font-size: 1rem; color: #7c3aed; margin-top: 32px; border-top: 1px solid #e0e0e0; padding-top: 12px; }
-      </style>
-    </head>
-    <body>
-      ${data.html}
-    </body>
+  <html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <style>
+      @page {
+        size: A4 landscape;
+        margin: 0;
+      }
+
+      html, body {
+        margin: 0;
+        padding: 0;
+        width: 29.7cm;
+        height: 21cm;
+        background: white;
+      }
+
+      /* Ordonnance box on left half */
+      .ord-container {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 14.85cm;     /* half of A4 width */
+        height: 21cm;       /* full height */
+        border: 2px solid #000;
+        box-sizing: border-box;
+        padding: 0.8cm;
+      }
+
+      .ord-header {
+        display: flex;
+        justify-content: space-between;
+        border-bottom: 2px solid #000;
+        padding-bottom: 5px;
+      }
+
+      .ord-left, .ord-right {
+        width: 45%;
+        font-size: 14px;
+        line-height: 1.4;
+      }
+
+      .ord-right { text-align: right; direction: rtl; }
+
+      .ord-num { font-size: 13px; margin-top: 4px; }
+
+      .ord-patient {
+        margin-top: 8px;
+        display: flex;
+        justify-content: space-between;
+        font-size: 15px;
+      }
+
+      .ord-title {
+        text-align: center;
+        font-weight: bold;
+        font-size: 22px;
+        margin-top: 10px;
+        text-decoration: underline;
+      }
+
+      .ord-body {
+        margin-top: 15px;
+        font-size: 17px;
+        line-height: 1.8;
+      }
+
+      .med-item { margin-bottom: 10px; }
+
+      .med-name {
+        font-weight: 700;
+        font-size: 18px;
+      }
+
+      .med-details {
+        margin-left: 15px;
+        font-size: 16px;
+        color: #333;
+      }
+
+      .ord-footer {
+        text-align: right;
+        margin-top: 10px;
+        font-size: 15px;
+        border-top: 1px dashed #000;
+        padding-top: 6px;
+      }
+    </style>
+  </head>
+
+  <body>
+    <div class="ord-container">
+      <div class="ord-header">
+        <div class="ord-left">
+          <strong>Dr DIB Amel</strong><br/>
+          Médecin Spécialiste en Pédiatrie et néonatologie<br/>
+          <strong>Adresse :</strong> Rue Frères KAFI logts 38, 1er étage<br/>
+          El-Harrouch SKIKDA<br/>
+          <strong>Tél :</strong> 0652 76 89 72/ 0562 24 40 87
+        </div>
+        <div class="ord-right">
+          <strong>د. ديب آمال</strong><br/>
+          طبيبة مختصة في طب الأطفال و حديثي الولادة<br/>
+          <strong>العنوان :</strong> شارع الإخوة كافي عقار 38 الطابق الأول<br/>
+          (بزاز لعلاوي) الحروش - سكيكدة
+        </div>
+      </div>
+
+      <div class="ord-num">N° d’ordonnance : ${id}</div>
+
+      <div class="ord-patient">
+        <span><strong>Nom :</strong> .......................</span>
+        <span><strong>Prénom :</strong> .......................</span>
+        <span><strong>Âge :</strong> ............</span>
+        <span><strong>Le :</strong> ${new Date().toLocaleDateString(
+          "fr-FR"
+        )}</span>
+      </div>
+
+      <div class="ord-title">ORDONNANCE</div>
+
+      <div class="ord-body">
+        ${medListHtml}
+      </div>
+
+      <div class="ord-footer">
+        <em>Signature et cachet du médecin</em>
+      </div>
+    </div>
+  </body>
   </html>
   `;
 
@@ -517,46 +490,197 @@ ipcMain.on("printOrdonnance", (event, data) => {
     "data:text/html;charset=utf-8," + encodeURIComponent(printHtml)
   );
 
+  // Print in landscape, left half only
   printWindow.webContents.on("did-finish-load", () => {
     setTimeout(() => {
-      printWindow.webContents.print({}, (success, failureReason) => {
-        if (success) console.log("🖨️ Ordonnance printed successfully");
-        else console.error("❌ Print failed:", failureReason);
-        printWindow.close();
-      });
+      printWindow.webContents.print(
+        {
+          silent: false,
+          printBackground: true,
+          margins: { marginType: "none" },
+          pageSize: {
+            name: "A4",
+            width: 297000, // 29.7 cm
+            height: 210000, // 21 cm
+          },
+          landscape: true,
+        },
+        (success, failureReason) => {
+          if (success)
+            console.log(
+              "🖨️ Ordonnance printed successfully (Landscape left half)"
+            );
+          else console.error("❌ Print failed:", failureReason);
+          printWindow.close();
+        }
+      );
     }, 500);
   });
 });
 
 ipcMain.on("printBilan", (event, data) => {
-  let printWindow = new BrowserWindow({
+  const { id, items = [] } = data;
+
+  const printWindow = new BrowserWindow({
     show: true,
-    width: 900,
+    width: 1000,
     height: 700,
     autoHideMenuBar: true,
-    webPreferences: {
-      nodeIntegration: false,
-      contextIsolation: true,
-    },
+    webPreferences: { nodeIntegration: false, contextIsolation: true },
   });
 
+  // Generate list of analyses/exams
+  const bilanListHtml = items
+    .map(
+      (b, i) => `
+        <div class="bilan-item">
+          <div class="bilan-name">${i + 1}. ${b.nom || b.name || ""}</div>
+        </div>`
+    )
+    .join("");
+
   const printHtml = `
-  <html>
-    <head>
-      <style>
-        body { font-family: 'Segoe UI', Arial, sans-serif; background: #f8f8fa; margin: 0; }
-        .bilan-print-header { text-align: center; padding: 24px 0 8px; border-bottom: 2px solid #7c3aed; }
-        .bilan-print-title { font-size: 2rem; color: #7c3aed; font-weight: bold; margin-bottom: 4px; }
-        .bilan-print-doc { font-size: 1.1rem; color: #444; margin-bottom: 2px; }
-        .bilan-print-date { font-size: 0.95rem; color: #888; margin-bottom: 12px; }
-        .bilan-print-list { margin: 24px 0; }
-        .bilan-print-item { padding: 12px 18px; border-radius: 8px; background: #fff; margin-bottom: 12px; box-shadow: 0 2px 8px #e9e9f3; }
-        .bilan-print-footer { text-align: right; font-size: 1rem; color: #7c3aed; margin-top: 32px; border-top: 1px solid #e0e0e0; padding-top: 12px; }
-      </style>
-    </head>
-    <body>
-      ${data.html}
-    </body>
+  <html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <style>
+      @page {
+        size: A4 landscape;
+        margin: 0;
+      }
+
+      html, body {
+        margin: 0;
+        padding: 0;
+        width: 29.7cm;
+        height: 21cm;
+        background: white;
+      }
+
+      .ord-container {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 14.85cm; /* left half of A4 */
+        height: 21cm;   /* full height */
+        border: 2px solid #000;
+        box-sizing: border-box;
+        padding: 0.8cm;
+      }
+
+      .ord-header {
+        display: flex;
+        justify-content: space-between;
+        border-bottom: 2px solid #000;
+        padding-bottom: 5px;
+      }
+
+      .ord-left, .ord-right {
+        width: 45%;
+        font-size: 14px;
+        line-height: 1.4;
+      }
+
+      .ord-right { text-align: right; direction: rtl; }
+
+      .ord-num {
+        font-size: 14px;
+        margin-top: 8px;
+        font-weight: 600;
+      }
+
+      .ord-patient {
+        margin-top: 8px;
+        display: flex;
+        justify-content: space-between;
+        font-size: 15px;
+      }
+
+      .ord-title {
+        text-align: center;
+        font-weight: bold;
+        font-size: 22px;
+        margin-top: 14px;
+        text-decoration: underline;
+      }
+
+      .ord-body {
+        margin-top: 20px;
+        font-size: 17px;
+        line-height: 1.8;
+      }
+
+      .bilan-item {
+        margin-bottom: 8px;
+        font-size: 17px;
+      }
+
+      .bilan-name {
+        font-weight: 600;
+      }
+
+      .ord-footer {
+        position: absolute;
+        bottom: 1.5cm;
+        right: 0.8cm;
+        width: calc(100% - 1.6cm);
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-end;
+        font-size: 15px;
+        border-top: 1px dashed #000;
+        padding-top: 6px;
+      }
+
+      .ord-date {
+        text-align: right;
+        font-size: 14px;
+        color: #333;
+      }
+    </style>
+  </head>
+
+  <body>
+    <div class="ord-container">
+      <div class="ord-header">
+        <div class="ord-left">
+          <strong>Dr DIB Amel</strong><br/>
+          Médecin Spécialiste en Pédiatrie et néonatologie<br/>
+          <strong>Adresse :</strong> Rue Frères KAFI logts 38, 1er étage<br/>
+          El-Harrouch SKIKDA<br/>
+          <strong>Tél :</strong> 0652 76 89 / 0562 24 40 87
+        </div>
+
+        <div class="ord-right">
+          <strong>د. ديب آمال</strong><br/>
+          طبيبة مختصة في طب الأطفال و حديثي الولادة<br/>
+          <strong>العنوان :</strong> شارع الإخوة كافي عقار 38 الطابق الأول<br/>
+          (بزاز لعلاوي) الحروش - سكيكدة
+        </div>
+      </div>
+
+      <div class="ord-num">N° de Bilan : ${id}</div>
+
+      <div class="ord-patient">
+        <span><strong>Nom :</strong> .......................</span>
+        <span><strong>Prénom :</strong> .......................</span>
+        <span><strong>Âge :</strong> ............</span>
+      </div>
+
+      <div class="ord-title">BILAN</div>
+
+      <div class="ord-body">
+        ${bilanListHtml}
+      </div>
+
+      <div class="ord-footer">
+        <em>Signature et cachet du médecin</em>
+        <div class="ord-date">
+          Le : ${new Date().toLocaleDateString("fr-FR")}
+        </div>
+      </div>
+    </div>
+  </body>
   </html>
   `;
 
@@ -566,37 +690,48 @@ ipcMain.on("printBilan", (event, data) => {
 
   printWindow.webContents.on("did-finish-load", () => {
     setTimeout(() => {
-      printWindow.webContents.print({}, (success, failureReason) => {
-        if (success) console.log("🖨️ Bilan printed successfully");
-        else console.error("❌ Print failed:", failureReason);
-        printWindow.close();
-      });
+      printWindow.webContents.print(
+        {
+          silent: false,
+          printBackground: true,
+          margins: { marginType: "none" },
+          pageSize: {
+            name: "A4",
+            width: 297000, // 29.7 cm
+            height: 210000, // 21 cm
+          },
+          landscape: true,
+        },
+        (success, failureReason) => {
+          if (success)
+            console.log("🖨️ Bilan printed successfully (Landscape left half)");
+          else console.error("❌ Print failed:", failureReason);
+          printWindow.close();
+        }
+      );
     }, 500);
   });
 });
 
-ipcMain.handle("electron.backup", async () => {
-  console.log("path" + path.dirname(app.getAppPath()));
-  try {
-    const backupScriptPath = path.join(
-      path.dirname(app.getAppPath()),
-      "Backup.bat"
-    );
-    console.log("backupScriptPath" + backupScriptPath);
+ipcMain.handle("backup-database", async () => {
+  backupDatabase();
+});
+ipcMain.handle("restore-database", async () => {
+  // Let the user select a .sql file
+  const { canceled, filePaths } = await dialog.showOpenDialog({
+    title: "Choisir un fichier de sauvegarde",
+    filters: [{ name: "SQL Files", extensions: ["sql"] }],
+    properties: ["openFile"],
+  });
 
-    await new Promise((resolve, reject) => {
-      exec(backupScriptPath, (error, stdout, stderr) => {
-        if (error) {
-          reject(`Backup failed: ${stderr}`);
-        } else {
-          resolve(stdout);
-        }
-      });
-    });
+  if (canceled || filePaths.length === 0)
+    return { success: false, message: "Aucun fichier sélectionné" };
 
-    return { success: true };
-  } catch (error) {
-    console.error("Backup error:", error);
-    return { success: false, message: error.message };
-  }
+  const filePath = filePaths[0];
+  console.log("🗂 Selected backup file:", filePath);
+  restoreDatabase(filePath);
+  return { success: true, message: "Restauration démarrée" };
+});
+ipcMain.handle("open-file", async (event, filePath) => {
+  await shell.openPath(filePath);
 });
