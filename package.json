@@ -8,6 +8,7 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
+    "release": "electron-builder --publish onTagOrDraft",
     "start": "next start",
     "electron:dev": "concurrently \"npm run dev\" \"npm run electron\"",
     "electron": "electron main.js",

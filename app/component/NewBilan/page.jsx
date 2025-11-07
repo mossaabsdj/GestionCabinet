@@ -20,11 +20,11 @@ export default function AddBilanModal({
   value,
   setValue,
 }) {
-  const [form, setForm] = useState({ nom: "" });
+  const [form, setForm] = useState({ nom: value || "" });
 
   // Synchronize form with passed `value` when editing or reopening
   useEffect(() => {
-    if (value) setForm(value);
+    // if (value) setForm(value);
   }, [value]);
 
   const handleSubmit = (e) => {
@@ -40,7 +40,7 @@ export default function AddBilanModal({
   };
 
   return (
-    <Dialog open={open} onOpenChange={onClose}>
+    <Dialog open={true} onOpenChange={onClose}>
       <DialogContent className="max-w-2xl rounded-2xl p-6 shadow-lg border border-purple-200">
         <DialogHeader className="flex flex-col items-center space-y-3">
           <div className="p-4 bg-purple-100 rounded-full shadow-md">

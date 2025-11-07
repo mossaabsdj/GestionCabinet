@@ -13,17 +13,12 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
-export default function AddMedicamentModal({
-  open,
-  onClose,
-  onAdd,
-  value,
-  setValue,
-}) {
-  const [form, setForm] = useState(value || { nom: "" });
+export default function AddMedicamentModal({ open, onClose, onAdd, value }) {
+  const [form, setForm] = useState({ nom: value || "" });
 
   function handleSubmit(e) {
     e.preventDefault();
+    console.log(form.nom);
     if (!form.nom) return alert("Le nom du médicament est requis");
     onAdd(form.nom);
     setForm({ nom: "" });

@@ -20,6 +20,10 @@ import {
   FileText,
   FlaskConical,
 } from "lucide-react";
+import DialogPage from "@/app/component/DialogPage/page";
+import DialogAlert from "@/app/component/DialgoAlert/page";
+import AddMedicamentModal from "../NewMedicament/page";
+import AddBilanModal from "../NewBilan/page";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Dialog,
@@ -64,6 +68,8 @@ export default function PrescriptionModal({
   const [customDose, setCustomDose] = useState("");
   const [customFreq, setCustomFreq] = useState("");
   const [customDuration, setCustomDuration] = useState("");
+  const [NewMedicament, setNewMedicament] = useState(false);
+  const [NewBilan, setNewBilan] = useState();
 
   const [bilanTypes, setBilanTypes] = useState([]);
   const [tmpfreq, setTmpfreq] = useState("");
@@ -556,6 +562,29 @@ export default function PrescriptionModal({
     },
   };
 
+  async function handleAddBilan(form) {
+    if (!form.nom.trim())
+      return showAlert("Champ requis", "Le nom du bilan est obligatoire.");
+    setLoading(true);
+    try {
+      const res = await fetch("/api/bilans", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ nom: form.nom }),
+      });
+
+      if (!res.ok) throw new Error("Erreur API");
+
+      const created = await res.json();
+      setBilans((prev) => [created, ...prev]);
+      //setNewBilan({ nom: "" });
+    } catch (err) {
+      console.error("Erreur lors de l’ajout", err);
+      showAlert("Erreur", "Impossible d’ajouter le bilan.");
+    } finally {
+      setLoading(false);
+    }
+  }
   const itemVariants = {
     hidden: { opacity: 0, x: -20 },
     visible: {
@@ -577,7 +606,42 @@ export default function PrescriptionModal({
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }
   }, [prescriptionItems]);
+  const [alertData, setAlertData] = useState({
+    open: false,
+    title: "",
+    message: "",
+  });
 
+  const showAlert = (title, message) =>
+    setAlertData({ open: true, title, message });
+  async function handleAddMedicament(nom) {
+    console.log(nom);
+    if (!nom) {
+      showAlert("Erreur", "Le nom du médicament est requis");
+
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const res = await fetch("/api/medicaments", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(nom),
+      });
+
+      if (!res.ok) throw new showAlert("Erreur", "erreur api");
+      const created = await res.json();
+      setMedicaments((prev) => [created, ...prev]);
+      //  setNewMedicament({ nom: "" });
+      setNewMedicament(false);
+    } catch (err) {
+      console.error("Erreur lors de l’ajout", err);
+      showAlert("Erreur", "Impossible d’ajouter le médicament.");
+    } finally {
+      setLoading(false);
+    }
+  }
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-4xl min-w-4xl p-0 max-h-[97vh] overflow-hidden">
@@ -707,14 +771,33 @@ export default function PrescriptionModal({
                                   </motion.li>
                                 ))
                               ) : (
-                                <li className="px-3 py-2 text-sm text-gray-500 text-center">
-                                  Aucun médicament trouvé
-                                </li>
+                                <div className="flex flex-col items-center justify-center py-4">
+                                  <li className="text-sm text-gray-500 italic mb-2">
+                                    Aucun médicament trouvé
+                                  </li>
+                                  <button
+                                    onClick={() => setNewMedicament(true)}
+                                    className="inline-flex items-center gap-2 px-3 py-1.5 text-sm font-medium 
+               text-white bg-purple-600 hover:bg-purple-700 rounded-lg 
+               transition-all duration-150 shadow-sm"
+                                  >
+                                    <Plus className="w-4 h-4" />
+                                    Ajouter un médicament
+                                  </button>
+                                </div>
                               )}
                             </motion.ul>
                           )}
                         </AnimatePresence>
                       </div>
+                      {NewMedicament && (
+                        <AddMedicamentModal
+                          open={NewMedicament}
+                          value={query}
+                          onAdd={handleAddMedicament}
+                          onClose={() => setNewMedicament(false)}
+                        />
+                      )}
 
                       <div>
                         <Label className="text-purple-700 font-medium">
@@ -1140,15 +1223,34 @@ export default function PrescriptionModal({
                                   </motion.li>
                                 ))
                               ) : (
-                                <li className="px-3 py-2 text-sm text-gray-500 text-center">
-                                  Aucun examen trouvé
-                                </li>
+                                <div className="flex flex-col items-center justify-center py-4">
+                                  <li className="text-sm text-gray-500 italic mb-2">
+                                    Aucun examen trouvé
+                                  </li>
+                                  <button
+                                    onClick={() => setNewBilan(true)}
+                                    className="inline-flex items-center gap-2 px-3 py-1.5 text-sm font-medium 
+               text-white bg-purple-600 hover:bg-purple-700 rounded-lg 
+               transition-all duration-150 shadow-sm"
+                                  >
+                                    <Plus className="w-4 h-4" />
+                                    Ajouter un Bilan
+                                  </button>
+                                </div>
                               )}
                             </motion.ul>
                           )}
                         </AnimatePresence>
                       </div>
                       <div>
+                        {NewBilan && (
+                          <AddBilanModal
+                            open={NewBilan}
+                            onAdd={handleAddBilan}
+                            value={labQuery}
+                            onClose={() => setNewBilan(false)}
+                          />
+                        )}
                         <Label className="text-purple-700 font-medium">
                           Type de bilan
                         </Label>
@@ -1404,7 +1506,12 @@ export default function PrescriptionModal({
             </Button>
           </motion.div>
         </motion.div>
-
+        <DialogAlert
+          open={alertData.open}
+          onClose={() => setAlertData({ ...alertData, open: false })}
+          title={alertData.title}
+          message={alertData.message}
+        />
         <Dialog open={existDialog} onOpenChange={setExistDialog}>
           <DialogContent className="max-w-sm rounded-2xl">
             <DialogHeader>
