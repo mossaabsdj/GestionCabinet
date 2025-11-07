@@ -11,6 +11,7 @@ contextBridge.exposeInMainWorld("electron", {
   backup: () => ipcRenderer.invoke("backup-database"),
   restore: () => ipcRenderer.invoke("restore-database"),
   openFile: (filePath) => ipcRenderer.invoke("open-file", filePath),
+  exit: () => ipcRenderer.send("exit"),
 
   printBarcode2: (barcodeData) =>
     ipcRenderer.send("print-barcode2", barcodeData),

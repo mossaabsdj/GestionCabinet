@@ -3,6 +3,8 @@
 // ====================
 generator client {
   provider = "prisma-client-js"
+binaryTargets = ["native", "windows"]
+
   output   = "../app/generated/prisma"
   }
 
@@ -71,7 +73,21 @@ model Consultation {
   bilanRecip            BilanRecip?
   createdAt             DateTime      @default(now())
   developpementPsychomoteur String?
+
+  // Newly added fields
+  motifDeConsultation   String?
+  perimetreCranien      Float?
+  rendezVousId          Int?
+  rendezVous            RendezVous?   @relation(fields: [rendezVousId], references: [id], onDelete: SetNull)
 }
+model RendezVous {
+  id           Int           @id @default(autoincrement())
+  date         DateTime
+  description  String?
+  consultations Consultation[]
+}
+
+
 
 model Radio {
   id              Int           @id @default(autoincrement())
@@ -115,7 +131,7 @@ model OrdonnanceItem {
   ordonnanceId  Int
   ordonnance    Ordonnance  @relation(fields: [ordonnanceId], references: [id], onDelete: Cascade)
   medicamentId  Int
-  medicament    Medicament  @relation(fields: [medicamentId], references: [id])
+  medicament    Medicament  @relation(fields: [medicamentId], references: [id] ,onDelete: Cascade)
   dosage        String?
   frequence     String?
   duree         String?
@@ -161,7 +177,7 @@ model BilanItem {
   bilanRecipId  Int
   bilanRecip    BilanRecip   @relation(fields: [bilanRecipId], references: [id], onDelete: Cascade)
   bilanId       Int
-  bilan         Bilan        @relation(fields: [bilanId], references: [id])
+  bilan         Bilan        @relation(fields: [bilanId], references: [id],onDelete: Cascade)
   resultat      String?
   remarque      String?
 }
@@ -181,7 +197,7 @@ model BilanTypeItem {
   bilanTypeId Int
   bilanType   BilanType   @relation(fields: [bilanTypeId], references: [id], onDelete: Cascade)
   bilanId     Int
-  bilan       Bilan       @relation(fields: [bilanId], references: [id])
+  bilan       Bilan       @relation(fields: [bilanId], references: [id],onDelete: Cascade)
   remarque    String?
 }
 
@@ -200,7 +216,7 @@ model RecetteTypeItem {
   recetteId    Int
   recette      RecetteType  @relation(fields: [recetteId], references: [id], onDelete: Cascade)
   medicamentId Int
-  medicament   Medicament   @relation(fields: [medicamentId], references: [id])
+  medicament   Medicament   @relation(fields: [medicamentId], references: [id],onDelete: Cascade)
   dosage       String?
   frequence    String?
   duree        String?

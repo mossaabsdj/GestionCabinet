@@ -20,7 +20,7 @@ import LoadingScreen from "../component/LoadingScreen/page";
 
 import { Trash2, Plus, Search, Pill, TestTube } from "lucide-react";
 import DialogPage from "@/app/component/DialogPage/page";
-import SearchBarPage from "@/app/component/SearchBar/page";
+import SearchBarPage from "@/app/component/SearchBar/SearchBar";
 // Mock data
 
 const MEDICAMENTS = [

@@ -61,6 +61,9 @@ export default function PrescriptionModal({
   const [bilans, setBilans] = useState([]);
   const [ordTypes, setOrdTypes] = useState([]);
   const [SelectedbilanType, setSelectedBilanType] = useState();
+  const [customDose, setCustomDose] = useState("");
+  const [customFreq, setCustomFreq] = useState("");
+  const [customDuration, setCustomDuration] = useState("");
 
   const [bilanTypes, setBilanTypes] = useState([]);
   const [tmpfreq, setTmpfreq] = useState("");
@@ -257,9 +260,9 @@ export default function PrescriptionModal({
       medicamentId: selectedMed.id,
       nom: selectedMed.nom,
       form: selectedMed.form,
-      dosage: tmpDose,
-      frequence: tmpfreq,
-      duree: tmpDuration,
+      dosage: tmpDose === "autre" ? customDose + " mg" : tmpDose,
+      frequence: tmpfreq === "autre" ? customFreq : tmpfreq,
+      duree: tmpDuration === "autre" ? customDuration : tmpDuration,
       quantite: tmpQuantite,
     };
     setPrescriptionItems([...prescriptionItems, item]);
@@ -312,7 +315,7 @@ export default function PrescriptionModal({
     };
     onsave(payload);
     console.log("✅ Saved:", payload);
-    alert("✅ Données sauvegardées");
+    // alert("✅ Données sauvegardées");
   }
 
   const totalMeds = prescriptionItems.length;
@@ -335,7 +338,14 @@ export default function PrescriptionModal({
       setPrescriptionItems([]);
     }
   }, [type, ordTypes]);
+  const scrollRef2 = useRef(null);
 
+  // ✅ Scroll to bottom whenever a new lab exam is added
+  useEffect(() => {
+    if (scrollRef2.current) {
+      scrollRef2.current.scrollTop = scrollRef2.current.scrollHeight;
+    }
+  }, [labItems]);
   useEffect(() => {
     if (SelectedbilanType && SelectedbilanType !== "autre") {
       const selectedtyoe = bilanTypes.filter((o) => o.id === SelectedbilanType);
@@ -356,44 +366,140 @@ export default function PrescriptionModal({
       setJustifText(JUSTIF_TYPE_TEXTS[justifType]);
     }
   }, [justifType]);
+  function calculateAge(dateString) {
+    if (!dateString) return "";
 
-  const handlePrintElectron = () => {
-    if (!prescriptionItems || prescriptionItems.length === 0) {
-      alert("Aucune donnée à imprimer");
-      return;
+    const birthDate = new Date(dateString);
+    const today = new Date();
+
+    const diffMs = today - birthDate;
+    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+    const diffMonths = Math.floor(diffDays / 30.44); // approx. average month length
+    const diffYears = Math.floor(diffMonths / 12);
+
+    if (diffDays < 30) {
+      // less than 1 month
+      return `${diffDays} jour${diffDays > 1 ? "s" : ""}`;
+    } else if (diffMonths < 24) {
+      // less than 2 years
+      return `${diffMonths} mois`;
+    } else {
+      // 2 years or older
+      return `${diffYears} an${diffYears > 1 ? "s" : ""}`;
     }
+  }
 
-    // The ordonnance ID (for example if saved in DB or generated)
-    const ordonnanceId = selectedPatient?.id || Date.now().toString();
+  const handlePrintElectron = async () => {
+    console.log(selectedPatient);
+    try {
+      if (!prescriptionItems || prescriptionItems.length === 0) {
+        alert("Aucune donnée à imprimer");
+        return;
+      }
+      const fullname = selectedPatient.nom;
+      let prenom = "";
+      let nom = "";
 
-    window.electron?.printOrdonnance({
-      id: ordonnanceId,
-      items: prescriptionItems.map((it) => ({
-        name: it.nom,
-        dosage: it.dosage,
-        duration: it.duree,
-        frequency: it.frequence,
-        quantity: it.quantite,
-      })),
-    });
+      if (fullname.trim()) {
+        const parts = fullname.trim().split(" ");
+        if (parts.length === 1) {
+          // only one word provided
+          nom = parts[0];
+        } else {
+          // assume last word is family name (Dib Amel → prenom: Amel, nom: Dib)
+          prenom = parts.slice(0, -1).join(" ");
+          nom = parts[parts.length - 1];
+        }
+      }
+      const datenaissance = selectedPatient.dateDeNaissance;
+      const age = calculateAge(datenaissance);
+      // 1️⃣ Fetch last consultation + ordonnance IDs from your API
+      const res = await fetch("/api/last-records");
+      if (!res.ok)
+        throw new Error("Erreur lors de la récupération des identifiants");
+      const data = await res.json();
+
+      // 2️⃣ Compute next IDs (safe even if null)
+      const nextConsultationId = (data.lastConsultationId || 0) + 1;
+      const nextOrdonnanceId = (data.lastOrdonnanceId || 0) + 1;
+
+      console.log("🩺 Next Consultation ID:", nextConsultationId);
+      console.log("💊 Next Ordonnance ID:", nextOrdonnanceId);
+      console.log(nom + "-" + prenom + "-" + age);
+      // 3️⃣ Send to Electron printer
+      window.electron?.printOrdonnance({
+        consultationId: nextConsultationId,
+        ordonnanceId: nextOrdonnanceId,
+        nom: nom,
+        prenom: prenom,
+        age: age,
+        items: prescriptionItems.map((it) => ({
+          name: it.nom,
+          dosage: it.dosage,
+          duration: it.duree,
+          frequency: it.frequence,
+          quantity: it.quantite,
+        })),
+      });
+    } catch (error) {
+      console.error("Erreur lors de l'impression de l'ordonnance:", error);
+      alert("Erreur lors de l'impression de l'ordonnance.");
+    }
   };
+  const handlePrintBilanElectron = async () => {
+    try {
+      if (!labItems || labItems.length === 0) {
+        //  alert("Aucun examen à imprimer");
+        return;
+      }
 
-  const handlePrintBilanElectron = () => {
-    if (!labItems || labItems.length === 0) {
-      alert("Aucun examen à imprimer");
-      return;
+      // 🧒 Split patient name into nom / prenom
+      const fullname = selectedPatient.nom || "";
+      let prenom = "";
+      let nom = "";
+
+      if (fullname.trim()) {
+        const parts = fullname.trim().split(" ");
+        if (parts.length === 1) nom = parts[0];
+        else {
+          prenom = parts.slice(0, -1).join(" ");
+          nom = parts[parts.length - 1];
+        }
+      }
+
+      // 🍼 Compute age (pediatric format)
+      const datenaissance = selectedPatient.dateDeNaissance;
+      const age = calculateAge(datenaissance);
+
+      // 🧾 Fetch last IDs
+      const res = await fetch("/api/last-records");
+      if (!res.ok)
+        throw new Error("Erreur lors de la récupération des identifiants");
+      const data = await res.json();
+
+      const nextBilanId = (data.lastBilanId || 0) + 1;
+      const nextConsultationId = (data.lastConsultationId || 0) + 1;
+
+      console.log("🧪 Next Bilan ID:", nextBilanId);
+      console.log("🩺 Next Consultation ID:", nextConsultationId);
+      console.log(`👶 ${nom} - ${prenom} - ${age}`);
+
+      // 🖨️ Send to Electron for printing
+      window.electron?.printBilan({
+        bilanId: nextBilanId,
+        consultationId: nextConsultationId,
+        nom,
+        prenom,
+        age,
+        items: labItems.map((exam) => ({
+          id: exam.id,
+          nom: exam.nom,
+        })),
+      });
+    } catch (error) {
+      console.error("Erreur lors de l'impression du bilan:", error);
+      // alert("Erreur lors de l'impression du bilan.");
     }
-
-    // Use patient ID if available, otherwise timestamp
-    const bilanId = selectedPatient?.id || Date.now().toString();
-
-    window.electron?.printBilan({
-      id: bilanId,
-      items: labItems.map((exam) => ({
-        id: exam.id,
-        nom: exam.nom,
-      })),
-    });
   };
 
   function handlePrintJustif() {
@@ -463,10 +569,18 @@ export default function PrescriptionModal({
       transition: { duration: 0.2 },
     },
   };
+  const scrollRef = useRef(null);
+
+  // ✅ Always scroll to bottom when list changes
+  useEffect(() => {
+    if (scrollRef.current) {
+      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+    }
+  }, [prescriptionItems]);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl min-w-4xl p-0 overflow-hidden">
+      <DialogContent className="max-w-4xl min-w-4xl p-0 max-h-[97vh] overflow-hidden">
         <motion.div
           className="p-6"
           initial={{ opacity: 0 }}
@@ -506,7 +620,7 @@ export default function PrescriptionModal({
                 initial="hidden"
                 animate="visible"
               >
-                <Card className="mt-4 border-purple-300 shadow-lg hover:shadow-xl transition-shadow duration-300">
+                <Card className="mt-3 border-purple-300 shadow-lg hover:shadow-xl transition-shadow duration-300">
                   <CardHeader className="flex flex-row items-center justify-between bg-gradient-to-r from-purple-50 to-white rounded-t-lg">
                     <CardTitle className="text-purple-700 flex items-center gap-2">
                       <Plus size={20} className="text-purple-500" /> Rédiger une
@@ -520,7 +634,7 @@ export default function PrescriptionModal({
                       🖨️ Imprimer
                     </Button>
                   </CardHeader>
-                  <CardContent className="pt-6">
+                  <CardContent className="pt-0">
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
                       <div className="md:col-span-2 relative">
                         <Label
@@ -644,6 +758,7 @@ export default function PrescriptionModal({
 
                   {selectedMed && (
                     <div className="grid gap-4">
+                      {/* === DOSAGE === */}
                       <div>
                         <Label className="text-purple-700 font-medium">
                           Dosage
@@ -662,9 +777,24 @@ export default function PrescriptionModal({
                           <option value="250 mg">250 mg</option>
                           <option value="500 mg">500 mg</option>
                           <option value="1 g">1 g</option>
+                          <option value="1,5 g">1,5 g</option>
+                          <option value="2 g">2 g</option>
+
+                          <option value="autre">Autre...</option>
                         </select>
+
+                        {tmpDose === "autre" && (
+                          <input
+                            type="text"
+                            placeholder="Entrer un dosage personnalisé (ex: 12.5 mg)"
+                            className="mt-2 w-full rounded-lg border border-purple-200 p-2 focus:ring-2 focus:ring-purple-400 transition-all"
+                            value={customDose}
+                            onChange={(e) => setCustomDose(e.target.value)}
+                          />
+                        )}
                       </div>
 
+                      {/* === POSOLOGIE === */}
                       <div>
                         <Label className="text-purple-700 font-medium">
                           Posologie (rythme de prise)
@@ -682,9 +812,21 @@ export default function PrescriptionModal({
                             Toutes les 8 heures
                           </option>
                           <option value="Selon besoin">Selon besoin</option>
+                          <option value="autre">Autre...</option>
                         </select>
+
+                        {tmpfreq === "autre" && (
+                          <input
+                            type="text"
+                            placeholder="Entrer une posologie personnalisée"
+                            className="mt-2 w-full rounded-lg border border-purple-200 p-2 focus:ring-2 focus:ring-purple-400 transition-all"
+                            value={customFreq}
+                            onChange={(e) => setCustomFreq(e.target.value)}
+                          />
+                        )}
                       </div>
 
+                      {/* === DURÉE === */}
                       <div>
                         <Label className="text-purple-700 font-medium">
                           Durée
@@ -700,23 +842,57 @@ export default function PrescriptionModal({
                           <option value="7 jours">7 jours</option>
                           <option value="10 jours">10 jours</option>
                           <option value="14 jours">14 jours</option>
+                          <option value="20 jours">20 jours</option>
+
                           <option value="1 mois">1 mois</option>
+                          <option value="2 mois">2 mois</option>
+                          <option value="3 mois">3 mois</option>
+
+                          <option value="autre">Autre...</option>
                         </select>
+
+                        {tmpDuration === "autre" && (
+                          <input
+                            type="text"
+                            placeholder="Entrer une durée personnalisée (ex: 21 jours)"
+                            className="mt-2 w-full rounded-lg border border-purple-200 p-2 focus:ring-2 focus:ring-purple-400 transition-all"
+                            value={customDuration}
+                            onChange={(e) => setCustomDuration(e.target.value)}
+                          />
+                        )}
                       </div>
 
                       <div>
                         <Label className="text-purple-700 font-medium">
                           Quantité (boîtes)
                         </Label>
-                        <Input
-                          type="number"
-                          min={1}
+                        <select
+                          className="w-full rounded-lg border border-purple-200 px-3 py-2 focus:ring-2 focus:ring-purple-400 transition-all"
                           value={tmpQuantite}
-                          onChange={(e) =>
-                            setTmpQuantite(Number(e.target.value))
-                          }
-                          className="border-purple-200 focus:ring-2 focus:ring-purple-400"
-                        />
+                          onChange={(e) => setTmpQuantite(e.target.value)}
+                        >
+                          <option value="">--Sélectionner--</option>
+                          <option value="1">1</option>
+                          <option value="2">2</option>
+                          <option value="3">3</option>
+                          <option value="4">4</option>
+                          <option value="5">5</option>
+                          <option value="5">6</option>
+                          <option value="5">7</option>
+                          <option value="5">8</option>
+                          <option value="5">9</option>
+                        </select>
+
+                        {tmpQuantite === "autre" && (
+                          <input
+                            type="number"
+                            min={1}
+                            placeholder="Entrer une quantité personnalisée"
+                            className="mt-2 w-full rounded-lg border border-purple-200 p-2 focus:ring-2 focus:ring-purple-400 transition-all"
+                            value={customQuantite}
+                            onChange={(e) => setCustomQuantite(e.target.value)}
+                          />
+                        )}
                       </div>
                     </div>
                   )}
@@ -739,31 +915,34 @@ export default function PrescriptionModal({
                 </DialogContent>
               </Dialog>
 
-              <Card className="mt-4 border-purple-300 h-[465px] flex flex-col shadow-lg">
-                <CardHeader className="pb-2 bg-gradient-to-r from-purple-50 to-white">
-                  <CardTitle className="text-purple-700 flex items-center justify-between">
+              <Card className="mt-1 border-purple-200 h-[390px] flex flex-col shadow-md rounded-xl">
+                <CardHeader className="py-1 bg-gradient-to-r from-purple-50 to-white">
+                  <CardTitle className="text-purple-700 flex items-center justify-between text-sm sm:text-base">
                     <span>Ordonnance — Aperçu</span>
-                    <span className="text-sm bg-purple-100 text-purple-700 px-3 py-1 rounded-full">
+                    <span className="text-xs sm:text-sm bg-purple-100 text-purple-700 px-2 py-0.5 rounded-full">
                       {totalMeds} médicament{totalMeds > 1 ? "s" : ""}
                     </span>
                   </CardTitle>
                 </CardHeader>
 
-                <CardContent className="flex-1 overflow-hidden">
+                <CardContent className="flex-1 overflow-hidden p-3 sm:p-0">
                   {prescriptionItems.length === 0 ? (
                     <motion.div
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 1 }}
-                      className="h-full flex flex-col items-center justify-center text-gray-400"
+                      className="h-full flex flex-col items-center justify-center text-gray-400 text-sm"
                     >
-                      <Pill size={48} className="mb-4 opacity-30" />
-                      <p className="text-lg">Aucun médicament ajouté</p>
-                      <p className="text-sm mt-2">
-                        Recherchez et ajoutez des médicaments ci-dessus
+                      <Pill size={36} className="mb-3 opacity-30" />
+                      <p className="font-medium">Aucun médicament ajouté</p>
+                      <p className="text-xs mt-1">
+                        Ajoutez un médicament ci-dessus
                       </p>
                     </motion.div>
                   ) : (
-                    <ul className="space-y-3 h-full overflow-y-auto p-2">
+                    <ul
+                      ref={scrollRef}
+                      className="space-y-3 max-h-[40vh] overflow-y-auto p-1  sm:p-6 scroll-smooth "
+                    >
                       <AnimatePresence>
                         {prescriptionItems.map((it, index) => (
                           <motion.li
@@ -773,31 +952,31 @@ export default function PrescriptionModal({
                             animate="visible"
                             exit="exit"
                             layout
-                            className="flex items-center justify-between bg-white border-2 border-purple-100 rounded-2xl p-4 shadow-sm hover:shadow-lg hover:border-purple-300 transition-all duration-300"
+                            className="flex items-center justify-between bg-white border border-purple-100 rounded-xl p-3 shadow-sm hover:shadow-md hover:border-purple-300 transition-all duration-300"
                           >
                             <div className="flex flex-col flex-1">
-                              <div className="flex items-center gap-3">
-                                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-purple-400 to-purple-600 flex items-center justify-center text-white font-bold text-sm">
+                              <div className="flex items-center gap-2">
+                                <div className="w-6 h-6 rounded-full bg-gradient-to-br from-purple-400 to-purple-600 flex items-center justify-center text-white font-semibold text-xs">
                                   {index + 1}
                                 </div>
                                 <div>
-                                  <span className="text-base font-semibold text-purple-700">
+                                  <span className="text-sm font-semibold text-purple-700">
                                     {it.nom}
                                   </span>
-                                  <span className="text-sm text-gray-500 font-medium ml-2">
+                                  <span className="text-xs text-gray-500 font-medium ml-1">
                                     {it.dosage}
                                   </span>
                                 </div>
                               </div>
 
-                              <div className="text-sm text-gray-600 mt-2 ml-11">
-                                <span className="bg-purple-50 px-2 py-1 rounded mr-2">
+                              <div className="text-xs text-gray-600 mt-1 ml-8 space-x-1">
+                                <span className="bg-purple-50 px-1.5 py-0.5 rounded">
                                   {it.frequence || "—"}
                                 </span>
-                                <span className="bg-blue-50 px-2 py-1 rounded mr-2">
-                                  pendant {it.duree || "—"}
+                                <span className="bg-blue-50 px-1.5 py-0.5 rounded">
+                                  {it.duree ? `pendant ${it.duree}` : "—"}
                                 </span>
-                                <span className="bg-green-50 px-2 py-1 rounded text-green-700 font-semibold">
+                                <span className="bg-green-50 px-1.5 py-0.5 rounded text-green-700 font-semibold">
                                   {it.quantite || 1} boîte
                                   {it.quantite > 1 ? "s" : ""}
                                 </span>
@@ -814,7 +993,7 @@ export default function PrescriptionModal({
                                 className="hover:bg-red-100 transition rounded-full"
                                 onClick={() => removeItem(it.medicamentId)}
                               >
-                                <Trash2 size={18} className="text-red-500" />
+                                <Trash2 size={16} className="text-red-500" />
                               </Button>
                             </motion.div>
                           </motion.li>
@@ -1019,7 +1198,10 @@ export default function PrescriptionModal({
                             </p>
                           </motion.div>
                         ) : (
-                          <ul className="space-y-3 max-h-96 overflow-auto">
+                          <ul
+                            ref={scrollRef2}
+                            className="space-y-2 max-h-[40vh] overflow-y-auto p-1 sm:p-2 scroll-smooth"
+                          >
                             <AnimatePresence>
                               {labItems.map((exam, index) => (
                                 <motion.li
@@ -1029,21 +1211,22 @@ export default function PrescriptionModal({
                                   animate="visible"
                                   exit="exit"
                                   layout
-                                  className="flex items-center justify-between border-2 border-purple-100 rounded-xl p-4 hover:bg-purple-50 hover:border-purple-300 transition-all duration-300 bg-white shadow-sm"
+                                  className="flex items-center justify-between border border-purple-100 rounded-xl p-3 hover:bg-purple-50 hover:border-purple-300 transition-all duration-300 bg-white shadow-sm"
                                 >
-                                  <div className="flex items-center gap-3 flex-1">
-                                    <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center text-white font-bold text-sm">
+                                  <div className="flex items-center gap-2 flex-1">
+                                    <div className="w-6 h-6 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center text-white font-bold text-xs">
                                       {index + 1}
                                     </div>
                                     <div>
-                                      <div className="font-semibold text-purple-700">
+                                      <div className="font-semibold text-purple-700 text-sm">
                                         {exam.nom}
                                       </div>
-                                      <div className="text-sm text-gray-500">
+                                      <div className="text-xs text-gray-500">
                                         Type : {bilanType || "Non précisé"}
                                       </div>
                                     </div>
                                   </div>
+
                                   <motion.div
                                     whileHover={{ scale: 1.1 }}
                                     whileTap={{ scale: 0.9 }}

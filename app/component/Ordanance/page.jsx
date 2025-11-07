@@ -12,22 +12,42 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { Calendar, Clock, Trash2, FileText } from "lucide-react";
+import { Calendar, Trash2 } from "lucide-react";
+// ✅ Pediatric Age Calculation
+function calculateAge(dateString) {
+  if (!dateString) return "";
 
-export default function OrdBilanPage({ patientId, query }) {
+  const birthDate = new Date(dateString);
+  const today = new Date();
+
+  const diffMs = today - birthDate;
+  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+  const diffMonths = Math.floor(diffDays / 30.44);
+  const diffYears = Math.floor(diffMonths / 12);
+
+  if (diffDays < 30) return `${diffDays} jour${diffDays > 1 ? "s" : ""}`;
+  if (diffMonths < 24) return `${diffMonths} mois`;
+
+  const remainingMonths = diffMonths % 12;
+  if (remainingMonths === 0)
+    return `${diffYears} an${diffYears > 1 ? "s" : ""}`;
+  return `${diffYears} an${
+    diffYears > 1 ? "s" : ""
+  } et ${remainingMonths} mois`;
+}
+
+export default function OrdBilanPage({ patientId, query, selectedPatient }) {
   const [tab, setTab] = useState("ord");
   const [ordonnances, setOrdonnances] = useState([]);
   const [bilans, setBilans] = useState([]);
-  const [bilan, setBilan] = useState([]);
-  const [filtredOrd, setfiltredOrd] = useState();
-  const [filtredBilan, setfiltredBilan] = useState();
-
   const [selectedOrdonnance, setSelectedOrdonnance] = useState(null);
   const [selectedBilan, setSelectedBilan] = useState(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const [deleteType, setDeleteType] = useState(null); // 'ord' or 'bilan'
+  const [deleteType, setDeleteType] = useState(null);
   const [itemToDelete, setItemToDelete] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [filtredOrd, setFiltredOrd] = useState([]);
+  const [filtredBilan, setFiltredBilan] = useState([]);
 
   // 🧾 Fetch ordonnances
   const fetchOrdonnances = async () => {
@@ -36,7 +56,7 @@ export default function OrdBilanPage({ patientId, query }) {
       const res = await fetch(`/api/Ordonnance?patientId=${patientId}`);
       const data = await res.json();
       setOrdonnances(data);
-      setfiltredOrd(data);
+      setFiltredOrd(data);
     } catch (err) {
       console.error("❌ Error fetching ordonnances:", err);
     }
@@ -45,12 +65,11 @@ export default function OrdBilanPage({ patientId, query }) {
   // 🧪 Fetch bilans reçus
   const fetchBilans = async () => {
     if (!patientId) return;
-
     try {
       const res = await fetch(`/api/BilanRecip?patientId=${patientId}`);
       const data = await res.json();
       setBilans(data);
-      setfiltredBilan(data);
+      setFiltredBilan(data);
     } catch (err) {
       console.error("❌ Error fetching bilans:", err);
     }
@@ -60,30 +79,27 @@ export default function OrdBilanPage({ patientId, query }) {
     fetchOrdonnances();
     fetchBilans();
   }, [patientId]);
+
   useEffect(() => {
     if (tab === "ord") {
-      console.log("ord");
-
       const filtred = ordonnances?.filter((v) =>
         v.id.toString().includes(query)
       );
-      console.log(filtred);
-      setfiltredOrd(filtred);
+      setFiltredOrd(filtred);
     }
     if (tab === "bilan") {
       const filtred = bilans?.filter((v) => v.id.toString().includes(query));
-      setfiltredBilan(filtred);
+      setFiltredBilan(filtred);
     }
   }, [query]);
 
-  // 🗑 Handle delete open
+  // 🗑 Delete Handling
   const confirmDelete = (type, item) => {
     setDeleteType(type);
     setItemToDelete(item);
     setDeleteDialogOpen(true);
   };
 
-  // 🗑 Handle delete (works for both ord and bilan)
   const handleDelete = async () => {
     if (!itemToDelete || !deleteType) return;
     setLoading(true);
@@ -105,46 +121,168 @@ export default function OrdBilanPage({ patientId, query }) {
       setLoading(false);
     }
   };
-  const handleBilanChange = (index, field, value) => {
-    if (!selectedBilan) return;
 
-    // Copy the selected bilan deeply
-    const updatedBilan = {
-      ...selectedBilan,
-      items: selectedBilan.items.map((item, i) =>
-        i === index ? { ...item, [field]: value } : item
-      ),
-    };
+  // 🖨️ Print Ordonnance
+  const handlePrintOrdonnanceElectron = async (ord) => {
+    try {
+      if (!ord.items || ord.items.length === 0) {
+        alert("Aucune donnée à imprimer");
+        return;
+      }
+      // console.log(JSON.stringify(ord));
+      const fullname = selectedPatient?.nom || "";
+      let prenom = "";
+      let nom = "";
 
-    // Update the selected bilan state
-    setSelectedBilan(updatedBilan);
+      if (fullname.trim()) {
+        const parts = fullname.trim().split(" ");
+        if (parts.length === 1) nom = parts[0];
+        else {
+          prenom = parts.slice(0, -1).join(" ");
+          nom = parts[parts.length - 1];
+        }
+      }
 
-    // Also update the bilans array to reflect this change
-    setBilans((prevBilans) =>
-      prevBilans.map((b) => (b.id === updatedBilan.id ? updatedBilan : b))
+      const datenaissance = selectedPatient?.dateDeNaissance;
+      const age = calculateAge(datenaissance);
+
+      // const res = await fetch("/api/last-records");
+      // const data = await res.json();
+
+      const nextConsultationId = ord.consultationId;
+      const nextOrdonnanceId = ord.id;
+      console.log(
+        "nextConsultationId" +
+          nextConsultationId +
+          "/nextOrdonnanceId" +
+          nextOrdonnanceId
+      );
+      window.electron?.printOrdonnance({
+        consultationId: nextConsultationId,
+        ordonnanceId: nextOrdonnanceId,
+        nom,
+        prenom,
+        age,
+        items: ord.items.map((it) => ({
+          name: it.medicament?.nom,
+          dosage: it.dosage,
+          duration: it.duree,
+          frequency: it.frequence,
+          quantity: it.quantite,
+        })),
+      });
+    } catch (err) {
+      console.error("Erreur lors de l'impression de l'ordonnance:", err);
+      alert("Erreur lors de l'impression de l'ordonnance.");
+    }
+  };
+
+  // 🖨️ Print Bilan
+  const handlePrintBilanElectron = async (bilan) => {
+    try {
+      if (!bilan.items || bilan.items.length === 0) {
+        alert("Aucun examen à imprimer");
+        return;
+      }
+      // console.log(JSON.stringify(bilan));
+      const fullname = selectedPatient?.nom || "";
+      let prenom = "";
+      let nom = "";
+
+      if (fullname.trim()) {
+        const parts = fullname.trim().split(" ");
+        if (parts.length === 1) nom = parts[0];
+        else {
+          prenom = parts.slice(0, -1).join(" ");
+          nom = parts[parts.length - 1];
+        }
+      }
+
+      const datenaissance = selectedPatient?.dateDeNaissance;
+      const age = calculateAge(datenaissance);
+
+      // const res = await fetch("/api/last-records");
+      // const data = await res.json();
+
+      const nextBilanId = bilan.id || 0;
+      const nextConsultationId = bilan.consultationId || 0;
+
+      window.electron?.printBilan({
+        bilanId: nextBilanId,
+        consultationId: nextConsultationId,
+        nom,
+        prenom,
+        age,
+        items: bilan.items.map((exam) => ({
+          id: exam.id,
+          nom: exam.bilan?.nom,
+        })),
+      });
+    } catch (err) {
+      console.error("Erreur lors de l'impression du bilan:", err);
+      alert("Erreur lors de l'impression du bilan.");
+    }
+  };
+
+  // 💾 Save updated bilan items (each has resultat & remarque)
+  const handleSaveBilan = async (bilan) => {
+    try {
+      const res = await fetch(`/api/BilanRecip`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          id: bilan.id, // ✅ now included in body, as your API expects
+          items: bilan?.items?.map((it) => ({
+            bilanId: it.bilanId, // ✅ backend expects this to recreate items
+            resultat: it.resultat || null,
+            remarque: it.remarque || null,
+          })),
+        }),
+      });
+
+      if (!res.ok) throw new Error("Erreur lors de la sauvegarde du bilan");
+      const updated = await res.json();
+
+      //   setBilans((prev) => prev.map((b) => (b.id === bilan.id ? updated : b)));
+      fetchBilans();
+      alert("✅ Bilan mis à jour avec succès !");
+    } catch (err) {
+      console.error("❌ Erreur lors de la sauvegarde du bilan:", err);
+      alert("Erreur lors de la sauvegarde du bilan.");
+    }
+  };
+  // 🧠 Handle input change for Bilan item (résultat / remarque)
+  const handleChangeBilanItem = (bilanId, itemIndex, field, value) => {
+    // نصنع نسخة جديدة من قائمة bilans
+    const updatedBilans = bilans.map((b) => {
+      if (b.id !== bilanId) return b;
+
+      // نصنع نسخة جديدة من items
+      const updatedItems = b.items.map((item, index) =>
+        index === itemIndex ? { ...item, [field]: value } : item
+      );
+
+      return { ...b, items: updatedItems };
+    });
+
+    setBilans(updatedBilans);
+
+    // تحديث bilan المفتوح في الحوار (Dialog)
+    setSelectedBilan((prev) =>
+      prev?.id === bilanId
+        ? {
+            ...prev,
+            items: prev.items.map((item, index) =>
+              index === itemIndex ? { ...item, [field]: value } : item
+            ),
+          }
+        : prev
     );
   };
 
-  const updateBilanAll = async (data) => {
-    try {
-      const res = await fetch("/api/BilanRecip", {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
-      });
-
-      if (res.ok) {
-        setSelectedBilan(null);
-
-        // refetch or close dialog if needed
-      } else {
-      }
-    } catch (error) {
-      console.error(error);
-    }
-  };
   if (!patientId)
-    return <p className="text-gray-500 text-center mt-10">Aucune Patient .</p>;
+    return <p className="text-gray-500 text-center mt-10">Aucun patient.</p>;
+
   return (
     <div className="p-0 max-w-6xl mx-auto">
       <Tabs
@@ -176,13 +314,12 @@ export default function OrdBilanPage({ patientId, query }) {
             </p>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-              {filtredOrd?.map((ord) => (
+              {filtredOrd.map((ord) => (
                 <Dialog
                   key={ord.id}
                   open={selectedOrdonnance?.id === ord.id}
                   onOpenChange={(open) => !open && setSelectedOrdonnance(null)}
                 >
-                  {/* 🟣 Card Summary */}
                   <Card
                     className="bg-purple-50 p-3 cursor-pointer hover:bg-purple-100 transition"
                     onClick={() => setSelectedOrdonnance(ord)}
@@ -192,27 +329,28 @@ export default function OrdBilanPage({ patientId, query }) {
                         <p className="font-medium text-purple-700">
                           Ordonnance #{ord.id}
                         </p>
-                        <Button
-                          size="icon"
-                          variant="ghost"
-                          className="h-8 w-8"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            confirmDelete("ord", ord);
-                          }}
-                        >
-                          <Trash2 size={18} className="text-red-500" />
-                        </Button>
+                        <div className="flex gap-2">
+                          <Button
+                            size="icon"
+                            variant="ghost"
+                            className="h-8 w-8"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              confirmDelete("ord", ord);
+                            }}
+                          >
+                            <Trash2 size={18} className="text-red-500" />
+                          </Button>
+                        </div>
                       </div>
                       <div className="flex items-center gap-2 text-sm text-gray-500 mt-1">
                         <Calendar size={16} />{" "}
-                        {new Date(ord.createdAt).toLocaleDateString()}
+                        {new Date(ord.createdAt).toLocaleDateString("fr-FR")}
                       </div>
                     </CardContent>
                   </Card>
 
-                  {/* 🟣 Dialog Details */}
-                  <DialogContent className="sm:min-w-4xl  w-full bg-white rounded-xl p-6 shadow-lg">
+                  <DialogContent className="sm:min-w-4xl w-full bg-white rounded-xl p-6 shadow-lg">
                     <DialogHeader>
                       <DialogTitle className="text-purple-700 text-lg font-semibold">
                         Détails de l’Ordonnance #{ord.id}
@@ -220,48 +358,58 @@ export default function OrdBilanPage({ patientId, query }) {
                     </DialogHeader>
 
                     {ord.items?.length > 0 ? (
-                      <div className="mt-4 border border-purple-100 rounded-xl overflow-hidden">
-                        <table className="w-full border-collapse text-sm">
-                          <thead className="bg-purple-100 text-purple-700">
-                            <tr>
-                              <th className="text-left py-3 px-4 font-semibold">
-                                Médicament
-                              </th>
-                              <th className="text-left py-3 px-4 font-semibold">
-                                Dosage
-                              </th>
-                              <th className="text-left py-3 px-4 font-semibold">
-                                Fréquence
-                              </th>
-                              <th className="text-left py-3 px-4 font-semibold">
-                                Durée
-                              </th>
-                            </tr>
-                          </thead>
-
-                          <tbody>
-                            {ord.items.map((item, i) => (
-                              <tr
-                                key={i}
-                                className="border-b border-purple-100 hover:bg-purple-50 transition-colors"
-                              >
-                                <td className="py-3 px-4 font-medium text-gray-800">
-                                  {item.medicament?.nom || "—"}
-                                </td>
-                                <td className="py-3 px-4 text-gray-600">
-                                  {item.dosage || "—"}
-                                </td>
-                                <td className="py-3 px-4 text-gray-600">
-                                  {item.frequence || "—"}
-                                </td>
-                                <td className="py-3 px-4 text-gray-600">
-                                  {item.duree || "—"}
-                                </td>
+                      <>
+                        <div className="mt-4 border border-purple-100 rounded-xl overflow-hidden">
+                          <table className="w-full border-collapse text-sm">
+                            <thead className="bg-purple-100 text-purple-700">
+                              <tr>
+                                <th className="text-left py-3 px-4 font-semibold">
+                                  Médicament
+                                </th>
+                                <th className="text-left py-3 px-4 font-semibold">
+                                  Dosage
+                                </th>
+                                <th className="text-left py-3 px-4 font-semibold">
+                                  Fréquence
+                                </th>
+                                <th className="text-left py-3 px-4 font-semibold">
+                                  Durée
+                                </th>
                               </tr>
-                            ))}
-                          </tbody>
-                        </table>
-                      </div>
+                            </thead>
+                            <tbody>
+                              {ord.items.map((item, i) => (
+                                <tr
+                                  key={i}
+                                  className="border-b border-purple-100 hover:bg-purple-50 transition-colors"
+                                >
+                                  <td className="py-3 px-4 font-medium text-gray-800">
+                                    {item.medicament?.nom || "—"}
+                                  </td>
+                                  <td className="py-3 px-4 text-gray-600">
+                                    {item.dosage || "—"}
+                                  </td>
+                                  <td className="py-3 px-4 text-gray-600">
+                                    {item.frequence || "—"}
+                                  </td>
+                                  <td className="py-3 px-4 text-gray-600">
+                                    {item.duree || "—"}
+                                  </td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
+
+                        <div className="flex justify-end mt-4">
+                          <Button
+                            onClick={() => handlePrintOrdonnanceElectron(ord)}
+                            className="bg-purple-600 hover:bg-purple-700 text-white"
+                          >
+                            🖨️ Imprimer l’Ordonnance
+                          </Button>
+                        </div>
+                      </>
                     ) : (
                       <p className="text-gray-500 text-center py-4">
                         Aucun médicament dans cette ordonnance.
@@ -282,7 +430,7 @@ export default function OrdBilanPage({ patientId, query }) {
             </p>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-              {filtredBilan?.map((bilan) => (
+              {filtredBilan.map((bilan) => (
                 <Dialog
                   key={bilan.id}
                   open={selectedBilan?.id === bilan.id}
@@ -311,113 +459,109 @@ export default function OrdBilanPage({ patientId, query }) {
                       </div>
                       <div className="flex items-center gap-2 text-sm text-gray-500 mt-1">
                         <Calendar size={16} />{" "}
-                        {new Date(bilan.createdAt).toLocaleDateString()}
+                        {new Date(bilan.createdAt).toLocaleDateString("fr-FR")}
                       </div>
                     </CardContent>
                   </Card>
 
-                  <DialogContent className="sm:min-w-4xl w-full bg-white rounded-xl p-6 shadow-lg">
-                    <DialogHeader>
-                      <DialogTitle className="text-green-700 text-lg font-semibold">
-                        Détails du Bilan #{bilan.id}
-                      </DialogTitle>
-                    </DialogHeader>
+                  {/* 👇 Dialog يعرض الـ selectedBilan بدل bilan */}
+                  {selectedBilan?.id === bilan.id && (
+                    <DialogContent className="sm:min-w-4xl w-full bg-white rounded-xl p-6 shadow-lg">
+                      <DialogHeader>
+                        <DialogTitle className="text-green-700 text-lg font-semibold">
+                          Détails du Bilan #{selectedBilan.id}
+                        </DialogTitle>
+                      </DialogHeader>
 
-                    {bilan.items?.length > 0 ? (
-                      <>
-                        <div className="mt-4 border border-green-100 rounded-xl overflow-hidden">
-                          <table className="w-full border-collapse text-sm">
-                            <thead className="bg-green-100 text-green-700">
-                              <tr>
-                                <th className="text-left py-3 px-4 font-semibold">
-                                  Nom du Bilan
-                                </th>
-                                <th className="text-left py-3 px-4 font-semibold">
-                                  Résultat
-                                </th>
-                                <th className="text-left py-3 px-4 font-semibold">
-                                  Remarque
-                                </th>
-                              </tr>
-                            </thead>
-
-                            <tbody>
-                              {bilan.items.map((item, i) => (
-                                <tr
-                                  key={i}
-                                  className="border-b border-green-100 hover:bg-green-50 transition-colors"
-                                >
-                                  {/* Nom du bilan */}
-                                  <td className="py-3 px-4 font-medium text-gray-800">
-                                    {item.bilan?.nom || "—"}
-                                  </td>
-
-                                  {/* Résultat */}
-                                  <td className="py-3 px-4">
-                                    <input
-                                      type="text"
-                                      placeholder="Écrire le résultat..."
-                                      className="w-full border rounded-md p-2 text-sm outline-none focus:ring-2 focus:ring-green-400"
-                                      value={item.resultat || ""}
-                                      onChange={(e) =>
-                                        handleBilanChange(
-                                          i,
-                                          "resultat",
-                                          e.target.value
-                                        )
-                                      }
-                                    />
-                                  </td>
-
-                                  {/* Remarque */}
-                                  <td className="py-3 px-4">
-                                    <textarea
-                                      placeholder="Ajouter une remarque..."
-                                      className="w-full border rounded-md p-2 text-sm outline-none focus:ring-2 focus:ring-green-400"
-                                      rows={2}
-                                      value={item.remarque || ""}
-                                      onChange={(e) =>
-                                        handleBilanChange(
-                                          i,
-                                          "remarque",
-                                          e.target.value
-                                        )
-                                      }
-                                    />
-                                  </td>
+                      {selectedBilan.items?.length > 0 ? (
+                        <>
+                          <div className="mt-4 border border-green-100 rounded-xl overflow-hidden">
+                            <table className="w-full border-collapse text-sm">
+                              <thead className="bg-green-100 text-green-700">
+                                <tr>
+                                  <th className="text-left py-3 px-4 font-semibold">
+                                    Nom du Bilan
+                                  </th>
+                                  <th className="text-left py-3 px-4 font-semibold">
+                                    Résultat
+                                  </th>
+                                  <th className="text-left py-3 px-4 font-semibold">
+                                    Remarque
+                                  </th>
                                 </tr>
-                              ))}
-                            </tbody>
-                          </table>
-                        </div>
+                              </thead>
+                              <tbody>
+                                {selectedBilan.items.map((item, i) => (
+                                  <tr
+                                    key={i}
+                                    className="border-b border-green-100 hover:bg-green-50 transition-colors"
+                                  >
+                                    <td className="py-3 px-4 font-medium text-gray-800">
+                                      {item.bilan?.nom || "—"}
+                                    </td>
+                                    <td className="py-3 px-4">
+                                      <input
+                                        type="text"
+                                        placeholder="Résultat..."
+                                        value={item.resultat || ""}
+                                        onChange={(e) =>
+                                          handleChangeBilanItem(
+                                            selectedBilan.id,
+                                            i,
+                                            "resultat",
+                                            e.target.value
+                                          )
+                                        }
+                                        className="w-full border rounded-lg px-3 py-1 focus:ring-2 focus:ring-green-500"
+                                      />
+                                    </td>
+                                    <td className="py-3 px-4">
+                                      <textarea
+                                        placeholder="Remarques..."
+                                        value={item.remarque || ""}
+                                        onChange={(e) =>
+                                          handleChangeBilanItem(
+                                            selectedBilan.id,
+                                            i,
+                                            "remarque",
+                                            e.target.value
+                                          )
+                                        }
+                                        className="w-full border rounded-lg px-3 py-1 focus:ring-2 focus:ring-green-500"
+                                        rows={1}
+                                      />
+                                    </td>
+                                  </tr>
+                                ))}
+                              </tbody>
+                            </table>
+                          </div>
 
-                        {/* ✅ One Save Button for all */}
-                        <div className="flex justify-end mt-6">
-                          <button
-                            onClick={async () => {
-                              const data = {
-                                id: bilan.id,
-                                items: bilan.items.map((it) => ({
-                                  bilanId: it.bilanId,
-                                  resultat: it.resultat || "",
-                                  remarque: it.remarque || "",
-                                })),
-                              };
+                          <div className="flex justify-end gap-2 mt-4">
+                            <Button
+                              onClick={() =>
+                                handlePrintBilanElectron(selectedBilan)
+                              }
+                              className="bg-green-600 hover:bg-green-700 text-white"
+                            >
+                              🖨️ Imprimer le Bilan
+                            </Button>
 
-                              await updateBilanAll(data);
-                            }}
-                            className="px-5 py-2 bg-green-600 text-white rounded-md text-sm font-medium hover:bg-green-700 transition"
-                          >
-                            💾 Enregistrer tout
-                          </button>
-                        </div>
-                      </>
-                    ) : (
-                      <p className="text-gray-500 text-center py-4">
-                        Aucun élément dans ce bilan.
-                      </p>
-                    )}
-                  </DialogContent>
+                            <Button
+                              onClick={() => handleSaveBilan(selectedBilan)}
+                              className="bg-blue-600 hover:bg-blue-700 text-white"
+                            >
+                              💾 Enregistrer
+                            </Button>
+                          </div>
+                        </>
+                      ) : (
+                        <p className="text-gray-500 text-center py-4">
+                          Aucun élément dans ce bilan.
+                        </p>
+                      )}
+                    </DialogContent>
+                  )}
                 </Dialog>
               ))}
             </div>
@@ -425,7 +569,7 @@ export default function OrdBilanPage({ patientId, query }) {
         </TabsContent>
       </Tabs>
 
-      {/* 🔒 Delete Confirmation Dialog */}
+      {/* 🗑 Delete Confirmation */}
       <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>

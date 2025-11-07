@@ -17,6 +17,7 @@ export async function GET() {
               },
             },
             bilanRecip: true,
+            rendezVous: { select: { id: true, date: true, description: true } }, // ✅ include new relation
           },
         },
         ordonnances: {
@@ -32,7 +33,7 @@ export async function GET() {
       orderBy: { createdAt: "desc" },
     });
 
-    // ✅ Format result
+    // ✅ Format result with new fields
     const formatted = patients.map((p) => ({
       id: p.id,
       nom: p.nom,
@@ -54,7 +55,18 @@ export async function GET() {
         frequenceRespiratoire: c.frequenceRespiratoire,
         saturationOxygene: c.saturationOxygene,
         glycemie: c.glycemie,
+        developpementPsychomoteur: c.developpementPsychomoteur || null, // ✅ new field
+        motifDeConsultation: c.motifDeConsultation || null, // ✅ new field
+        perimetreCranien: c.perimetreCranien || null, // ✅ new field
         createdAt: c.createdAt,
+
+        rendezVous: c.rendezVous
+          ? {
+              id: c.rendezVous.id,
+              date: c.rendezVous.date,
+              description: c.rendezVous.description || null,
+            }
+          : null, // ✅ include linked rendez-vous
 
         radios: c.radios.map((r) => ({
           id: r.id,

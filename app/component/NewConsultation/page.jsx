@@ -7,17 +7,21 @@ import {
   User,
   Activity,
   Heart,
-  FilePlus,
-  Trash2,
   FileText,
   Plus,
   FlaskConical,
   Calendar,
   Pill,
+  Ruler,
+  Stethoscope,
+  Clock,
+  ChevronDown,
+  ChevronUp,
+  Trash2,
 } from "lucide-react";
-import { Card } from "@/components/ui/card"; // shadcn/ui
+import { Card } from "@/components/ui/card";
 import NewOrdanance from "@/app/component/NewOrdanance/page";
-import AddVaccinationButton from "../NewVaccination/page";
+
 export default function NewConsultationPage({ selectedPatient = {}, onSave }) {
   const [form, setForm] = useState({
     note: "",
@@ -32,26 +36,39 @@ export default function NewConsultationPage({ selectedPatient = {}, onSave }) {
     saturationOxygene: "",
     glycemie: "",
     developpementPsychomoteur: "",
+    motifDeConsultation: "",
+    perimetreCranien: "",
+    rendezVousDate: "",
+    rendezVousDescription: "",
   });
+
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [showNewOrdonnance, setShowNewOrdonnance] = useState(false);
+  const [showRendezVous, setShowRendezVous] = useState(false);
+
   const setordananceData = (data) => {
-    console.log(JSON.stringify(data));
     setForm((prev) => ({
       ...prev,
-      ordonnance: data.ordonnance,
-      bilanRecip: data.bilanRecip,
+      ordonnance:
+        data?.ordonnance?.items && data.ordonnance.items.length > 0
+          ? data.ordonnance
+          : prev.ordonnance, // keep old data if no items
+      bilanRecip:
+        data?.bilanRecip?.items && data.bilanRecip.items.length > 0
+          ? data.bilanRecip
+          : prev.bilanRecip, // keep old data if no items
     }));
-    console.log("Form" + JSON.stringify(form));
+
     setShowNewOrdonnance(false);
   };
+
   useEffect(() => {
     if (selectedPatient && Object.keys(selectedPatient).length > 0) {
       setForm((prev) => ({
         ...prev,
         note: selectedPatient.note ?? "",
-        ordonnance: selectedPatient.ordonnance ?? "",
+        ordonnance: selectedPatient.ordonnance ?? {},
         taille: selectedPatient.taille ?? "",
         poids: selectedPatient.poids ?? "",
         tensionSystolique: selectedPatient.tensionSystolique ?? "",
@@ -63,6 +80,12 @@ export default function NewConsultationPage({ selectedPatient = {}, onSave }) {
         glycemie: selectedPatient.glycemie ?? "",
         developpementPsychomoteur:
           selectedPatient.developpementPsychomoteur ?? "",
+        motifDeConsultation: selectedPatient.motifDeConsultation ?? "",
+        perimetreCranien: selectedPatient.perimetreCranien ?? "",
+        rendezVousDate: selectedPatient?.rendezVous?.date
+          ? new Date(selectedPatient.rendezVous.date).toISOString().slice(0, 16)
+          : "",
+        rendezVousDescription: selectedPatient?.rendezVous?.description ?? "",
       }));
     }
   }, [selectedPatient]);
@@ -71,12 +94,6 @@ export default function NewConsultationPage({ selectedPatient = {}, onSave }) {
     const { name, value } = e.target;
     setForm((s) => ({ ...s, [name]: value }));
   }
-
-  // Add new file
-
-  // Change type of a file
-
-  // Remove a file
 
   async function handleSave() {
     setError("");
@@ -96,7 +113,12 @@ export default function NewConsultationPage({ selectedPatient = {}, onSave }) {
         saturationOxygene: "",
         glycemie: "",
         developpementPsychomoteur: "",
+        motifDeConsultation: "",
+        perimetreCranien: "",
+        rendezVousDate: "",
+        rendezVousDescription: "",
       });
+      setShowRendezVous(false);
       setSaving(false);
     } catch (e) {
       setSaving(false);
@@ -121,7 +143,14 @@ export default function NewConsultationPage({ selectedPatient = {}, onSave }) {
       type: "number",
       unite: "kg",
     },
-
+    {
+      icon: Ruler,
+      label: "Périmètre crânien",
+      name: "perimetreCranien",
+      value: form.perimetreCranien,
+      type: "number",
+      unite: "cm",
+    },
     {
       icon: Activity,
       label: "TA systolique",
@@ -160,7 +189,7 @@ export default function NewConsultationPage({ selectedPatient = {}, onSave }) {
       name: "frequenceRespiratoire",
       value: form.frequenceRespiratoire,
       type: "number",
-      unite: "cpm", // cycles per minute
+      unite: "cpm",
     },
     {
       icon: Activity,
@@ -182,14 +211,30 @@ export default function NewConsultationPage({ selectedPatient = {}, onSave }) {
 
   return (
     <div className="min-h-screen w-full dark:bg-gray-900 p-0">
-      <div className="max-w-full mx-auto dark:bg-gray-800 rounded-2xl p-6 md:p-8 ">
+      <div className="max-w-full mx-auto dark:bg-gray-800 rounded-2xl p-6 md:p-6">
         {error && (
           <div className="flex items-center gap-2 mb-4 text-sm text-red-600">
             <AlertCircle className="w-4 h-4" /> {error}
           </div>
         )}
+
+        {/* 🩺 Motif de consultation */}
+        <div className="mb-2">
+          <label className="block text-sm font-medium mb-2">
+            Motif de consultation
+          </label>
+          <textarea
+            name="motifDeConsultation"
+            value={form.motifDeConsultation}
+            onChange={handleChange}
+            rows={3}
+            placeholder="Ex: Fièvre, toux, contrôle, etc."
+            className="w-full rounded-lg border px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-purple-300"
+          />
+        </div>
+
         {/* Notes */}
-        <div className="mb-6">
+        <div className="mb-2">
           <label className="block text-sm font-medium mb-2">Notes</label>
           <textarea
             name="note"
@@ -199,30 +244,30 @@ export default function NewConsultationPage({ selectedPatient = {}, onSave }) {
             className="w-full rounded-lg border px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-purple-300"
           />
         </div>
-        <div className="mb-3">
+
+        {/* Développement psychomoteur */}
+        <div className="mb-2">
           <label className="block text-sm font-medium mb-2">
-            developpement Psychomoteur
+            Développement psychomoteur
           </label>
           <textarea
             name="developpementPsychomoteur"
             value={form.developpementPsychomoteur}
             onChange={handleChange}
-            rows={1}
+            rows={2}
             className="w-full rounded-lg border px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-purple-300"
           />
         </div>
+
         {/* Infos médicales */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {medicalInfo.map((info) => (
             <Card key={info.label} className="flex items-center gap-3 p-3">
               <div className="flex justify-between w-full">
-                {/* Label + Icon */}
                 <div className="flex flex-row items-center">
                   <info.icon className="text-purple-500" size={20} />
                   <span className="text-gray-500 ml-2">{info.label}</span>
                 </div>
-
-                {/* Input + Unit */}
                 <div className="flex items-center gap-1">
                   <input
                     type={info.type}
@@ -241,8 +286,70 @@ export default function NewConsultationPage({ selectedPatient = {}, onSave }) {
             </Card>
           ))}
         </div>
+        <div className="py-4">
+          {" "}
+          {/* Collapsible Rendez-vous Section */}
+          <div className="mb-6 border rounded-lg">
+            <button
+              type="button"
+              onClick={() => setShowRendezVous((prev) => !prev)}
+              className="w-full flex justify-between items-center p-3 bg-purple-50 hover:bg-purple-100 rounded-t-lg"
+            >
+              <div className="flex items-center gap-2 text-purple-700 font-medium">
+                <Calendar size={18} />
+                <span>Rendez-vous</span>
+              </div>
+              {showRendezVous ? (
+                <ChevronUp size={20} className="text-purple-600" />
+              ) : (
+                <ChevronDown size={20} className="text-purple-600" />
+              )}
+            </button>
+          </div>
+          {showRendezVous && (
+            <div className="px-4 space-y-2  dark:bg-gray-900 rounded-b-lg">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <Card className="flex items-center gap-3 p-3">
+                  <div className="flex justify-between w-full">
+                    <div className="flex flex-row items-center">
+                      <Calendar className="text-purple-500" size={20} />
+                      <span className="text-gray-500 ml-2">
+                        Date du rendez-vous
+                      </span>
+                    </div>
+                    <input
+                      type="datetime-local"
+                      name="rendezVousDate"
+                      value={form.rendezVousDate}
+                      onChange={handleChange}
+                      className="text-right w-48 border-b focus:outline-none focus:border-purple-400 bg-transparent"
+                    />
+                  </div>
+                </Card>
 
-        {/* Bouton ordonnance */}
+                <Card className="flex items-center gap-3 p-3">
+                  <div className="flex justify-between w-full">
+                    <div className="flex flex-row items-center">
+                      <Clock className="text-purple-500" size={20} />
+                      <span className="text-gray-500 ml-2">Description</span>
+                    </div>
+                    <input
+                      type="text"
+                      name="rendezVousDescription"
+                      value={form.rendezVousDescription}
+                      onChange={handleChange}
+                      placeholder="Ex: Contrôle, suivi..."
+                      className="text-right w-48 border-b focus:outline-none focus:border-purple-400 bg-transparent"
+                    />
+                  </div>
+                </Card>
+              </div>
+            </div>
+          )}
+        </div>
+        {/* ====================== */}
+        {/* 💊 ORDONNANCE & 🔬 BILAN SECTIONS */}
+        {/* ====================== */}
         <div className="mt-6 space-y-4">
           {/* === Add Ordonnance Button === */}
           {!showNewOrdonnance ? (
@@ -250,10 +357,10 @@ export default function NewConsultationPage({ selectedPatient = {}, onSave }) {
               type="button"
               onClick={() => setShowNewOrdonnance(true)}
               className="flex items-center gap-2 px-4 py-2 rounded-lg bg-purple-600 
-                 text-white hover:bg-purple-700 transition"
+         text-white hover:bg-purple-700 transition"
             >
               <Plus className="w-4 h-4" />
-              Ajouter une ordonnance
+              Ajouter une ordonnance / bilan
             </button>
           ) : (
             <NewOrdanance
@@ -308,13 +415,13 @@ export default function NewConsultationPage({ selectedPatient = {}, onSave }) {
           )}
 
           {/* === Bilan Summary Card === */}
-          {form.bilanRecip && form.bilanRecip.items.length > 0 && (
+          {form.bilanRecip && form.bilanRecip.items?.length > 0 && (
             <div className="flex items-center justify-between bg-green-50 border border-green-100 rounded-xl p-4 shadow-sm">
               <div className="flex flex-col sm:flex-row sm:items-center gap-4">
                 <div className="flex items-center gap-2 text-green-700">
                   <FlaskConical size={20} />
                   <span className="font-semibold">
-                    Bilan: {form.ordonnance.type || form.ordonnance.id || "—"}
+                    Bilan: {form.bilanRecip.type || form.bilanRecip.id || "—"}
                   </span>
                 </div>
                 <div className="flex items-center gap-2 text-gray-600">
@@ -328,7 +435,7 @@ export default function NewConsultationPage({ selectedPatient = {}, onSave }) {
                   <Calendar size={18} />
                   <span>
                     {form.bilanRecip.date
-                      ? new Date(form.ordonnance.date).toLocaleDateString()
+                      ? new Date(form.bilanRecip.date).toLocaleDateString()
                       : "—"}
                   </span>
                 </div>
@@ -339,7 +446,7 @@ export default function NewConsultationPage({ selectedPatient = {}, onSave }) {
                 onClick={() =>
                   setForm((prev) => ({
                     ...prev,
-                    bilan: {},
+                    bilanRecip: {},
                   }))
                 }
                 className="text-red-500 hover:text-red-700 transition"
@@ -349,6 +456,7 @@ export default function NewConsultationPage({ selectedPatient = {}, onSave }) {
             </div>
           )}
         </div>
+
         {/* Save Button */}
         <div className="flex justify-end mt-6">
           <button

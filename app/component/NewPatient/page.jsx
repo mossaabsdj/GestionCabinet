@@ -1,3 +1,5 @@
+"use client";
+
 import { useState } from "react";
 import { Stethoscope } from "lucide-react";
 import {
@@ -62,20 +64,17 @@ export default function AddPatientModal({ open, onClose, onAdd }) {
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-2xl rounded-2xl p-6 shadow-lg">
-        <DialogHeader className="flex flex-col items-center space-y-3">
-          <div className="p-4 bg-purple-100 rounded-full shadow-md">
+      <DialogContent className="max-w-2xl max-h-[97vh] rounded-2xl p-4  shadow-lg">
+        <DialogHeader className="flex flex-col items-center space-y-2">
+          <div className="p-2 bg-purple-100 rounded-full shadow-md">
             <Stethoscope className="w-7 h-7 text-purple-700" />
           </div>
           <DialogTitle className="text-2xl font-bold text-purple-800">
             Nouveau Patient
           </DialogTitle>
-          <p className="text-sm text-gray-500">
-            Remplissez les informations pour créer un nouveau dossier patient
-          </p>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="mt-4 space-y-6">
+        <form onSubmit={handleSubmit} className="mt-2 space-y-4">
           {/* Nom obligatoire */}
           <div>
             <Label className="text-purple-700 font-medium">Nom *</Label>

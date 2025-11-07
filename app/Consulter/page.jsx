@@ -40,7 +40,7 @@ import PatientVisits from "../component/Visites/page";
 import Ordonnances from "../component/Ordanance/page";
 import LoadingScreen from "../component/LoadingScreen/page";
 import { motion, AnimatePresence } from "framer-motion";
-import ModernSearchBar from "../component/SearchBar/page";
+import ModernSearchBar from "../component/SearchBar/SearchBar";
 import { tabs } from "@heroui/theme";
 export default function PatientDashboard() {
   const searchRef = useRef();
@@ -54,7 +54,7 @@ export default function PatientDashboard() {
   const [patientsData, setPatients] = useState([]);
   const [loading, setLoading] = useState(true);
   const [ShowAddDialogNewAnalyse, setShowAddDialogNewAnalyse] = useState(false);
-  const [NewConsultationData, setNewConsultationData] = useState({});
+  const [NewConsultationData, setNewConsultationData] = useState(null);
   const [lastid, setlastid] = useState(null);
   const [openNewordanance, setnewordanance] = useState(false);
   const [showShortcuts, setShowShortcuts] = useState(false);
@@ -118,7 +118,7 @@ export default function PatientDashboard() {
     setlastid(selectedPatient?.id);
     console.log(formData);
 
-    // Check if all fields are empty
+    // ✅ Check if at least one field has data
     const hasData =
       formData.note?.trim() ||
       formData.taille ||
@@ -131,6 +131,9 @@ export default function PatientDashboard() {
       formData.saturationOxygene ||
       formData.glycemie ||
       formData.developpementPsychomoteur?.trim() ||
+      formData.motifDeConsultation?.trim() || // ✅ new
+      formData.perimetreCranien || // ✅ new
+      formData.rendezVousDate || // ✅ new
       formData?.ordonnance?.items?.length > 0 ||
       formData?.bilanRecip?.items?.length > 0;
 
@@ -140,19 +143,22 @@ export default function PatientDashboard() {
       );
       return;
     }
+
     setConfig({
       title: "Nouvelle consultation ajoutée !",
       description: "La consultation du patient a été ajoutée avec succès.",
     });
     setsuccessopen(true);
-
     setload(true);
+
     try {
       const response = await fetch("/api/Consulter", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
+
+        // ✅ include new fields in POST body
         body: JSON.stringify({
           patientId: selectedPatient?.id,
           note: formData.note?.trim() || "",
@@ -167,6 +173,14 @@ export default function PatientDashboard() {
           glycemie: formData.glycemie || null,
           developpementPsychomoteur:
             formData.developpementPsychomoteur?.trim() || null,
+
+          // ✅ New fields
+          motifDeConsultation: formData.motifDeConsultation?.trim() || null,
+          perimetreCranien: formData.perimetreCranien || null,
+          rendezVousDate: formData.rendezVousDate || null,
+          rendezVousDescription: formData.rendezVousDescription?.trim() || null,
+
+          // ✅ Ordonnance
           ordonnance:
             formData?.ordonnance?.items?.length > 0
               ? {
@@ -179,6 +193,8 @@ export default function PatientDashboard() {
                   })),
                 }
               : undefined,
+
+          // ✅ Bilan
           bilanRecip:
             formData?.bilanRecip?.items?.length > 0
               ? {
@@ -191,6 +207,7 @@ export default function PatientDashboard() {
               : undefined,
         }),
       });
+
       if (!response.ok) {
         setsuccessopen(false);
         const err = await response.json();
@@ -198,14 +215,13 @@ export default function PatientDashboard() {
           err.error || "Erreur lors de la création de la consultation"
         );
       }
-      setload(false);
 
       const consultation = await response.json();
+      console.log("✅ Consultation créée:", consultation);
+
       await fetchPatients();
       setnewordanance(false);
-
-      //  setsuccessopen(true);
-      console.log("✅ Consultation créée:", consultation);
+      setload(false);
       return consultation;
     } catch (error) {
       console.error("❌ addConsultation error:", error);
@@ -366,6 +382,19 @@ export default function PatientDashboard() {
 
     return [
       {
+        icon: Stethoscope,
+        label: "Motif de consultation",
+        value: (
+          <textarea
+            rows={3}
+            readOnly
+            className="w-full border rounded-md p-2 text-sm text-gray-800"
+            value={getInfo("motifDeConsultation", lastIndex) || ""}
+          />
+        ),
+        unite: "",
+      },
+      {
         icon: ClipboardList,
         label: "Notes",
         value: (
@@ -402,6 +431,12 @@ export default function PatientDashboard() {
         label: "Poids",
         value: getInfo("poids", lastIndex),
         unite: "kg",
+      },
+      {
+        icon: Ruler,
+        label: "Périmètre crânien",
+        value: getInfo("perimetreCranien", lastIndex),
+        unite: "cm",
       },
       {
         icon: Activity,
@@ -445,7 +480,18 @@ export default function PatientDashboard() {
         value: getInfo("glycemie", lastIndex),
         unite: "g/L",
       },
-    ];
+
+      c?.rendezVous
+        ? {
+            icon: Clock,
+            label: "Rendez-vous lié",
+            value: `${new Date(c.rendezVous.date).toLocaleDateString(
+              "fr-FR"
+            )} - ${c.rendezVous.description || "Non spécifié"}`,
+            unite: "",
+          }
+        : null,
+    ].filter(Boolean);
   };
 
   async function handleAddPatient(data) {
@@ -569,7 +615,7 @@ export default function PatientDashboard() {
         initial={{ x: -100, opacity: 0 }}
         animate={{ x: 0, opacity: 1 }}
         transition={{ duration: 0.5, ease: "easeOut" }}
-        className="w-70 h-screen bg-purple-100 rounded-tr-4xl p-6 pl-2 pr-2  pr-0flex flex-col border-r border-purple-200 fixed "
+        className="w-60 h-screen bg-purple-100 rounded-tr-4xl p-6 pl-2 pr-2  pr-0flex flex-col border-r border-purple-200 fixed "
       >
         <div className="flex justify-between items-center mb-6">
           <motion.h2
@@ -649,7 +695,7 @@ export default function PatientDashboard() {
         </motion.ul>
       </motion.div>
       {/* Main Content */}
-      <div className="flex-1 ml-50 p-8 overflow-auto">
+      <div className="flex-1 ml-50 p-6 px-0 pr-2 overflow-auto">
         {/* Keyboard shortcut hint button */}
         <motion.button
           initial={{ opacity: 0, scale: 0.8 }}
@@ -744,7 +790,7 @@ export default function PatientDashboard() {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.3 }}
-          className="flex border-b border-purple-200 mb-6 overflow-x-hidden"
+          className="flex flex-wrap sm:flex-nowrap border-b border-purple-200 mb-6 overflow-x-auto scrollbar-hide"
         >
           {[
             "Informations Patient",
@@ -765,7 +811,7 @@ export default function PatientDashboard() {
               onClick={() => {
                 setselectedtab(tab);
               }}
-              className={`px-4 py-2 font-medium border-b-2 transition-all duration-200 whitespace-nowrap ${
+              className={`px-2 sm:px-2 py-2 text-sm sm:text-base font-medium border-b-2 transition-all duration-200 whitespace-nowrap ${
                 tab === selectedtab
                   ? "text-purple-600 border-purple-600"
                   : "text-gray-600 border-transparent hover:text-purple-600 hover:border-purple-300"
@@ -897,6 +943,7 @@ export default function PatientDashboard() {
                 <Ordonnances
                   patientId={selectedPatient?.id}
                   query={query.ord}
+                  selectedPatient={selectedPatient}
                 />
               )}
             </motion.div>

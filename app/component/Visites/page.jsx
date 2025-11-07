@@ -18,54 +18,51 @@ import {
   User,
   Activity,
   Heart,
-  FileText,
   Pill,
   FlaskConical,
   Edit3,
   Save,
+  Ruler,
 } from "lucide-react";
 
 export default function PatientVisits({ patientId, query }) {
   const [visits, setVisits] = useState([]);
-  const printRef = useRef();
-  const bilanPrintRef = useRef();
-  const [filtredData, setfiltredData] = useState();
+  const [filtredData, setfiltredData] = useState([]);
   const [selectedVisit, setSelectedVisit] = useState(null);
   const [deleteConfirm, setDeleteConfirm] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [editedData, setEditedData] = useState({});
-  const [search, setsearch] = useState("");
+  const printRef = useRef();
+  const bilanPrintRef = useRef();
+
+  // 🔄 Filter by query
   useEffect(() => {
-    console.log(query);
     const filtred = visits?.filter((v) => v.id.toString().includes(query));
     setfiltredData(filtred);
-  }, [query]);
+  }, [query, visits]);
+
+  // 🔄 Fetch consultations
   const fetchConsultations = async () => {
     try {
       const res = await fetch(`/api/Consulter?patientId=${patientId}`);
       const data = await res.json();
-
       if (!res.ok) throw new Error(data.error || "Erreur de chargement");
-
       setVisits(data);
       setfiltredData(data);
     } catch (err) {
       console.error("❌ Erreur:", err);
     }
   };
-  // ✅ Fetch consultations
+
   useEffect(() => {
     if (!patientId) return;
-
     fetchConsultations();
   }, [patientId]);
 
-  // ✅ Delete consultation
+  // 🗑️ Delete consultation
   async function handleDelete(id) {
     try {
-      const res = await fetch(`/api/Consulter?id=${id}`, {
-        method: "DELETE",
-      });
+      const res = await fetch(`/api/Consulter?id=${id}`, { method: "DELETE" });
       const data = await res.json();
       if (!res.ok)
         throw new Error(data.error || "Erreur lors de la suppression");
@@ -78,14 +75,16 @@ export default function PatientVisits({ patientId, query }) {
     }
   }
 
-  // ✅ Save modifications
+  // 💾 Save modifications
   async function handleSave() {
     try {
-      // Convert specific fields to numeric types safely
       const formattedData = {
         ...editedData,
         taille: editedData.taille ? parseFloat(editedData.taille) : null,
         poids: editedData.poids ? parseFloat(editedData.poids) : null,
+        perimetreCranien: editedData.perimetreCranien
+          ? parseFloat(editedData.perimetreCranien)
+          : null,
         tensionSystolique: editedData.tensionSystolique
           ? parseInt(editedData.tensionSystolique)
           : null,
@@ -110,26 +109,41 @@ export default function PatientVisits({ patientId, query }) {
       const res = await fetch("/api/Consulter", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ id: selectedVisit.id, ...formattedData }),
+        body: JSON.stringify({
+          id: selectedVisit.id,
+          ...formattedData,
+          motifDeConsultation: editedData.motifDeConsultation || null,
+          rendezVousDate: editedData.rendezVousDate || null,
+          rendezVousDescription: editedData.rendezVousDescription || null,
+        }),
       });
 
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Erreur de mise à jour");
+
       await fetchConsultations();
-      setSelectedVisit(null);
-      // ✅ Update UI with correct types
       setIsEditing(false);
+      setSelectedVisit(null);
     } catch (err) {
       console.error("❌ Erreur lors de la mise à jour:", err);
     }
   }
 
+  // 🔄 Handle form changes
   const handleChange = (field, value) => {
     setEditedData((prev) => ({ ...prev, [field]: value }));
   };
 
+  // ⚕️ Medical Info Grid (with perimetreCranien)
   const renderMedicalInfo = (visit) => {
     const fields = [
+      {
+        icon: Ruler,
+        label: "Périmètre crânien",
+        value: visit.perimetreCranien,
+        unite: "cm",
+        field: "perimetreCranien",
+      },
       {
         icon: User,
         label: "Taille",
@@ -222,66 +236,7 @@ export default function PatientVisits({ patientId, query }) {
       </div>
     );
   };
-  const handlePrintElectron = () => {
-    if (!printRef.current) return;
-    console.log("sbn");
-    const printContents = printRef.current.outerHTML;
 
-    window.electron.printOrdonnance({
-      title: "Ordonnance - Dr DIB Amel",
-      html: `
-      <html>
-        <head>
-          <style>
-            body { font-family: 'Segoe UI', Arial, sans-serif; background: #f8f8fa; margin: 0; }
-            .ord-print-header { text-align: center; padding: 24px 0 8px; border-bottom: 2px solid #7c3aed; }
-            .ord-print-title { font-size: 2rem; color: #7c3aed; font-weight: bold; margin-bottom: 4px; }
-            .ord-print-doc { font-size: 1.1rem; color: #444; margin-bottom: 2px; }
-            .ord-print-date { font-size: 0.95rem; color: #888; margin-bottom: 12px; }
-            .ord-print-list { margin: 24px 0; }
-            .ord-print-item { padding: 12px 18px; border-radius: 8px; background: #fff; margin-bottom: 12px; box-shadow: 0 2px 8px #e9e9f3; }
-            .ord-print-item-title { font-size: 1.1rem; color: #7c3aed; font-weight: 500; }
-            .ord-print-item-details { font-size: 0.98rem; color: #444; margin-top: 2px; }
-            .ord-print-footer { text-align: right; font-size: 1rem; color: #7c3aed; margin-top: 32px; border-top: 1px solid #e0e0e0; padding-top: 12px; }
-          </style>
-        </head>
-        <body>
-          ${printContents}
-        </body>
-      </html>
-    `,
-    });
-  };
-
-  // ✅ Print Bilan using Electron
-  const handlePrintBilanElectron = () => {
-    if (!bilanPrintRef.current) return;
-
-    const printContents = bilanPrintRef.current.outerHTML;
-
-    window.electron.printBilan({
-      title: "Bilans & Analyses - Dr DIB Amel",
-      html: `
-      <html>
-        <head>
-          <style>
-            body { font-family: 'Segoe UI', Arial, sans-serif; background: #f8f8fa; margin: 0; }
-            .bilan-print-header { text-align: center; padding: 24px 0 8px; border-bottom: 2px solid #7c3aed; }
-            .bilan-print-title { font-size: 2rem; color: #7c3aed; font-weight: bold; margin-bottom: 4px; }
-            .bilan-print-doc { font-size: 1.1rem; color: #444; margin-bottom: 2px; }
-            .bilan-print-date { font-size: 0.95rem; color: #888; margin-bottom: 12px; }
-            .bilan-print-list { margin: 24px 0; }
-            .bilan-print-item { padding: 12px 18px; border-radius: 8px; background: #fff; margin-bottom: 12px; box-shadow: 0 2px 8px #e9e9f3; }
-            .bilan-print-footer { text-align: right; font-size: 1rem; color: #7c3aed; margin-top: 32px; border-top: 1px solid #e0e0e0; padding-top: 12px; }
-          </style>
-        </head>
-        <body>
-          ${printContents}
-        </body>
-      </html>
-    `,
-    });
-  };
   return (
     <div className="p-4">
       {filtredData?.length === 0 ? (
@@ -332,22 +287,22 @@ export default function PatientVisits({ patientId, query }) {
           {selectedVisit && (
             <>
               <DialogHeader>
-                <div className="flex flex-row justify-between ">
+                <div className="flex flex-row justify-between">
                   <DialogTitle className="text-purple-700 text-lg font-semibold">
                     Consultation #{selectedVisit.id}
                   </DialogTitle>
-                  <div className="flex flex-row p-4">
+                  <div className="flex gap-3">
                     {isEditing ? (
                       <Button
                         onClick={handleSave}
-                        className="flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white"
+                        className="bg-green-600 hover:bg-green-700 text-white flex items-center gap-2"
                       >
                         <Save size={16} /> Enregistrer
                       </Button>
                     ) : (
                       <Button
                         onClick={() => setIsEditing(true)}
-                        className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white"
+                        className="bg-blue-600 hover:bg-blue-700 text-white flex items-center gap-2"
                       >
                         <Edit3 size={16} /> Modifier
                       </Button>
@@ -355,14 +310,13 @@ export default function PatientVisits({ patientId, query }) {
                     <Button
                       variant="destructive"
                       onClick={() => setDeleteConfirm(true)}
-                      className="flex items-center  mx-3 bg-red-500 hover:bg-red-600 text-white"
+                      className="flex items-center bg-red-500 hover:bg-red-600 text-white"
                     >
                       <Trash2 size={16} />
                     </Button>
                   </div>
                 </div>
               </DialogHeader>
-
               {/* Notes */}
               <div className="mt-3">
                 <label className="block text-sm font-medium mb-1">Notes</label>
@@ -370,7 +324,7 @@ export default function PatientVisits({ patientId, query }) {
                   <textarea
                     rows={3}
                     className="w-full border rounded-lg p-2 bg-white"
-                    value={editedData.note ?? ""}
+                    value={editedData.note ?? selectedVisit.note ?? ""}
                     onChange={(e) => handleChange("note", e.target.value)}
                   />
                 ) : (
@@ -379,10 +333,32 @@ export default function PatientVisits({ patientId, query }) {
                   </p>
                 )}
               </div>
-
+              {/* Motif de consultation */}
               <div className="mt-3">
                 <label className="block text-sm font-medium mb-1">
-                  Développement Psychomoteur
+                  Motif de consultation
+                </label>
+                {isEditing ? (
+                  <textarea
+                    rows={3}
+                    className="w-full border rounded-lg p-2 bg-white"
+                    value={editedData.motifDeConsultation ?? ""}
+                    onChange={(e) =>
+                      handleChange("motifDeConsultation", e.target.value)
+                    }
+                  />
+                ) : (
+                  <p className="text-gray-700 bg-white p-3 rounded-lg shadow-sm min-h-[60px]">
+                    {selectedVisit.motifDeConsultation ||
+                      "Aucun motif enregistré."}
+                  </p>
+                )}
+              </div>
+
+              {/* Développement psychomoteur */}
+              <div className="mt-3">
+                <label className="block text-sm font-medium mb-1">
+                  Développement psychomoteur
                 </label>
                 {isEditing ? (
                   <textarea
@@ -401,13 +377,69 @@ export default function PatientVisits({ patientId, query }) {
                 )}
               </div>
 
-              {/* Infos médicales */}
+              {/* 🗓️ Rendez-vous */}
+              <div className="mt-4 bg-white p-3 rounded-lg shadow-sm">
+                <h4 className="text-purple-700 font-semibold flex items-center gap-2 mb-2">
+                  <Calendar size={18} /> Rendez-vous
+                </h4>
+                {isEditing ? (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <div>
+                      <label className="text-sm text-gray-600 mb-1 block">
+                        Date du rendez-vous
+                      </label>
+                      <input
+                        type="datetime-local"
+                        className="border rounded-md px-3 py-2 w-full text-sm"
+                        value={
+                          editedData.rendezVousDate ??
+                          (selectedVisit.rendezVous?.date
+                            ? new Date(selectedVisit.rendezVous.date)
+                                .toISOString()
+                                .slice(0, 16)
+                            : "")
+                        }
+                        onChange={(e) =>
+                          handleChange("rendezVousDate", e.target.value)
+                        }
+                      />
+                    </div>
+                    <div>
+                      <label className="text-sm text-gray-600 mb-1 block">
+                        Description
+                      </label>
+                      <input
+                        type="text"
+                        className="border rounded-md px-3 py-2 w-full text-sm"
+                        value={
+                          editedData.rendezVousDescription ??
+                          selectedVisit.rendezVous?.description ??
+                          ""
+                        }
+                        onChange={(e) =>
+                          handleChange("rendezVousDescription", e.target.value)
+                        }
+                      />
+                    </div>
+                  </div>
+                ) : (
+                  <p className="text-gray-700 text-sm">
+                    <b>Date :</b>{" "}
+                    {selectedVisit.rendezVous?.date
+                      ? new Date(
+                          selectedVisit.rendezVous.date
+                        ).toLocaleDateString("fr-FR")
+                      : "—"}{" "}
+                    | <b>Description :</b>{" "}
+                    {selectedVisit.rendezVous?.description || "—"}
+                  </p>
+                )}
+              </div>
+
+              {/* 🧪 Infos médicales */}
               {renderMedicalInfo(selectedVisit)}
-
-              {/* Buttons */}
-
               {/* ====================== */}
-              {/* BILAN RECIP (Analyses) */}
+              {/* 🔬 BILAN RECIP (Analyses) */}
               {/* ====================== */}
               {selectedVisit?.bilanRecip?.items?.length > 0 && (
                 <div ref={bilanPrintRef} className="mt-5">
@@ -442,7 +474,7 @@ export default function PatientVisits({ patientId, query }) {
               )}
 
               {/* ====================== */}
-              {/* ORDONNANCE (Prescription) */}
+              {/* 💊 ORDONNANCE (Prescription) */}
               {/* ====================== */}
               {selectedVisit?.ordonnance?.items?.length > 0 && (
                 <div ref={printRef} className="mt-5">
@@ -455,8 +487,9 @@ export default function PatientVisits({ patientId, query }) {
                       onClick={() => {
                         handlePrintElectron();
                       }}
+                      className="text-purple-600 hover:text-purple-800 text-sm"
                     >
-                      print
+                      Imprimer
                     </button>
                   </div>
 
@@ -491,19 +524,16 @@ export default function PatientVisits({ patientId, query }) {
                   </div>
                 </div>
               )}
+
+              <DialogFooter className="mt-6 flex justify-end">
+                <Button onClick={() => setSelectedVisit(null)}>Fermer</Button>
+              </DialogFooter>
             </>
           )}
-          <DialogFooter className="mt-6 flex justify-between">
-            <div className="flex gap-2">
-              <Button onClick={() => setSelectedVisit(null)}>Fermer</Button>
-            </div>
-          </DialogFooter>
         </DialogContent>
       </Dialog>
 
-      {/* ====================== */}
-      {/* DELETE CONFIRM DIALOG */}
-      {/* ====================== */}
+      {/* 🗑️ DELETE CONFIRM DIALOG */}
       <Dialog open={deleteConfirm} onOpenChange={setDeleteConfirm}>
         <DialogContent className="sm:max-w-sm bg-white rounded-xl">
           <DialogHeader>
@@ -515,7 +545,6 @@ export default function PatientVisits({ patientId, query }) {
               continuer ?
             </DialogDescription>
           </DialogHeader>
-
           <DialogFooter className="flex justify-end gap-2 mt-4">
             <Button variant="secondary" onClick={() => setDeleteConfirm(false)}>
               Annuler

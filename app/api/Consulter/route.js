@@ -29,6 +29,7 @@ export async function GET(req) {
           },
         },
         patient: { select: { id: true, nom: true } },
+        rendezVous: { select: { id: true, date: true, description: true } }, // ✅ new relation
       },
       orderBy: { createdAt: "desc" },
     });
@@ -46,12 +47,11 @@ export async function GET(req) {
 // ====================
 // POST: Create new consultation
 // ====================
-
 export async function POST(req) {
   try {
     const data = await req.json();
 
-    // Convert to numeric types safely
+    // Convert numeric types safely
     const taille = data.taille ? parseFloat(data.taille) : null;
     const poids = data.poids ? parseFloat(data.poids) : null;
     const tensionSystolique = data.tensionSystolique
@@ -71,6 +71,22 @@ export async function POST(req) {
       ? parseInt(data.saturationOxygene)
       : null;
     const glycemie = data.glycemie ? parseFloat(data.glycemie) : null;
+    const perimetreCranien = data.perimetreCranien
+      ? parseFloat(data.perimetreCranien)
+      : null;
+
+    // ✅ Auto-create RendezVous if not provided
+    let rendezVousId = data.rendezVousId ? Number(data.rendezVousId) : null;
+
+    if (!rendezVousId && data.rendezVousDate) {
+      const rendezVous = await prisma.rendezVous.create({
+        data: {
+          date: new Date(data.rendezVousDate),
+          description: data.rendezVousDescription || "Consultation programmée",
+        },
+      });
+      rendezVousId = rendezVous.id;
+    }
 
     const consultation = await prisma.consultation.create({
       data: {
@@ -85,7 +101,10 @@ export async function POST(req) {
         frequenceRespiratoire,
         saturationOxygene,
         glycemie,
-        developpementPsychomoteur: data.developpementPsychomoteur || null, // ✅ new field
+        developpementPsychomoteur: data.developpementPsychomoteur || null,
+        motifDeConsultation: data.motifDeConsultation || null,
+        perimetreCranien,
+        rendezVousId, // ✅ now always set if date given
 
         // ✅ Ordonnance
         ordonnance: data.ordonnance
@@ -124,6 +143,7 @@ export async function POST(req) {
       include: {
         ordonnance: { include: { items: true } },
         bilanRecip: { include: { items: true } },
+        rendezVous: true,
       },
     });
 
@@ -137,6 +157,9 @@ export async function POST(req) {
   }
 }
 
+// ====================
+// PUT: Update consultation
+// ====================
 export async function PUT(req) {
   try {
     const data = await req.json();
@@ -154,6 +177,11 @@ export async function PUT(req) {
       saturationOxygene,
       glycemie,
       developpementPsychomoteur,
+      motifDeConsultation,
+      perimetreCranien,
+      rendezVousId,
+      rendezVousDate,
+      rendezVousDescription,
     } = data;
 
     if (!id) {
@@ -163,7 +191,7 @@ export async function PUT(req) {
       );
     }
 
-    // 🧠 Prepare data for update — only defined fields
+    // ✅ Build main consultation update data
     const updateData = {
       ...(patientId !== undefined && { patientId: Number(patientId) }),
       ...(note !== undefined && { note }),
@@ -205,12 +233,47 @@ export async function PUT(req) {
       ...(developpementPsychomoteur !== undefined && {
         developpementPsychomoteur,
       }),
+      ...(motifDeConsultation !== undefined && { motifDeConsultation }),
+      ...(perimetreCranien !== undefined && {
+        perimetreCranien: perimetreCranien
+          ? parseFloat(perimetreCranien)
+          : null,
+      }),
     };
 
-    // 💾 Update only the consultation record
+    // ✅ Handle RendezVous (update or create)
+    if (rendezVousDate || rendezVousDescription) {
+      if (rendezVousId) {
+        // Update existing rendezvous
+        await prisma.rendezVous.update({
+          where: { id: Number(rendezVousId) },
+          data: {
+            ...(rendezVousDate && { date: new Date(rendezVousDate) }),
+            ...(rendezVousDescription && {
+              description: rendezVousDescription,
+            }),
+          },
+        });
+      } else {
+        // Create a new rendezvous and link to consultation
+        const newRendezVous = await prisma.rendezVous.create({
+          data: {
+            date: rendezVousDate ? new Date(rendezVousDate) : new Date(),
+            description: rendezVousDescription || "",
+          },
+        });
+
+        updateData.rendezVous = {
+          connect: { id: newRendezVous.id },
+        };
+      }
+    }
+
+    // ✅ Update consultation with new data
     const updated = await prisma.consultation.update({
       where: { id: Number(id) },
       data: updateData,
+      include: { rendezVous: true },
     });
 
     return NextResponse.json(updated);
@@ -241,7 +304,6 @@ export async function DELETE(req) {
           ordonnance: { consultationId: Number(id) },
         },
       }),
-
       prisma.bilanItem.deleteMany({
         where: {
           bilanRecip: { consultationId: Number(id) },

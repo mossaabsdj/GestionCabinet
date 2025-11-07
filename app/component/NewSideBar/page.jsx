@@ -26,7 +26,13 @@ const Sidebar = ({
 }) => {
   const [activeItem, setActiveItem] = useState(items[0]?.url || "");
   const [hoveredItem, setHoveredItem] = useState(null);
-
+  const handleExit = () => {
+    if (window?.electron?.exit) {
+      window.electron.exit();
+    } else {
+      alert("Exit unavailable outside Electron.");
+    }
+  };
   const handleItemClick = (item) => {
     setActiveItem(item.url);
     if (onNavigate) {
@@ -151,6 +157,7 @@ const Sidebar = ({
 
           {!collapsed && (
             <motion.button
+              onClick={handleExit}
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
@@ -173,7 +180,7 @@ export default function App() {
   const [currentPage, setCurrentPage] = useState("Accueill");
 
   const items = [
-    { title: "Tableau de bord", url: "Accueill", icon: Home },
+    { title: "Tableau de bord", url: "/", icon: Home },
     { title: "Consulter", url: "Consulter", icon: Stethoscope },
     { title: "Patients", url: "Patients", icon: Users },
     { title: "Predifined", url: "Predifined", icon: FileText },

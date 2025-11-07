@@ -92,6 +92,7 @@ export default function Analyses({
 
   // ✅ Open file in new tab
   const openFile = (fullPath) => {
+    console.log("path" + fullPath);
     if (window.electron?.openFile) {
       window.electron.openFile(fullPath);
     } else {
@@ -213,7 +214,9 @@ export default function Analyses({
               </button>
 
               <CardContent
-                onClick={() => openFile(`${basePath}/${file.fichier}`)}
+                onClick={() =>
+                  openFile(`${basePath}/public/uploads/${file.fichier}`)
+                }
               >
                 <p className="font-medium text-purple-700 text-lg">
                   {file.name}

@@ -5,13 +5,13 @@ const express = require("express");
 const app = next({ dev: false, dir: path.join(__dirname, ".") });
 const handle = app.getRequestHandler();
 
-const port = 3000;
+const port = process.env.PORT || 3000;
 
 app.prepare().then(() => {
   const server = express();
 
-  server.all("*", (req, res) => {
-    return handle(req, res);
+  server.all("*splat", (req, res) => {
+    handle(req, res);
   });
 
   server.listen(port, (err) => {

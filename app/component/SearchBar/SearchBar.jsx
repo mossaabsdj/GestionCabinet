@@ -1,6 +1,7 @@
 import { motion } from "framer-motion";
 
 import { Trash2, Plus, Search, Pill, TestTube } from "lucide-react";
+
 export default function ModernSearchBar({
   value,
   onChange,

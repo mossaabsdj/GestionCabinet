@@ -6,6 +6,10 @@ export async function GET(req) {
     const { searchParams } = new URL(req.url);
     const daysParam = parseInt(searchParams.get("days")) || 7; // default: last 7 days
 
+    // await prisma.medicament.createMany({
+    //  data: medicines.map((nom) => ({ nom })),
+    //  skipDuplicates: true, // 👈 ignores duplicates if nom is unique
+    // });
     // --- Calculate the date range
     const now = new Date();
     const startDate = new Date(now);
