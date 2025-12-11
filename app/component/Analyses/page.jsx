@@ -186,50 +186,78 @@ export default function Analyses({
       ) : files.length === 0 ? (
         <p className="text-gray-500">Aucun fichier trouvé.</p>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-          {files.map((file) => (
-            <Card
-              key={file.id}
-              className="bg-purple-50 relative p-4 hover:bg-purple-100 transition cursor-pointer"
-            >
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  confirmDelete(file);
-                }}
-                className="group absolute top-2 right-2 h-9 w-9 flex items-center justify-center
-             rounded-full border border-red-200 bg-red-50/60 text-red-500
-             hover:bg-red-100 hover:border-red-300 hover:text-red-600
-             shadow-sm hover:shadow-md transition-all duration-300"
-              >
-                <Trash2 className="w-4 h-4 group-hover:scale-110 transition-transform duration-300" />
-
-                {/* Tooltip */}
-                <span
-                  className="absolute -bottom-6 left-1/2 -translate-x-1/2 text-xs text-gray-500 
-                   opacity-0 group-hover:opacity-100 transition-opacity duration-300"
-                >
-                  Supprimer
-                </span>
-              </button>
-
-              <CardContent
-                onClick={() =>
-                  openFile(`${basePath}/public/uploads/${file.fichier}`)
-                }
-              >
-                <p className="font-medium text-purple-700 text-lg">
-                  {file.name}
-                </p>
-                <div className="flex items-center gap-2 text-sm text-gray-500 mt-1">
-                  <Calendar size={16} /> {file.date}
-                </div>
-                <p className="text-sm text-purple-700 font-semibold mt-1">
-                  {file.type}
-                </p>
-              </CardContent>
-            </Card>
-          ))}
+        <div className="bg-white rounded-xl shadow-lg overflow-hidden border border-purple-100">
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead>
+                <tr className="bg-purple-400 text-white">
+                  <th className="text-left px-6 py-4 font-semibold text-sm uppercase tracking-wider">
+                    Nom
+                  </th>
+                  <th className="text-left px-6 py-4 font-semibold text-sm uppercase tracking-wider">
+                    Type
+                  </th>
+                  <th className="text-left px-6 py-4 font-semibold text-sm uppercase tracking-wider">
+                    Date
+                  </th>
+                  <th className="text-left px-6 py-4 font-semibold text-sm uppercase tracking-wider">
+                    Actions
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-100">
+                {files.map((file, index) => (
+                  <tr
+                    key={file.id}
+                    className={`cursor-pointer transition-colors hover:bg-purple-50 ${
+                      index % 2 === 0 ? "bg-white" : "bg-gray-50"
+                    }`}
+                    onClick={() =>
+                      openFile(`${basePath}/public/uploads/${file.fichier}`)
+                    }
+                  >
+                    <td className="px-6 py-4">
+                      <span className="text-sm font-medium text-gray-900">
+                        {file.name}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4">
+                      <span
+                        className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold ${
+                          file.type === "Radio"
+                            ? "bg-blue-100 text-blue-800"
+                            : "bg-green-100 text-green-800"
+                        }`}
+                      >
+                        {file.type}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4">
+                      <div className="flex items-center gap-2 text-sm text-gray-700 font-medium">
+                        <Calendar size={16} className="text-purple-500" />
+                        {file.date}
+                      </div>
+                    </td>
+                    <td className="px-6 py-4">
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          confirmDelete(file);
+                        }}
+                        className="group h-9 w-9 flex items-center justify-center
+                    rounded-full border border-red-200 bg-red-50/60 text-red-500
+                    hover:bg-red-100 hover:border-red-300 hover:text-red-600
+                    shadow-sm hover:shadow-md transition-all duration-300"
+                        title="Supprimer"
+                      >
+                        <Trash2 className="w-4 h-4 group-hover:scale-110 transition-transform duration-300" />
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       )}
 

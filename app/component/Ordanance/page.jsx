@@ -313,111 +313,138 @@ export default function OrdBilanPage({ patientId, query, selectedPatient }) {
               Aucune ordonnance trouvée.
             </p>
           ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-              {filtredOrd.map((ord) => (
-                <Dialog
-                  key={ord.id}
-                  open={selectedOrdonnance?.id === ord.id}
-                  onOpenChange={(open) => !open && setSelectedOrdonnance(null)}
-                >
-                  <Card
-                    className="bg-purple-50 p-3 cursor-pointer hover:bg-purple-100 transition"
-                    onClick={() => setSelectedOrdonnance(ord)}
-                  >
-                    <CardContent>
-                      <div className="flex justify-between">
-                        <p className="font-medium text-purple-700">
-                          Ordonnance #{ord.id}
-                        </p>
-                        <div className="flex gap-2">
-                          <Button
-                            size="icon"
-                            variant="ghost"
-                            className="h-8 w-8"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              confirmDelete("ord", ord);
-                            }}
-                          >
-                            <Trash2 size={18} className="text-red-500" />
-                          </Button>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-2 text-sm text-gray-500 mt-1">
-                        <Calendar size={16} />{" "}
-                        {new Date(ord.createdAt).toLocaleDateString("fr-FR")}
-                      </div>
-                    </CardContent>
-                  </Card>
+            <div className="bg-white rounded-xl shadow-lg overflow-hidden border border-purple-100">
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead>
+                    <tr className="bg-gradient-to-r bg-purple-400 text-white">
+                      <th className="text-left px-6 py-4 font-semibold text-sm uppercase tracking-wider">
+                        #
+                      </th>
+                      <th className="text-left px-6 py-4 font-semibold text-sm uppercase tracking-wider">
+                        Date
+                      </th>
+                      <th className="text-left px-6 py-4 font-semibold text-sm uppercase tracking-wider">
+                        Actions
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-100">
+                    {filtredOrd.map((ord, index) => (
+                      <Dialog
+                        key={ord.id}
+                        open={selectedOrdonnance?.id === ord.id}
+                        onOpenChange={(open) =>
+                          !open && setSelectedOrdonnance(null)
+                        }
+                      >
+                        <tr
+                          className={`cursor-pointer transition-colors hover:bg-purple-50 ${
+                            index % 2 === 0 ? "bg-white" : "bg-gray-50"
+                          }`}
+                          onClick={() => setSelectedOrdonnance(ord)}
+                        >
+                          <td className="px-6 py-4">
+                            <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold bg-purple-100 text-purple-800">
+                              Ordonnance #{ord.id}
+                            </span>
+                          </td>
+                          <td className="px-6 py-4">
+                            <div className="flex items-center gap-2 text-sm text-gray-700 font-medium">
+                              <Calendar size={16} className="text-purple-500" />
+                              {new Date(ord.createdAt).toLocaleDateString(
+                                "fr-FR"
+                              )}
+                            </div>
+                          </td>
+                          <td className="px-6 py-4">
+                            <Button
+                              size="icon"
+                              variant="ghost"
+                              className="h-8 w-8 hover:bg-red-50"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                confirmDelete("ord", ord);
+                              }}
+                            >
+                              <Trash2 size={18} className="text-red-500" />
+                            </Button>
+                          </td>
+                        </tr>
 
-                  <DialogContent className="sm:min-w-4xl w-full bg-white rounded-xl p-6 shadow-lg">
-                    <DialogHeader>
-                      <DialogTitle className="text-purple-700 text-lg font-semibold">
-                        Détails de l’Ordonnance #{ord.id}
-                      </DialogTitle>
-                    </DialogHeader>
+                        <DialogContent className="sm:min-w-4xl w-full bg-white rounded-xl p-6 shadow-lg">
+                          <DialogHeader>
+                            <DialogTitle className="text-purple-700 text-lg font-semibold">
+                              Détails de l'Ordonnance #{ord.id}
+                            </DialogTitle>
+                          </DialogHeader>
 
-                    {ord.items?.length > 0 ? (
-                      <>
-                        <div className="mt-4 border border-purple-100 rounded-xl overflow-hidden">
-                          <table className="w-full border-collapse text-sm">
-                            <thead className="bg-purple-100 text-purple-700">
-                              <tr>
-                                <th className="text-left py-3 px-4 font-semibold">
-                                  Médicament
-                                </th>
-                                <th className="text-left py-3 px-4 font-semibold">
-                                  Dosage
-                                </th>
-                                <th className="text-left py-3 px-4 font-semibold">
-                                  Fréquence
-                                </th>
-                                <th className="text-left py-3 px-4 font-semibold">
-                                  Durée
-                                </th>
-                              </tr>
-                            </thead>
-                            <tbody>
-                              {ord.items.map((item, i) => (
-                                <tr
-                                  key={i}
-                                  className="border-b border-purple-100 hover:bg-purple-50 transition-colors"
+                          {ord.items?.length > 0 ? (
+                            <>
+                              <div className="mt-4 border border-purple-100 rounded-xl overflow-hidden">
+                                <table className="w-full border-collapse text-sm">
+                                  <thead className="bg-purple-100 text-purple-700">
+                                    <tr>
+                                      <th className="text-left py-3 px-4 font-semibold">
+                                        Médicament
+                                      </th>
+                                      <th className="text-left py-3 px-4 font-semibold">
+                                        Dosage
+                                      </th>
+                                      <th className="text-left py-3 px-4 font-semibold">
+                                        Fréquence
+                                      </th>
+                                      <th className="text-left py-3 px-4 font-semibold">
+                                        Durée
+                                      </th>
+                                    </tr>
+                                  </thead>
+                                  <tbody>
+                                    {ord.items.map((item, i) => (
+                                      <tr
+                                        key={i}
+                                        className="border-b border-purple-100 hover:bg-purple-50 transition-colors"
+                                      >
+                                        <td className="py-3 px-4 font-medium text-gray-800">
+                                          {item.medicament?.nom || "—"}
+                                        </td>
+                                        <td className="py-3 px-4 text-gray-600">
+                                          {item.dosage || "—"}
+                                        </td>
+                                        <td className="py-3 px-4 text-gray-600">
+                                          {item.frequence || "—"}
+                                        </td>
+                                        <td className="py-3 px-4 text-gray-600">
+                                          {item.duree || "—"}
+                                        </td>
+                                      </tr>
+                                    ))}
+                                  </tbody>
+                                </table>
+                              </div>
+
+                              <div className="flex justify-end mt-4">
+                                <Button
+                                  onClick={() =>
+                                    handlePrintOrdonnanceElectron(ord)
+                                  }
+                                  className="bg-purple-600 hover:bg-purple-700 text-white"
                                 >
-                                  <td className="py-3 px-4 font-medium text-gray-800">
-                                    {item.medicament?.nom || "—"}
-                                  </td>
-                                  <td className="py-3 px-4 text-gray-600">
-                                    {item.dosage || "—"}
-                                  </td>
-                                  <td className="py-3 px-4 text-gray-600">
-                                    {item.frequence || "—"}
-                                  </td>
-                                  <td className="py-3 px-4 text-gray-600">
-                                    {item.duree || "—"}
-                                  </td>
-                                </tr>
-                              ))}
-                            </tbody>
-                          </table>
-                        </div>
-
-                        <div className="flex justify-end mt-4">
-                          <Button
-                            onClick={() => handlePrintOrdonnanceElectron(ord)}
-                            className="bg-purple-600 hover:bg-purple-700 text-white"
-                          >
-                            🖨️ Imprimer l’Ordonnance
-                          </Button>
-                        </div>
-                      </>
-                    ) : (
-                      <p className="text-gray-500 text-center py-4">
-                        Aucun médicament dans cette ordonnance.
-                      </p>
-                    )}
-                  </DialogContent>
-                </Dialog>
-              ))}
+                                  🖨️ Imprimer l'Ordonnance
+                                </Button>
+                              </div>
+                            </>
+                          ) : (
+                            <p className="text-gray-500 text-center py-4">
+                              Aucun médicament dans cette ordonnance.
+                            </p>
+                          )}
+                        </DialogContent>
+                      </Dialog>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             </div>
           )}
         </TabsContent>
@@ -429,141 +456,167 @@ export default function OrdBilanPage({ patientId, query, selectedPatient }) {
               Aucun bilan reçu trouvé.
             </p>
           ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-              {filtredBilan.map((bilan) => (
-                <Dialog
-                  key={bilan.id}
-                  open={selectedBilan?.id === bilan.id}
-                  onOpenChange={(open) => !open && setSelectedBilan(null)}
-                >
-                  <Card
-                    className="bg-blue-50 p-3 cursor-pointer hover:bg-blue-100 transition"
-                    onClick={() => setSelectedBilan(bilan)}
-                  >
-                    <CardContent>
-                      <div className="flex justify-between">
-                        <p className="font-medium text-blue-700">
-                          Bilan reçu #{bilan.id}
-                        </p>
-                        <Button
-                          size="icon"
-                          variant="ghost"
-                          className="h-8 w-8"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            confirmDelete("bilan", bilan);
-                          }}
+            <div className="bg-white rounded-xl shadow-lg overflow-hidden border border-blue-100">
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead>
+                    <tr className="bg-purple-400  text-white">
+                      <th className="text-left px-6 py-4 font-semibold text-sm uppercase tracking-wider">
+                        #
+                      </th>
+                      <th className="text-left px-6 py-4 font-semibold text-sm uppercase tracking-wider">
+                        Date
+                      </th>
+                      <th className="text-left px-6 py-4 font-semibold text-sm uppercase tracking-wider">
+                        Actions
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-100">
+                    {filtredBilan.map((bilan, index) => (
+                      <Dialog
+                        key={bilan.id}
+                        open={selectedBilan?.id === bilan.id}
+                        onOpenChange={(open) => !open && setSelectedBilan(null)}
+                      >
+                        <tr
+                          className={`cursor-pointer transition-colors hover:bg-blue-50 ${
+                            index % 2 === 0 ? "bg-white" : "bg-gray-50"
+                          }`}
+                          onClick={() => setSelectedBilan(bilan)}
                         >
-                          <Trash2 size={18} className="text-red-500" />
-                        </Button>
-                      </div>
-                      <div className="flex items-center gap-2 text-sm text-gray-500 mt-1">
-                        <Calendar size={16} />{" "}
-                        {new Date(bilan.createdAt).toLocaleDateString("fr-FR")}
-                      </div>
-                    </CardContent>
-                  </Card>
+                          <td className="px-6 py-4">
+                            <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold bg-purple-100 text-purple-800">
+                              Bilan reçu #{bilan.id}
+                            </span>
+                          </td>
+                          <td className="px-6 py-4">
+                            <div className="flex items-center gap-2 text-sm text-gray-700 font-medium">
+                              <Calendar size={16} className="text-purple-500" />
+                              {new Date(bilan.createdAt).toLocaleDateString(
+                                "fr-FR"
+                              )}
+                            </div>
+                          </td>
+                          <td className="px-6 py-4">
+                            <Button
+                              size="icon"
+                              variant="ghost"
+                              className="h-8 w-8 hover:bg-red-50"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                confirmDelete("bilan", bilan);
+                              }}
+                            >
+                              <Trash2 size={18} className="text-red-500" />
+                            </Button>
+                          </td>
+                        </tr>
 
-                  {/* 👇 Dialog يعرض الـ selectedBilan بدل bilan */}
-                  {selectedBilan?.id === bilan.id && (
-                    <DialogContent className="sm:min-w-4xl w-full bg-white rounded-xl p-6 shadow-lg">
-                      <DialogHeader>
-                        <DialogTitle className="text-green-700 text-lg font-semibold">
-                          Détails du Bilan #{selectedBilan.id}
-                        </DialogTitle>
-                      </DialogHeader>
+                        {selectedBilan?.id === bilan.id && (
+                          <DialogContent className="sm:min-w-4xl w-full bg-white rounded-xl p-6 shadow-lg">
+                            <DialogHeader>
+                              <DialogTitle className="text-green-700 text-lg font-semibold">
+                                Détails du Bilan #{selectedBilan.id}
+                              </DialogTitle>
+                            </DialogHeader>
 
-                      {selectedBilan.items?.length > 0 ? (
-                        <>
-                          <div className="mt-4 border border-green-100 rounded-xl overflow-hidden">
-                            <table className="w-full border-collapse text-sm">
-                              <thead className="bg-green-100 text-green-700">
-                                <tr>
-                                  <th className="text-left py-3 px-4 font-semibold">
-                                    Nom du Bilan
-                                  </th>
-                                  <th className="text-left py-3 px-4 font-semibold">
-                                    Résultat
-                                  </th>
-                                  <th className="text-left py-3 px-4 font-semibold">
-                                    Remarque
-                                  </th>
-                                </tr>
-                              </thead>
-                              <tbody>
-                                {selectedBilan.items.map((item, i) => (
-                                  <tr
-                                    key={i}
-                                    className="border-b border-green-100 hover:bg-green-50 transition-colors"
+                            {selectedBilan.items?.length > 0 ? (
+                              <>
+                                <div className="mt-4 border border-green-100 rounded-xl overflow-hidden">
+                                  <table className="w-full border-collapse text-sm">
+                                    <thead className="bg-green-100 text-green-700">
+                                      <tr>
+                                        <th className="text-left py-3 px-4 font-semibold">
+                                          Nom du Bilan
+                                        </th>
+                                        <th className="text-left py-3 px-4 font-semibold">
+                                          Résultat
+                                        </th>
+                                        <th className="text-left py-3 px-4 font-semibold">
+                                          Remarque
+                                        </th>
+                                      </tr>
+                                    </thead>
+                                    <tbody>
+                                      {selectedBilan.items.map((item, i) => (
+                                        <tr
+                                          key={i}
+                                          className="border-b border-green-100 hover:bg-green-50 transition-colors"
+                                        >
+                                          <td className="py-3 px-4 font-medium text-gray-800">
+                                            {item.bilan?.nom || "—"}
+                                          </td>
+                                          <td className="py-3 px-4">
+                                            <input
+                                              type="text"
+                                              placeholder="Résultat..."
+                                              value={item.resultat || ""}
+                                              onChange={(e) =>
+                                                handleChangeBilanItem(
+                                                  selectedBilan.id,
+                                                  i,
+                                                  "resultat",
+                                                  e.target.value
+                                                )
+                                              }
+                                              className="w-full border rounded-lg px-3 py-1 focus:ring-2 focus:ring-green-500"
+                                            />
+                                          </td>
+                                          <td className="py-3 px-4">
+                                            <textarea
+                                              placeholder="Remarques..."
+                                              value={item.remarque || ""}
+                                              onChange={(e) =>
+                                                handleChangeBilanItem(
+                                                  selectedBilan.id,
+                                                  i,
+                                                  "remarque",
+                                                  e.target.value
+                                                )
+                                              }
+                                              className="w-full border rounded-lg px-3 py-1 focus:ring-2 focus:ring-green-500"
+                                              rows={1}
+                                            />
+                                          </td>
+                                        </tr>
+                                      ))}
+                                    </tbody>
+                                  </table>
+                                </div>
+
+                                <div className="flex justify-end gap-2 mt-4">
+                                  <Button
+                                    onClick={() =>
+                                      handlePrintBilanElectron(selectedBilan)
+                                    }
+                                    className="bg-green-600 hover:bg-green-700 text-white"
                                   >
-                                    <td className="py-3 px-4 font-medium text-gray-800">
-                                      {item.bilan?.nom || "—"}
-                                    </td>
-                                    <td className="py-3 px-4">
-                                      <input
-                                        type="text"
-                                        placeholder="Résultat..."
-                                        value={item.resultat || ""}
-                                        onChange={(e) =>
-                                          handleChangeBilanItem(
-                                            selectedBilan.id,
-                                            i,
-                                            "resultat",
-                                            e.target.value
-                                          )
-                                        }
-                                        className="w-full border rounded-lg px-3 py-1 focus:ring-2 focus:ring-green-500"
-                                      />
-                                    </td>
-                                    <td className="py-3 px-4">
-                                      <textarea
-                                        placeholder="Remarques..."
-                                        value={item.remarque || ""}
-                                        onChange={(e) =>
-                                          handleChangeBilanItem(
-                                            selectedBilan.id,
-                                            i,
-                                            "remarque",
-                                            e.target.value
-                                          )
-                                        }
-                                        className="w-full border rounded-lg px-3 py-1 focus:ring-2 focus:ring-green-500"
-                                        rows={1}
-                                      />
-                                    </td>
-                                  </tr>
-                                ))}
-                              </tbody>
-                            </table>
-                          </div>
+                                    🖨️ Imprimer le Bilan
+                                  </Button>
 
-                          <div className="flex justify-end gap-2 mt-4">
-                            <Button
-                              onClick={() =>
-                                handlePrintBilanElectron(selectedBilan)
-                              }
-                              className="bg-green-600 hover:bg-green-700 text-white"
-                            >
-                              🖨️ Imprimer le Bilan
-                            </Button>
-
-                            <Button
-                              onClick={() => handleSaveBilan(selectedBilan)}
-                              className="bg-blue-600 hover:bg-blue-700 text-white"
-                            >
-                              💾 Enregistrer
-                            </Button>
-                          </div>
-                        </>
-                      ) : (
-                        <p className="text-gray-500 text-center py-4">
-                          Aucun élément dans ce bilan.
-                        </p>
-                      )}
-                    </DialogContent>
-                  )}
-                </Dialog>
-              ))}
+                                  <Button
+                                    onClick={() =>
+                                      handleSaveBilan(selectedBilan)
+                                    }
+                                    className="bg-blue-600 hover:bg-blue-700 text-white"
+                                  >
+                                    💾 Enregistrer
+                                  </Button>
+                                </div>
+                              </>
+                            ) : (
+                              <p className="text-gray-500 text-center py-4">
+                                Aucun élément dans ce bilan.
+                              </p>
+                            )}
+                          </DialogContent>
+                        )}
+                      </Dialog>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             </div>
           )}
         </TabsContent>

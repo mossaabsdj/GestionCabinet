@@ -89,63 +89,93 @@ export default function Vaccination({ patientId, refrech, setrefrech }) {
           Aucune vaccination trouvée pour ce patient.
         </p>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-          {vaccinations.map((vaccine) => (
-            <Card
-              key={vaccine.id}
-              className="bg-purple-50 hover:bg-purple-100 p-3 transition rounded-2xl shadow-sm relative"
-            >
-              <CardContent>
-                <div className="flex justify-between items-start">
-                  <div className="flex items-center gap-3 mb-2">
-                    <div className="p-2 bg-purple-200 rounded-full">
-                      <Syringe className="w-5 h-5 text-purple-700" />
-                    </div>
-                    <p className="font-semibold text-lg text-purple-800">
-                      {vaccine.vaccine.name}
-                    </p>
-                  </div>
-
-                  <Button
-                    size="icon"
-                    variant="ghost"
-                    className="group relative h-10 w-10 rounded-full border border-red-200 bg-red-50/50 
-             hover:bg-red-100 hover:border-red-300 transition-all duration-300 shadow-sm
-             hover:shadow-md"
-                    onClick={() => {
-                      setSelectedVaccine(vaccine);
-                      setOpenDialog(true);
-                    }}
+        <div className="bg-white rounded-xl shadow-lg overflow-hidden border border-purple-100">
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead>
+                <tr className="bg-gradient-to-r from-purple-600 to-purple-500 text-white">
+                  <th className="text-left px-6 py-4 font-semibold text-sm uppercase tracking-wider">
+                    Vaccin
+                  </th>
+                  <th className="text-left px-6 py-4 font-semibold text-sm uppercase tracking-wider">
+                    Date
+                  </th>
+                  <th className="text-left px-6 py-4 font-semibold text-sm uppercase tracking-wider">
+                    Dose
+                  </th>
+                  <th className="text-left px-6 py-4 font-semibold text-sm uppercase tracking-wider">
+                    Notes
+                  </th>
+                  <th className="text-left px-6 py-4 font-semibold text-sm uppercase tracking-wider">
+                    Actions
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-100">
+                {vaccinations.map((vaccine, index) => (
+                  <tr
+                    key={vaccine.id}
+                    className={`transition-colors hover:bg-purple-50 ${
+                      index % 2 === 0 ? "bg-white" : "bg-gray-50"
+                    }`}
                   >
-                    <Trash2 className="w-5 h-5 text-red-500 group-hover:scale-110 transition-transform duration-300" />
-                    <span
-                      className="absolute -bottom-6 left-1/2 -translate-x-1/2 text-xs text-gray-500 
-                   opacity-0 group-hover:opacity-100 transition-opacity duration-300"
-                    >
-                      Supprimer
-                    </span>
-                  </Button>
-                </div>
-
-                <div className="flex items-center gap-2 text-sm text-gray-600 mt-2">
-                  <CalendarClock size={16} />
-                  {new Date(vaccine.dateGiven).toLocaleDateString("fr-FR")}
-                </div>
-
-                {vaccine.doseNumber && (
-                  <p className="text-sm text-purple-600 mt-2">
-                    Dose: {vaccine.doseNumber}
-                  </p>
-                )}
-
-                {vaccine.notes && (
-                  <p className="text-xs text-gray-500 mt-1 italic">
-                    {vaccine.notes}
-                  </p>
-                )}
-              </CardContent>
-            </Card>
-          ))}
+                    <td className="px-6 py-4">
+                      <div className="flex items-center gap-3">
+                        <div className="p-2 bg-purple-100 rounded-full">
+                          <Syringe className="w-4 h-4 text-purple-700" />
+                        </div>
+                        <span className="font-semibold text-gray-900">
+                          {vaccine.vaccine.name}
+                        </span>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4">
+                      <div className="flex items-center gap-2 text-sm text-gray-700 font-medium">
+                        <CalendarClock size={16} className="text-purple-500" />
+                        {new Date(vaccine.dateGiven).toLocaleDateString(
+                          "fr-FR"
+                        )}
+                      </div>
+                    </td>
+                    <td className="px-6 py-4">
+                      {vaccine.doseNumber ? (
+                        <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-purple-100 text-purple-800">
+                          Dose {vaccine.doseNumber}
+                        </span>
+                      ) : (
+                        <span className="text-gray-400 text-sm">—</span>
+                      )}
+                    </td>
+                    <td className="px-6 py-4">
+                      {vaccine.notes ? (
+                        <span className="text-sm text-gray-600 italic">
+                          {vaccine.notes}
+                        </span>
+                      ) : (
+                        <span className="text-gray-400 text-sm">—</span>
+                      )}
+                    </td>
+                    <td className="px-6 py-4">
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        className="group h-9 w-9 rounded-full border border-red-200 bg-red-50/50 
+                    hover:bg-red-100 hover:border-red-300 transition-all duration-300 shadow-sm
+                    hover:shadow-md"
+                        onClick={() => {
+                          setSelectedVaccine(vaccine);
+                          setOpenDialog(true);
+                        }}
+                        title="Supprimer"
+                      >
+                        <Trash2 className="w-4 h-4 text-red-500 group-hover:scale-110 transition-transform duration-300" />
+                      </Button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       )}
 

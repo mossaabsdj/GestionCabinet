@@ -266,7 +266,7 @@ export default function PrescriptionModal({
       medicamentId: selectedMed.id,
       nom: selectedMed.nom,
       form: selectedMed.form,
-      dosage: tmpDose === "autre" ? customDose + " mg" : tmpDose,
+      dosage: tmpDose === "autre" ? customDose : tmpDose,
       frequence: tmpfreq === "autre" ? customFreq : tmpfreq,
       duree: tmpDuration === "autre" ? customDuration : tmpDuration,
       quantite: tmpQuantite,
@@ -399,7 +399,7 @@ export default function PrescriptionModal({
     console.log(selectedPatient);
     try {
       if (!prescriptionItems || prescriptionItems.length === 0) {
-        alert("Aucune donnée à imprimer");
+        //alert("Aucune donnée à imprimer");
         return;
       }
       const fullname = selectedPatient.nom;
@@ -449,7 +449,7 @@ export default function PrescriptionModal({
       });
     } catch (error) {
       console.error("Erreur lors de l'impression de l'ordonnance:", error);
-      alert("Erreur lors de l'impression de l'ordonnance.");
+      //  alert("Erreur lors de l'impression de l'ordonnance.");
     }
   };
   const handlePrintBilanElectron = async () => {
@@ -852,16 +852,20 @@ export default function PrescriptionModal({
                           className="border border-purple-200 rounded-lg p-2 w-full focus:ring-2 focus:ring-purple-400 transition-all"
                         >
                           <option value="">-- Sélectionner --</option>
+
                           <option value="5 mg">5 mg</option>
                           <option value="10 mg">10 mg</option>
                           <option value="20 mg">20 mg</option>
                           <option value="50 mg">50 mg</option>
                           <option value="100 mg">100 mg</option>
-                          <option value="250 mg">250 mg</option>
                           <option value="500 mg">500 mg</option>
                           <option value="1 g">1 g</option>
-                          <option value="1,5 g">1,5 g</option>
-                          <option value="2 g">2 g</option>
+                          <option value="1 ml">1 ml</option>
+                          <option value="2 ml">2 ml</option>
+                          <option value="5 ml">5 ml</option>
+                          <option value="10 ml">10 ml</option>
+                          <option value="20 ml">20 ml</option>
+                          <option value="50 ml">50 ml</option>
 
                           <option value="autre">Autre...</option>
                         </select>

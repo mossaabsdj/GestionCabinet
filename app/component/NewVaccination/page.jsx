@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Syringe, Plus } from "lucide-react";
+import { Syringe, Plus, AlertCircle } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -9,6 +9,15 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
@@ -26,25 +35,86 @@ export default function AddVaccinationButton({
   const [notes, setNotes] = useState("");
   const [loading, setLoading] = useState(false);
 
+  // ✅ New states for adding vaccine
+  const [showAddVaccine, setShowAddVaccine] = useState(false);
+  const [newVaccineName, setNewVaccineName] = useState("");
+  const [addingVaccine, setAddingVaccine] = useState(false);
+
+  // ✅ Alert Dialog states
+  const [alertOpen, setAlertOpen] = useState(false);
+  const [alertConfig, setAlertConfig] = useState({
+    title: "",
+    description: "",
+    variant: "default",
+  });
+
+  // ✅ Show alert helper
+  const showAlert = (title, description, variant = "default") => {
+    setAlertConfig({ title, description, variant });
+    setAlertOpen(true);
+  };
+
   // ✅ Fetch available vaccines
   useEffect(() => {
-    async function fetchVaccines() {
-      try {
-        const res = await fetch("/api/Vaccine");
-        if (!res.ok) throw new Error("Erreur lors du chargement des vaccins");
-        const data = await res.json();
-        setVaccines(data);
-      } catch (error) {
-        console.error("❌ Erreur de chargement:", error);
-      }
-    }
     fetchVaccines();
   }, []);
+
+  const fetchVaccines = async () => {
+    try {
+      const res = await fetch("/api/Vaccine");
+      if (!res.ok) throw new Error("Erreur lors du chargement des vaccins");
+      const data = await res.json();
+      setVaccines(data);
+    } catch (error) {
+      console.error("❌ Erreur de chargement:", error);
+    }
+  };
+
+  // ✅ Add new vaccine to database
+  const handleAddNewVaccine = async () => {
+    if (!newVaccineName.trim()) {
+      showAlert(
+        "Champs requis",
+        "Veuillez entrer un nom de vaccin",
+        "destructive"
+      );
+      return;
+    }
+
+    setAddingVaccine(true);
+    try {
+      const res = await fetch("/api/Vaccine", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: newVaccineName.trim() }),
+      });
+
+      if (!res.ok) throw new Error("Erreur lors de l'ajout du vaccin");
+
+      const newVaccine = await res.json();
+
+      // Refresh vaccine list and select the new one
+      await fetchVaccines();
+      setSelectedVaccine(newVaccine.id);
+      setNewVaccineName("");
+      setShowAddVaccine(false);
+      showAlert("Succès", "Le vaccin a été ajouté avec succès", "default");
+    } catch (error) {
+      console.error("❌ Erreur:", error);
+      showAlert("Erreur", "Impossible d'ajouter le vaccin", "destructive");
+    } finally {
+      setAddingVaccine(false);
+    }
+  };
 
   // ✅ Submit new vaccination
   const handleAddVaccination = async () => {
     if (!selectedVaccine || !dateGiven) {
-      alert("Veuillez remplir tous les champs requis.");
+      showAlert(
+        "Champs requis",
+        "Veuillez remplir tous les champs requis",
+        "destructive"
+      );
       return;
     }
 
@@ -61,7 +131,7 @@ export default function AddVaccinationButton({
           notes,
         }),
       });
-      if (!res.ok) throw new Error("Erreur lors de l’ajout de la vaccination");
+      if (!res.ok) throw new Error("Erreur lors de l'ajout de la vaccination");
       const data = await res.json();
       setrefrech(true);
 
@@ -71,9 +141,14 @@ export default function AddVaccinationButton({
       setDateGiven("");
       setDoseNumber("");
       setNotes("");
+      showAlert(
+        "Succès",
+        "La vaccination a été ajoutée avec succès",
+        "default"
+      );
     } catch (error) {
       console.error("❌ Erreur:", error);
-      alert("Impossible d’ajouter la vaccination.");
+      showAlert("Erreur", "Impossible d'ajouter la vaccination", "destructive");
     } finally {
       setLoading(false);
     }
@@ -109,18 +184,53 @@ export default function AddVaccinationButton({
           <div className="space-y-4 mt-4">
             <div>
               <Label className="text-purple-700 font-medium">Vaccin *</Label>
-              <select
-                className="w-full h-12 mt-1 border rounded-xl px-3 text-gray-700 focus:ring-2 focus:ring-purple-500"
-                value={selectedVaccine}
-                onChange={(e) => setSelectedVaccine(e.target.value)}
-              >
-                <option value="">-- Sélectionnez un vaccin --</option>
-                {vaccines.map((v) => (
-                  <option key={v.id} value={v.id}>
-                    {v.name}
-                  </option>
-                ))}
-              </select>
+              <div className="flex gap-2 mt-1">
+                <select
+                  className="flex-1 h-12 border rounded-xl px-3 text-gray-700 focus:ring-2 focus:ring-purple-500"
+                  value={selectedVaccine}
+                  onChange={(e) => setSelectedVaccine(e.target.value)}
+                >
+                  <option value="">-- Sélectionnez un vaccin --</option>
+                  {vaccines.map((v) => (
+                    <option key={v.id} value={v.id}>
+                      {v.name}
+                    </option>
+                  ))}
+                </select>
+                <Button
+                  type="button"
+                  onClick={() => setShowAddVaccine(!showAddVaccine)}
+                  className="h-12 px-4 bg-green-600 hover:bg-green-700 text-white rounded-xl"
+                  title="Ajouter un nouveau vaccin"
+                >
+                  <Plus className="w-5 h-5" />
+                </Button>
+              </div>
+
+              {/* Add New Vaccine Section */}
+              {showAddVaccine && (
+                <div className="mt-3 p-4 bg-green-50 border border-green-200 rounded-xl">
+                  <Label className="text-green-700 font-medium text-sm">
+                    Nouveau vaccin
+                  </Label>
+                  <div className="flex gap-2 mt-2">
+                    <Input
+                      value={newVaccineName}
+                      onChange={(e) => setNewVaccineName(e.target.value)}
+                      placeholder="Nom du vaccin"
+                      className="h-10 rounded-lg"
+                      disabled={addingVaccine}
+                    />
+                    <Button
+                      onClick={handleAddNewVaccine}
+                      disabled={addingVaccine}
+                      className="h-10 px-4 bg-green-600 hover:bg-green-700 text-white rounded-lg text-sm"
+                    >
+                      {addingVaccine ? "..." : "Ajouter"}
+                    </Button>
+                  </div>
+                </div>
+              )}
             </div>
 
             <div>
@@ -163,7 +273,11 @@ export default function AddVaccinationButton({
           <DialogFooter className="flex justify-end space-x-4 pt-4">
             <Button
               variant="outline"
-              onClick={() => setOpen(false)}
+              onClick={() => {
+                setOpen(false);
+                setShowAddVaccine(false);
+                setNewVaccineName("");
+              }}
               className="h-12 px-6 rounded-xl border-gray-300 hover:bg-gray-100"
               disabled={loading}
             >
@@ -179,6 +293,54 @@ export default function AddVaccinationButton({
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* ✅ Alert Dialog (replaces SweetAlert) */}
+      <AlertDialog open={alertOpen} onOpenChange={setAlertOpen}>
+        <AlertDialogContent className="rounded-2xl">
+          <AlertDialogHeader>
+            <div className="flex items-center gap-3">
+              <div
+                className={`p-3 rounded-full ${
+                  alertConfig.variant === "destructive"
+                    ? "bg-red-100"
+                    : "bg-green-100"
+                }`}
+              >
+                <AlertCircle
+                  className={`w-6 h-6 ${
+                    alertConfig.variant === "destructive"
+                      ? "text-red-600"
+                      : "text-green-600"
+                  }`}
+                />
+              </div>
+              <AlertDialogTitle
+                className={`text-xl ${
+                  alertConfig.variant === "destructive"
+                    ? "text-red-600"
+                    : "text-green-600"
+                }`}
+              >
+                {alertConfig.title}
+              </AlertDialogTitle>
+            </div>
+            <AlertDialogDescription className="text-gray-600 mt-2">
+              {alertConfig.description}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogAction
+              className={`rounded-xl px-6 ${
+                alertConfig.variant === "destructive"
+                  ? "bg-red-600 hover:bg-red-700"
+                  : "bg-purple-600 hover:bg-purple-700"
+              } text-white`}
+            >
+              OK
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 }

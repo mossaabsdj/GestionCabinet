@@ -94,6 +94,8 @@ export async function POST(req) {
         note: data.note,
         taille,
         poids,
+        createdAt: data.createdAt ? new Date(data.createdAt) : undefined,
+
         tensionSystolique,
         tensionDiastolique,
         temperature,
@@ -110,6 +112,10 @@ export async function POST(req) {
         ordonnance: data.ordonnance
           ? {
               create: {
+                createdAt: data.createdAt
+                  ? new Date(data.createdAt)
+                  : undefined,
+
                 patientId: data.patientId,
                 items: {
                   create: data.ordonnance.items.map((item) => ({
@@ -128,6 +134,10 @@ export async function POST(req) {
         bilanRecip: data.bilanRecip
           ? {
               create: {
+                createdAt: data.createdAt
+                  ? new Date(data.createdAt)
+                  : undefined,
+
                 patientId: data.patientId,
                 items: {
                   create: data.bilanRecip.items.map((item) => ({
@@ -168,6 +178,8 @@ export async function PUT(req) {
       patientId,
       note,
       taille,
+      createdAt,
+
       poids,
       tensionSystolique,
       tensionDiastolique,
@@ -193,7 +205,9 @@ export async function PUT(req) {
 
     // ✅ Build main consultation update data
     const updateData = {
-      ...(patientId !== undefined && { patientId: Number(patientId) }),
+      ...(patientId !== undefined && {
+        patient: { connect: { id: Number(patientId) } },
+      }),
       ...(note !== undefined && { note }),
       ...(taille !== undefined && {
         taille: taille ? parseFloat(taille) : null,
@@ -238,6 +252,8 @@ export async function PUT(req) {
         perimetreCranien: perimetreCranien
           ? parseFloat(perimetreCranien)
           : null,
+        // 🆕 createdAt: only update if provided
+        ...(createdAt && { createdAt: new Date(createdAt) }),
       }),
     };
 
@@ -249,24 +265,22 @@ export async function PUT(req) {
           where: { id: Number(rendezVousId) },
           data: {
             ...(rendezVousDate && { date: new Date(rendezVousDate) }),
-            ...(rendezVousDescription && {
-              description: rendezVousDescription,
-            }),
+            description: rendezVousDescription || "",
           },
         });
       } else {
-        // Create a new rendezvous and link to consultation
+        // Create a new rendezvous
         const newRendezVous = await prisma.rendezVous.create({
           data: {
             date: rendezVousDate ? new Date(rendezVousDate) : new Date(),
             description: rendezVousDescription || "",
           },
         });
-
-        updateData.rendezVous = {
-          connect: { id: newRendezVous.id },
-        };
+        updateData.rendezVous = { connect: { id: newRendezVous.id } };
       }
+    } else if (rendezVousId) {
+      // Clear existing rendezvous
+      updateData.rendezVous = { disconnect: true }; // or delete if you want to remove
     }
 
     // ✅ Update consultation with new data

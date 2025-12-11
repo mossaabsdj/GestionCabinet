@@ -24,9 +24,9 @@ import {
   MapPin,
   Sparkles,
   Keyboard,
-  Files,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react";
-
 import {
   DialogDescription,
   Dialog,
@@ -52,14 +52,13 @@ import Ordonnances from "../component/Ordanance/page";
 import LoadingScreen from "../component/LoadingScreen/page";
 import { motion, AnimatePresence } from "framer-motion";
 import ModernSearchBar from "../component/SearchBar/SearchBar";
-import VisitsInfoModal from "@/app/component/Infomedical";
 import { tabs } from "@heroui/theme";
+
 export default function PatientDashboard() {
   const searchRef = useRef();
   const [selectedPatient, setSelectedPatient] = useState();
   const [search, setSearch] = useState("");
   const [files, setFiles] = useState([]);
-  const [visitsinfo, setVisitsinfo] = useState(false);
   const [refrech, setrefrech] = useState(false);
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [selectedtab, setselectedtab] = useState("Informations Patient");
@@ -76,7 +75,8 @@ export default function PatientDashboard() {
   const [successopen, setsuccessopen] = useState(false);
   const [DateTimeModal, setDataTimeModel] = useState(false);
   const [viderForm, setViderForm] = useState(false);
-  const [Age, setAge] = useState();
+  const [currentConsultationIndex, setCurrentConsultationIndex] = useState(0);
+
   const [date, setDate] = useState(
     new Date().toISOString().split("T")[0] // "YYYY-MM-DD"
   );
@@ -92,37 +92,6 @@ export default function PatientDashboard() {
 
     autoCloseDelay: 100,
   });
-  function calculateAge(dateString) {
-    if (!dateString) return "";
-
-    const birthDate = new Date(dateString);
-    const today = new Date();
-
-    const diffMs = today - birthDate;
-    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-    const diffMonths = Math.floor(diffDays / 30.44); // approx. average month length
-    const diffYears = Math.floor(diffMonths / 12);
-
-    if (diffDays < 30) {
-      // less than 1 month
-      return `${diffDays} jour${diffDays > 1 ? "s" : ""}`;
-    } else if (diffMonths < 24) {
-      // less than 2 years
-      return `${diffMonths} mois`;
-    } else {
-      // 2 years or older
-      return `${diffYears} an${diffYears > 1 ? "s" : ""}`;
-    }
-  }
-  useEffect(() => {
-    if (!selectedPatient) return;
-
-    const datenaissance = selectedPatient.dateDeNaissance;
-    const age = calculateAge(datenaissance);
-    setAge(age);
-    // console.log("Age:", age);
-  }, [selectedPatient]);
-
   const filteredPatients = patientsData.filter((p) =>
     p.nom.toLowerCase().includes(search.toLowerCase())
   );
@@ -279,10 +248,7 @@ export default function PatientDashboard() {
       const consultation = await response.json();
       console.log("✅ Consultation créée:", consultation);
       setViderForm(true);
-      // ✅ Refresh only the selected patient
-      if (selectedPatient?.id) {
-        await fetchPatientById(selectedPatient.id);
-      }
+      await fetchPatients();
       setnewordanance(false);
       setload(false);
       return consultation;
@@ -311,17 +277,22 @@ export default function PatientDashboard() {
     console.log("New consultation data:" + JSON.stringify(NewConsultationData));
     addconsultationfunction(NewConsultationData);
   }, [NewConsultationData]);
+
   async function fetchPatients() {
+    console.log("lastid" + lastid);
     try {
       const res = await fetch("/api/patients");
       if (!res.ok) throw new Error("Failed to fetch patients");
       const data = await res.json();
+      console.log(JSON.stringify(data[0]));
       setPatients(data);
+      setSelectedPatient(data[0]);
 
-      // If no patient selected, select the first one
-      if (!selectedPatient && data.length > 0) {
-        fetchPatientById(data[0].id);
+      if (lastid != null && lastid != "") {
+        const updatedPatient = data.find((p) => p.id === lastid) || null;
+        setSelectedPatient(updatedPatient);
       }
+      console.log(JSON.stringify(selectedPatient));
     } catch (error) {
       console.error("❌ Error fetching patients:", error);
     } finally {
@@ -329,19 +300,17 @@ export default function PatientDashboard() {
     }
   }
 
-  async function fetchPatientById(id) {
-    try {
-      const res = await fetch(`/api/patients?id=${id}`); // use the updated GET API
-      if (!res.ok) throw new Error("Failed to fetch patient");
-      const data = await res.json();
-      setSelectedPatient(data);
-    } catch (error) {
-      console.error("❌ Error fetching patient:", error);
-    }
-  }
   useEffect(() => {
     fetchPatients();
+    setCurrentConsultationIndex(0);
   }, []);
+
+  // Reset consultation index when patient changes
+  useEffect(() => {
+    if (selectedPatient?.consultations?.length > 0) {
+      setCurrentConsultationIndex(selectedPatient.consultations.length - 1);
+    }
+  }, [selectedPatient?.id]);
 
   // Keyboard shortcuts
   useEffect(() => {
@@ -405,24 +374,24 @@ export default function PatientDashboard() {
       label: "Date de naissance",
       value: selectedPatient?.dateDeNaissance
         ? new Date(selectedPatient.dateDeNaissance).toLocaleDateString("fr-FR")
-        : "—",
+        : "Non spécifiée",
     },
     {
       icon: Weight,
       label: "Poids de naissance",
       value: selectedPatient?.poidsDeNaissance
-        ? `${selectedPatient.poidsDeNaissance} kg`
-        : "—",
+        ? `${selectedPatient?.poidsDeNaissance} kg`
+        : "Non spécifié",
     },
     {
       icon: ClipboardList,
       label: "Antécédents",
-      value: selectedPatient?.antecedents || "—",
+      value: selectedPatient?.antecedents || "Non spécifié",
     },
     {
       icon: Droplets,
       label: "Groupe sanguin",
-      value: selectedPatient?.groupeSanguin || "—",
+      value: selectedPatient?.groupeSanguin || "Non spécifié",
     },
   ];
 
@@ -430,145 +399,140 @@ export default function PatientDashboard() {
     {
       icon: MapPin,
       label: "Adresse",
-      value: selectedPatient?.adresse || "—",
+      value: selectedPatient?.adresse || "Non spécifiée",
     },
     {
       icon: Phone,
       label: "Téléphone",
-      value: selectedPatient?.telephone || "—",
+      value: selectedPatient?.telephone || "Non spécifié",
     },
   ];
 
-  const medicalInfo = (selectedPatient) => {
+  const medicalInfo = (selectedPatient, consultationIndex) => {
     if (!selectedPatient?.consultations?.length) return [];
 
     const consultations = selectedPatient.consultations;
-    const lastIndex = consultations.length - 1;
+    const index = consultationIndex ?? consultations.length - 1;
 
-    const getInfo = (attr, index) => {
-      for (let i = index; i >= 0; i--) {
+    const getInfo = (attr, currentIndex) => {
+      for (let i = currentIndex; i >= 0; i--) {
         const val = consultations[i]?.[attr];
         if (val !== null && val !== undefined && val !== "") {
           return val;
         }
       }
-      return null; // return null instead of "—"
+      return null;
     };
 
-    const c = consultations[lastIndex];
+    const c = consultations[index];
 
-    const fields = [
+    const allFields = [
       {
         icon: Stethoscope,
         label: "Motif de consultation",
-        value: getInfo("motifDeConsultation", lastIndex),
+        value: getInfo("motifDeConsultation", index),
         type: "textarea",
+        unite: "",
       },
       {
         icon: ClipboardList,
         label: "Notes",
-        value: getInfo("note", lastIndex),
+        value: getInfo("note", index),
         type: "textarea",
+        unite: "",
       },
       {
         icon: Sparkles,
         label: "Développement Psychomoteur",
-        value: getInfo("developpementPsychomoteur", lastIndex),
+        value: getInfo("developpementPsychomoteur", index),
         type: "textarea",
+        unite: "",
       },
       {
         icon: Ruler,
         label: "Taille",
-        value: getInfo("taille", lastIndex),
+        value: getInfo("taille", index),
+        type: "text",
         unite: "cm",
       },
       {
         icon: Weight,
         label: "Poids",
-        value: getInfo("poids", lastIndex),
+        value: getInfo("poids", index),
+        type: "text",
         unite: "kg",
       },
       {
         icon: Ruler,
         label: "Périmètre crânien",
-        value: getInfo("perimetreCranien", lastIndex),
+        value: getInfo("perimetreCranien", index),
+        type: "text",
         unite: "cm",
       },
       {
         icon: Activity,
         label: "TA systolique",
-        value: getInfo("tensionSystolique", lastIndex),
+        value: getInfo("tensionSystolique", index),
+        type: "text",
         unite: "mmHg",
       },
       {
         icon: Activity,
         label: "TA diastolique",
-        value: getInfo("tensionDiastolique", lastIndex),
+        value: getInfo("tensionDiastolique", index),
+        type: "text",
         unite: "mmHg",
       },
       {
         icon: Thermometer,
         label: "Température",
-        value: getInfo("temperature", lastIndex),
+        value: getInfo("temperature", index),
+        type: "text",
         unite: "°C",
       },
       {
         icon: HeartPulse,
         label: "Fréquence cardiaque",
-        value: getInfo("frequenceCardiaque", lastIndex),
+        value: getInfo("frequenceCardiaque", index),
+        type: "text",
         unite: "bpm",
       },
       {
         icon: Gauge,
         label: "Fréquence respiratoire",
-        value: getInfo("frequenceRespiratoire", lastIndex),
+        value: getInfo("frequenceRespiratoire", index),
+        type: "text",
         unite: "cpm",
       },
       {
         icon: Droplets,
         label: "Saturation en oxygène",
-        value: getInfo("saturationOxygene", lastIndex),
+        value: getInfo("saturationOxygene", index),
+        type: "text",
         unite: "%",
       },
       {
         icon: ClipboardList,
         label: "Glycémie",
-        value: getInfo("glycemie", lastIndex),
+        value: getInfo("glycemie", index),
+        type: "text",
         unite: "g/L",
       },
       c?.rendezVous
         ? {
-            icon: Clock,
+            icon: Calendar,
             label: "Rendez-vous lié",
             value: `${new Date(c.rendezVous.date).toLocaleDateString(
               "fr-FR"
             )} - ${c.rendezVous.description || "Non spécifié"}`,
+            type: "text",
             unite: "",
           }
         : null,
     ];
 
-    // Filter out fields with no value
-    return fields
-      .filter(
-        (f) => f && f.value !== null && f.value !== undefined && f.value !== ""
-      )
-      .map((f) => {
-        if (f.type === "textarea") {
-          return {
-            ...f,
-            value: (
-              <textarea
-                readOnly
-                rows={3}
-                className="w-full border rounded-md p-2 text-sm text-gray-800"
-                value={f.value}
-              />
-            ),
-          };
-        }
-        return f;
-      });
+    // Filter out null values and null fields
+    return allFields.filter((field) => field !== null && field.value !== null);
   };
 
   async function handleAddPatient(data) {
@@ -629,15 +593,6 @@ export default function PatientDashboard() {
 
   return (
     <div className="flex min-h-screen bg-gradient-to-br from-purple-50 via-white to-purple-100">
-      {visitsinfo && (
-        <VisitsInfoModal
-          patientId={selectedPatient?.id}
-          open={visitsinfo}
-          setopen={setVisitsinfo}
-          fetchPatientById={fetchPatientById}
-        />
-      )}
-
       <SuccessModal
         config={config}
         dialogOpen={successopen}
@@ -783,7 +738,7 @@ export default function PatientDashboard() {
                 transition={{ delay: index * 0.05 }}
                 whileHover={{ scale: 1.02, x: 5 }}
                 whileTap={{ scale: 0.98 }}
-                onClick={() => fetchPatientById(patient.id)} // fetch full details
+                onClick={() => setSelectedPatient(patient)}
                 className={`p-3 mb-2 rounded-lg cursor-pointer flex flex-col transition-all duration-200 ${
                   selectedPatient?.id === patient.id
                     ? "bg-purple-600 text-white shadow-lg"
@@ -821,30 +776,22 @@ export default function PatientDashboard() {
           initial={{ y: -30, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           transition={{ duration: 0.5 }}
-          className="flex justify-between items-center mb-3"
+          className="flex justify-between items-center mb-6"
         >
-          <div className="space-y-1">
-            <div className="flex items-center gap-3">
-              <motion.h1
-                initial={{ opacity: 0, y: -5 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ type: "spring", stiffness: 250, damping: 15 }}
-                className="text-3xl font-bold text-purple-800"
-              >
-                {selectedPatient?.nom}
-              </motion.h1>
-
-              <span className="px-3 py-1 text-sm rounded-full bg-purple-100 text-purple-800 font-semibold">
-                {Age}
-              </span>
-            </div>
-
-            <p className="text-gray-500 text-sm flex items-center gap-2">
-              <ClipboardList size={16} className="text-purple-600" />
+          <div>
+            <motion.h1
+              initial={{ scale: 0.9 }}
+              animate={{ scale: 1 }}
+              transition={{ type: "spring", stiffness: 200 }}
+              className="text-3xl font-bold text-purple-800"
+            >
+              {selectedPatient?.nom}
+            </motion.h1>
+            <p className="text-gray-500 text-sm flex items-center gap-1 mt-1">
+              <ClipboardList size={16} />
               {!NewConsultation ? "Dernier diagnostic" : "Nouveau diagnostic"}
             </p>
           </div>
-
           {selectedtab === "Prescriptions et Bilans" && (
             <div>
               <ModernSearchBar
@@ -970,8 +917,9 @@ export default function PatientDashboard() {
                       title: "Informations Médicales",
                       icon: Stethoscope,
                       data: selectedPatient
-                        ? medicalInfo(selectedPatient)
+                        ? medicalInfo(selectedPatient, currentConsultationIndex)
                         : null,
+                      isPaginated: true,
                     },
                     {
                       title: "Informations de Contact",
@@ -988,29 +936,76 @@ export default function PatientDashboard() {
                       transition={{ delay: sectionIndex * 0.1 }}
                       className="mb-6"
                     >
-                      <div className="flex items-center justify-between mb-4">
-                        {/* Section Title */}
+                      <div className="flex justify-between items-center mb-4">
                         <h3 className="text-xl font-semibold text-purple-700 flex items-center gap-2">
                           <section.icon size={20} /> {section.title}
                         </h3>
 
-                        {/* Optional Dossier/View Button */}
-                        {section.title === "Informations Médicales" && (
-                          <button
-                            type="button"
-                            onClick={() => setVisitsinfo(true)}
-                            disabled={!date || !time}
-                            className="p-2 rounded-xl bg-purple-500 text-white shadow-sm hover:bg-purple-700 disabled:opacity-60 disabled:cursor-not-allowed transition-colors flex items-center justify-center"
-                          >
-                            <Files size={18} />
-                          </button>
-                        )}
+                        {section.isPaginated &&
+                          selectedPatient?.consultations?.length > 0 && (
+                            <div className="flex items-center gap-3">
+                              <span className="text-sm text-gray-600">
+                                Consultation {currentConsultationIndex + 1} /{" "}
+                                {selectedPatient.consultations.length}
+                              </span>
+                              <span className="text-xs text-gray-500">
+                                {new Date(
+                                  selectedPatient.consultations[
+                                    currentConsultationIndex
+                                  ]?.createdAt
+                                ).toLocaleDateString("fr-FR")}
+                              </span>
+                              <div className="flex gap-2">
+                                <motion.button
+                                  whileHover={{ scale: 1.1 }}
+                                  whileTap={{ scale: 0.9 }}
+                                  onClick={() =>
+                                    setCurrentConsultationIndex((prev) =>
+                                      Math.max(0, prev - 1)
+                                    )
+                                  }
+                                  disabled={currentConsultationIndex === 0}
+                                  className={`p-2 rounded-lg transition-all ${
+                                    currentConsultationIndex === 0
+                                      ? "bg-gray-200 text-gray-400 cursor-not-allowed"
+                                      : "bg-purple-100 text-purple-700 hover:bg-purple-200"
+                                  }`}
+                                >
+                                  <ChevronLeft size={20} />
+                                </motion.button>
+                                <motion.button
+                                  whileHover={{ scale: 1.1 }}
+                                  whileTap={{ scale: 0.9 }}
+                                  onClick={() =>
+                                    setCurrentConsultationIndex((prev) =>
+                                      Math.min(
+                                        selectedPatient.consultations.length -
+                                          1,
+                                        prev + 1
+                                      )
+                                    )
+                                  }
+                                  disabled={
+                                    currentConsultationIndex ===
+                                    selectedPatient.consultations.length - 1
+                                  }
+                                  className={`p-2 rounded-lg transition-all ${
+                                    currentConsultationIndex ===
+                                    selectedPatient.consultations.length - 1
+                                      ? "bg-gray-200 text-gray-400 cursor-not-allowed"
+                                      : "bg-purple-100 text-purple-700 hover:bg-purple-200"
+                                  }`}
+                                >
+                                  <ChevronRight size={20} />
+                                </motion.button>
+                              </div>
+                            </div>
+                          )}
                       </div>
-                      <div className="grid grid-cols-2 gap-4">
-                        {section?.data?.map((info, infoIndex) => {
-                          const isEmpty = !info.value || info.value === "—";
 
-                          return (
+                      {section?.data?.length > 0 ? (
+                        <div className="grid grid-cols-2 gap-4">
+                          {section.data.map((info, infoIndex) => (
                             <motion.div
                               key={info.label}
                               initial={{ opacity: 0, scale: 0.9 }}
@@ -1020,47 +1015,40 @@ export default function PatientDashboard() {
                               }}
                               whileHover={{ scale: 1.02, y: -2 }}
                             >
-                              <Card
-                                className={`flex items-center gap-3 p-3 shadow-sm transition-shadow w-full
-          ${
-            isEmpty
-              ? "bg-gray-100 cursor-not-allowed opacity-60"
-              : "bg-white hover:shadow-md"
-          }`}
-                              >
-                                <div className="flex justify-between w-full">
-                                  <div className="flex flex-row items-center">
+                              <Card className="flex items-center gap-3 p-3 shadow-sm hover:shadow-md transition-shadow bg-white z-0">
+                                <div className="flex flex-col w-full gap-2">
+                                  <div className="flex items-center gap-2">
                                     <info.icon
-                                      className={`text-purple-500 ${
-                                        isEmpty ? "text-gray-400" : ""
-                                      }`}
+                                      className="text-purple-500"
                                       size={20}
                                     />
-                                    <span
-                                      className={`ml-2 ${
-                                        isEmpty
-                                          ? "text-gray-400"
-                                          : "text-gray-500"
-                                      }`}
-                                    >
+                                    <span className="text-gray-500 text-sm">
                                       {info.label}
                                     </span>
                                   </div>
-                                  <span
-                                    className={`font-medium ${
-                                      isEmpty
-                                        ? "text-gray-400"
-                                        : "text-gray-800"
-                                    }`}
-                                  >
-                                    {info.value || "—"} {info.unite}
-                                  </span>
+                                  {info.type === "textarea" ? (
+                                    <textarea
+                                      rows={3}
+                                      readOnly
+                                      className="w-full border rounded-md p-2 text-sm text-gray-800 bg-gray-50"
+                                      value={info.value || ""}
+                                    />
+                                  ) : (
+                                    <span className="font-medium text-gray-900">
+                                      {info.value} {info.unite}
+                                    </span>
+                                  )}
                                 </div>
                               </Card>
                             </motion.div>
-                          );
-                        })}
-                      </div>
+                          ))}
+                        </div>
+                      ) : section.isPaginated ? (
+                        <div className="text-center py-8 text-gray-500">
+                          Aucune donnée médicale disponible pour cette
+                          consultation
+                        </div>
+                      ) : null}
                     </motion.div>
                   ))}
                 </>
@@ -1094,7 +1082,6 @@ export default function PatientDashboard() {
                 <PatientVisits
                   patientId={selectedPatient?.id}
                   query={query.visites}
-                  fetchPatientById={fetchPatientById}
                 />
               )}
               {selectedtab === "Prescriptions et Bilans" && (

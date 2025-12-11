@@ -33,10 +33,10 @@ export default function AddPatientModal({ open, onClose, onAdd }) {
     dateDeNaissance: "", // 🆕 added
   });
 
-  function handleSubmit(e) {
+  async function handleSubmit(e) {
     e.preventDefault();
-    if (!form.nom) return alert("Le nom est requis");
-    onAdd({
+
+    const result = await onAdd({
       ...form,
       poidsDeNaissance: form.poidsDeNaissance
         ? parseFloat(form.poidsDeNaissance)
@@ -47,18 +47,20 @@ export default function AddPatientModal({ open, onClose, onAdd }) {
         : null,
       createdAt: new Date().toISOString(),
     });
-    setForm({
-      nom: "",
-      sexe: "",
+    if (result.success) {
+      setForm({
+        nom: "",
+        sexe: "",
 
-      age: "",
-      telephone: "",
-      adresse: "",
-      antecedents: "",
-      groupeSanguin: "",
-      poidsDeNaissance: "", // 🆕 added
-      dateDeNaissance: "", // 🆕 added
-    });
+        age: "",
+        telephone: "",
+        adresse: "",
+        antecedents: "",
+        groupeSanguin: "",
+        poidsDeNaissance: "", // 🆕 added
+        dateDeNaissance: "", // 🆕 added
+      });
+    }
     onClose();
   }
 

@@ -4,18 +4,45 @@ import { prisma } from "@/lib/prisma";
 // =====================
 // GET /api/patients
 // =====================
-export async function GET() {
+
+export async function GET(request) {
   try {
-    const patients = await prisma.patient.findMany({
-      orderBy: { createdAt: "desc" },
-      include: {
-        consultations: true,
-        ordonnances: true,
-        bilans: true,
-        paiements: true,
-      },
-    });
-    return NextResponse.json(patients);
+    const { searchParams } = new URL(request.url);
+    const id = searchParams.get("id"); // optional patient ID
+
+    if (id) {
+      // Fetch a single patient by ID
+      const patient = await prisma.patient.findUnique({
+        where: { id: Number(id) }, // or id if UUID
+        include: {
+          consultations: true,
+          ordonnances: true,
+          bilans: true,
+          paiements: true,
+        },
+      });
+
+      if (!patient) {
+        return NextResponse.json(
+          { error: "Patient non trouvé" },
+          { status: 404 }
+        );
+      }
+
+      return NextResponse.json(patient);
+    } else {
+      // Fetch all patients
+      const patients = await prisma.patient.findMany({
+        orderBy: { createdAt: "desc" },
+        include: {
+          consultations: false,
+          ordonnances: false,
+          bilans: false,
+          paiements: false,
+        },
+      });
+      return NextResponse.json(patients);
+    }
   } catch (error) {
     console.error("❌ Error fetching patients:", error);
     return NextResponse.json(

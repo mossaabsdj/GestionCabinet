@@ -1,4 +1,5 @@
 "use client";
+import Swal from "sweetalert2";
 
 import { useState, useEffect, useRef } from "react";
 import { Card, CardContent } from "@/components/ui/card";
@@ -33,7 +34,13 @@ import {
   Sparkles,
 } from "lucide-react";
 
-export default function PatientVisits({ patientId, query, fetchPatientById }) {
+export default function PatientVisits({
+  patientId,
+  query,
+  open,
+  setopen,
+  fetchPatientById,
+}) {
   const [visits, setVisits] = useState([]);
   const [filtredData, setfiltredData] = useState([]);
   const [selectedVisit, setSelectedVisit] = useState(null);
@@ -46,8 +53,7 @@ export default function PatientVisits({ patientId, query, fetchPatientById }) {
 
   // 🔄 Filter by query
   useEffect(() => {
-    const filtred = visits?.filter((v) => v.id.toString().includes(query));
-    setfiltredData(filtred);
+    setfiltredData(visits);
   }, [query, visits]);
 
   // 🔄 Fetch consultations
@@ -55,11 +61,30 @@ export default function PatientVisits({ patientId, query, fetchPatientById }) {
     try {
       const res = await fetch(`/api/Consulter?patientId=${patientId}`);
       const data = await res.json();
+
       if (!res.ok) throw new Error(data.error || "Erreur de chargement");
+
+      if (!data || data.length === 0) {
+        setopen(false);
+        Swal.fire({
+          icon: "info",
+          title: "Aucune donnée",
+          text: "Aucune consultation trouvée pour ce patient.",
+          confirmButtonColor: "#6b21a8", // purple
+        });
+        setVisits([]);
+        setfiltredData([]);
+        setSelectedVisit(null);
+        return []; // ✅ return empty array
+      }
+
       setVisits(data);
       setfiltredData(data);
+      setSelectedVisit(data[0]);
+      return data; // ✅ return fetched data
     } catch (err) {
       console.error("❌ Erreur:", err);
+      return []; // ✅ return empty array on error
     }
   };
 
@@ -75,12 +100,11 @@ export default function PatientVisits({ patientId, query, fetchPatientById }) {
       const data = await res.json();
       if (!res.ok)
         throw new Error(data.error || "Erreur lors de la suppression");
-
-      setVisits((prev) => prev.filter((v) => v.id !== id));
+      await fetchConsultations();
       await fetchPatientById(patientId);
-
+      //  setVisits((prev) => prev.filter((v) => v.id !== id));
       setDeleteConfirm(false);
-      setSelectedVisit(null);
+      // setSelectedVisit(null);
     } catch (err) {
       console.error(err);
     }
@@ -135,14 +159,13 @@ export default function PatientVisits({ patientId, query, fetchPatientById }) {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Erreur de mise à jour");
 
-      await fetchConsultations();
+      const updatedVisits = await fetchConsultations();
+      await fetchPatientById(patientId);
+
+      setSelectedVisit(updatedVisits[currentVisitIndex] || null);
       setIsEditing(false);
 
       // Update the selected visit after save
-      const updatedVisit = filtredData[currentVisitIndex];
-      await fetchPatientById(patientId);
-
-      setSelectedVisit(updatedVisit);
     } catch (err) {
       console.error("❌ Erreur lors de la mise à jour:", err);
     }
@@ -368,76 +391,13 @@ export default function PatientVisits({ patientId, query, fetchPatientById }) {
 
   return (
     <div className="p-4">
-      {filtredData?.length === 0 ? (
-        <p className="text-center text-gray-500">
-          Aucune consultation trouvée.
-        </p>
-      ) : (
-        <div className="bg-white rounded-xl shadow-lg overflow-hidden border border-purple-100">
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead>
-                <tr className="bg-gradient-to-r bg-purple-400 text-white">
-                  <th className="text-left px-6 py-4 font-semibold text-sm uppercase tracking-wider">
-                    #
-                  </th>
-                  <th className="text-left px-6 py-4 font-semibold text-sm uppercase tracking-wider">
-                    Date
-                  </th>
-                  <th className="text-left px-6 py-4 font-semibold text-sm uppercase tracking-wider">
-                    Heure
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-100">
-                {filtredData?.map((visit, index) => (
-                  <tr
-                    key={visit.id}
-                    onClick={() => {
-                      setCurrentVisitIndex(index);
-                      setSelectedVisit(visit);
-                      setEditedData(visit);
-                      setIsEditing(false);
-                    }}
-                    className={`cursor-pointer transition-colors hover:bg-purple-50 ${
-                      index % 2 === 0 ? "bg-white" : "bg-gray-50"
-                    }`}
-                  >
-                    <td className="px-6 py-4">
-                      <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold bg-purple-100 text-purple-800">
-                        Consultation #{visit.id}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4">
-                      <div className="flex items-center gap-2 text-sm text-gray-700 font-medium">
-                        <Calendar size={16} className="text-purple-500" />
-                        {new Date(visit.createdAt).toLocaleDateString("fr-FR")}
-                      </div>
-                    </td>
-                    <td className="px-6 py-4">
-                      <div className="flex items-center gap-2 text-sm text-gray-700 font-medium">
-                        <Clock size={16} className="text-purple-500" />
-                        {new Date(visit.createdAt).toLocaleTimeString("fr-FR", {
-                          hour: "2-digit",
-                          minute: "2-digit",
-                        })}
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      )}
-
       {/* ====================== */}
       {/* DETAILS DIALOG */}
       {/* ====================== */}
       <Dialog
-        open={!!selectedVisit}
+        open={open}
         onOpenChange={() => {
-          setSelectedVisit(null);
+          setopen(false);
           setIsEditing(false);
         }}
       >
@@ -512,16 +472,16 @@ export default function PatientVisits({ patientId, query, fetchPatientById }) {
                       ) : (
                         <button
                           onClick={() => setIsEditing(true)}
-                          className="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl transition font-semibold shadow-md hover:shadow-lg flex items-center gap-2"
+                          className="px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl transition font-semibold shadow-md hover:shadow-lg flex items-center gap-2"
                         >
-                          <Edit3 size={18} /> Modifier
+                          <Edit3 size={15} /> Modifier
                         </button>
                       )}
                       <button
                         onClick={() => setDeleteConfirm(true)}
-                        className="px-5 py-2.5 bg-red-500 hover:bg-red-600 text-white rounded-xl transition font-semibold shadow-md hover:shadow-lg flex items-center gap-2"
+                        className="px-3 py-2 bg-red-500 hover:bg-red-600 text-white rounded-xl transition font-semibold shadow-md hover:shadow-lg flex items-center gap-2"
                       >
-                        <Trash2 size={18} />
+                        <Trash2 size={15} />
                       </button>
                     </div>
                   </div>
@@ -735,6 +695,7 @@ export default function PatientVisits({ patientId, query, fetchPatientById }) {
           )}
         </DialogContent>
       </Dialog>
+
       {/* 🗑️ DELETE CONFIRM DIALOG */}
       <Dialog open={deleteConfirm} onOpenChange={setDeleteConfirm}>
         <DialogContent className="sm:max-w-lg bg-white rounded-2xl shadow-2xl">

@@ -22,7 +22,12 @@ import {
 import { Card } from "@/components/ui/card";
 import NewOrdanance from "@/app/component/NewOrdanance/page";
 
-export default function NewConsultationPage({ selectedPatient = {}, onSave }) {
+export default function NewConsultationPage({
+  selectedPatient = {},
+  onSave,
+  viderForm,
+  setViderForm,
+}) {
   const [form, setForm] = useState({
     note: "",
     ordonnance: {},
@@ -94,12 +99,8 @@ export default function NewConsultationPage({ selectedPatient = {}, onSave }) {
     const { name, value } = e.target;
     setForm((s) => ({ ...s, [name]: value }));
   }
-
-  async function handleSave() {
-    setError("");
-    setSaving(true);
-    try {
-      await Promise.resolve(onSave?.({ ...form }));
+  useEffect(() => {
+    if (viderForm) {
       setForm({
         note: "",
         ordonnance: {},
@@ -118,6 +119,15 @@ export default function NewConsultationPage({ selectedPatient = {}, onSave }) {
         rendezVousDate: "",
         rendezVousDescription: "",
       });
+      setViderForm(false);
+    }
+  }, [viderForm]);
+  async function handleSave() {
+    setError("");
+    setSaving(true);
+    try {
+      await Promise.resolve(onSave?.({ ...form }));
+
       setShowRendezVous(false);
       setSaving(false);
     } catch (e) {
