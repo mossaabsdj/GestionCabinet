@@ -54,10 +54,10 @@ export default function Analyses({
 
       // Filter only the patient’s files
       const filteredRadios = radios.filter(
-        (r) => r.patient.id === Number(patientID)
+        (r) => r.patient.id === Number(patientID),
       );
       const filteredBilans = bilans.filter(
-        (b) => b.patient.id === Number(patientID)
+        (b) => b.patient.id === Number(patientID),
       );
 
       const combined = [
@@ -177,20 +177,18 @@ export default function Analyses({
   };
 
   return (
-    <div className="p-5 ">
-      {/* Header */}
-
+    <div className="p-5">
       {/* Content */}
       {loading ? (
         <p className="text-gray-500">Chargement...</p>
       ) : files.length === 0 ? (
         <p className="text-gray-500">Aucun fichier trouvé.</p>
       ) : (
-        <div className="bg-white rounded-xl shadow-lg overflow-hidden border border-purple-100">
+        <div className="bg-white rounded-xl shadow-lg overflow-hidden border border-[var(--color-100)]">
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
-                <tr className="bg-purple-400 text-white">
+                <tr className="bg-[var(--color-400)] text-white">
                   <th className="text-left px-6 py-4 font-semibold text-sm uppercase tracking-wider">
                     Nom
                   </th>
@@ -209,7 +207,7 @@ export default function Analyses({
                 {files.map((file, index) => (
                   <tr
                     key={file.id}
-                    className={`cursor-pointer transition-colors hover:bg-purple-50 ${
+                    className={`cursor-pointer transition-colors hover:bg-[var(--color-50)] ${
                       index % 2 === 0 ? "bg-white" : "bg-gray-50"
                     }`}
                     onClick={() =>
@@ -234,7 +232,10 @@ export default function Analyses({
                     </td>
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-2 text-sm text-gray-700 font-medium">
-                        <Calendar size={16} className="text-purple-500" />
+                        <Calendar
+                          size={16}
+                          className="text-[var(--color-500)]"
+                        />
                         {file.date}
                       </div>
                     </td>
@@ -268,7 +269,7 @@ export default function Analyses({
       >
         <DialogContent className="sm:max-w-[450px]">
           <DialogHeader>
-            <DialogTitle className="text-purple-700">
+            <DialogTitle className="text-[var(--color-700)]">
               Ajouter une analyse
             </DialogTitle>
           </DialogHeader>
@@ -281,7 +282,7 @@ export default function Analyses({
                 onChange={(e) =>
                   setFormData({ ...formData, type: e.target.value })
                 }
-                className="w-full border border-gray-300 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                className="w-full border border-gray-300 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-[var(--color-500)]"
               >
                 <option value="">Select Type</option>
                 <option value="Radio">Radio</option>
@@ -307,7 +308,7 @@ export default function Analyses({
                   setFormData({ ...formData, fichier: e.target.files[0].name });
                   handleFileChange(e.target.files[0]);
                 }}
-                className="w-full border border-gray-300 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                className="w-full border border-gray-300 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-[var(--color-500)]"
               />
             </div>
 
@@ -321,7 +322,7 @@ export default function Analyses({
               </Button>
               <Button
                 type="submit"
-                className="bg-purple-600 hover:bg-purple-700 text-white"
+                className="bg-[var(--color-600)] hover:bg-[var(--color-700)] text-white"
               >
                 Enregistrer
               </Button>
@@ -334,7 +335,7 @@ export default function Analyses({
       <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
         <DialogContent className="sm:max-w-[400px]">
           <DialogHeader>
-            <DialogTitle className="text-purple-700">
+            <DialogTitle className="text-[var(--color-700)]">
               Confirmer la suppression
             </DialogTitle>
           </DialogHeader>

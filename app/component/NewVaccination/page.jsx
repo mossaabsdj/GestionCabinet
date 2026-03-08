@@ -76,7 +76,7 @@ export default function AddVaccinationButton({
       showAlert(
         "Champs requis",
         "Veuillez entrer un nom de vaccin",
-        "destructive"
+        "destructive",
       );
       return;
     }
@@ -113,7 +113,7 @@ export default function AddVaccinationButton({
       showAlert(
         "Champs requis",
         "Veuillez remplir tous les champs requis",
-        "destructive"
+        "destructive",
       );
       return;
     }
@@ -144,7 +144,7 @@ export default function AddVaccinationButton({
       showAlert(
         "Succès",
         "La vaccination a été ajoutée avec succès",
-        "default"
+        "default",
       );
     } catch (error) {
       console.error("❌ Erreur:", error);
@@ -159,7 +159,7 @@ export default function AddVaccinationButton({
       {/* Modern Button */}
       <Button
         onClick={() => setOpen(true)}
-        className="flex items-center gap-2 bg-purple-600 hover:bg-purple-700 text-white font-medium px-5 py-2 rounded-xl shadow-md transition"
+        className="flex items-center gap-2 bg-[var(--color-600)] hover:bg-[var(--color-700)] text-white font-medium px-5 py-2 rounded-xl shadow-md transition"
       >
         <Plus className="w-5 h-5" />
         Nouvelle vaccination
@@ -167,12 +167,12 @@ export default function AddVaccinationButton({
 
       {/* Modal */}
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="max-w-lg rounded-2xl p-6 shadow-lg border border-purple-200">
+        <DialogContent className="max-w-lg rounded-2xl p-6 shadow-lg border border-[var(--color-200)]">
           <DialogHeader className="flex flex-col items-center space-y-3">
-            <div className="p-4 bg-purple-100 rounded-full shadow-md">
-              <Syringe className="w-7 h-7 text-purple-700" />
+            <div className="p-4 bg-[var(--color-100)] rounded-full shadow-md">
+              <Syringe className="w-7 h-7 text-[var(--color-700)]" />
             </div>
-            <DialogTitle className="text-2xl font-bold text-purple-800">
+            <DialogTitle className="text-2xl font-bold text-[var(--color-800)]">
               Ajouter une Vaccination
             </DialogTitle>
             <p className="text-sm text-gray-500 text-center">
@@ -183,10 +183,12 @@ export default function AddVaccinationButton({
           {/* Form Fields */}
           <div className="space-y-4 mt-4">
             <div>
-              <Label className="text-purple-700 font-medium">Vaccin *</Label>
+              <Label className="text-[var(--color-700)] font-medium">
+                Vaccin *
+              </Label>
               <div className="flex gap-2 mt-1">
                 <select
-                  className="flex-1 h-12 border rounded-xl px-3 text-gray-700 focus:ring-2 focus:ring-purple-500"
+                  className="flex-1 h-12 border rounded-xl px-3 text-gray-700 focus:ring-2 focus:ring-[var(--color-500)]"
                   value={selectedVaccine}
                   onChange={(e) => setSelectedVaccine(e.target.value)}
                 >
@@ -200,7 +202,7 @@ export default function AddVaccinationButton({
                 <Button
                   type="button"
                   onClick={() => setShowAddVaccine(!showAddVaccine)}
-                  className="h-12 px-4 bg-green-600 hover:bg-green-700 text-white rounded-xl"
+                  className="h-12 px-4 bg-[var(--color-600)] hover:bg-[var(--color-700)] text-white rounded-xl"
                   title="Ajouter un nouveau vaccin"
                 >
                   <Plus className="w-5 h-5" />
@@ -224,7 +226,7 @@ export default function AddVaccinationButton({
                     <Button
                       onClick={handleAddNewVaccine}
                       disabled={addingVaccine}
-                      className="h-10 px-4 bg-green-600 hover:bg-green-700 text-white rounded-lg text-sm"
+                      className="h-10 px-4 bg-[var(--color-600)] hover:bg-[var(--color-700)] text-white rounded-lg text-sm"
                     >
                       {addingVaccine ? "..." : "Ajouter"}
                     </Button>
@@ -234,7 +236,7 @@ export default function AddVaccinationButton({
             </div>
 
             <div>
-              <Label className="text-purple-700 font-medium">
+              <Label className="text-[var(--color-700)] font-medium">
                 Date donnée *
               </Label>
               <Input
@@ -246,7 +248,7 @@ export default function AddVaccinationButton({
             </div>
 
             <div>
-              <Label className="text-purple-700 font-medium">
+              <Label className="text-[var(--color-700)] font-medium">
                 Numéro de dose
               </Label>
               <Input
@@ -259,7 +261,9 @@ export default function AddVaccinationButton({
             </div>
 
             <div>
-              <Label className="text-purple-700 font-medium">Notes</Label>
+              <Label className="text-[var(--color-700)] font-medium">
+                Notes
+              </Label>
               <Input
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
@@ -285,7 +289,7 @@ export default function AddVaccinationButton({
             </Button>
             <Button
               onClick={handleAddVaccination}
-              className="h-12 px-6 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-medium"
+              className="h-12 px-6 rounded-xl bg-[var(--color-600)] hover:bg-[var(--color-700)] text-white font-medium"
               disabled={loading}
             >
               {loading ? "Ajout en cours..." : "Ajouter"}
@@ -333,7 +337,7 @@ export default function AddVaccinationButton({
               className={`rounded-xl px-6 ${
                 alertConfig.variant === "destructive"
                   ? "bg-red-600 hover:bg-red-700"
-                  : "bg-purple-600 hover:bg-purple-700"
+                  : "bg-[var(--color-600)] hover:bg-[var(--color-700)]"
               } text-white`}
             >
               OK

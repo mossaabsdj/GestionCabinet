@@ -16,6 +16,17 @@
 }
 
 @theme inline {
+  --color-50: var(--mycolor-50);
+  --color-100: var(--mycolor-100);
+  --color-200: var(--mycolor-200);
+  --color-300: var(--mycolor-300);
+  --color-400: var(--mycolor-400);
+  --color-500: var(--mycolor-500);
+  --color-600: var(--mycolor-600);
+  --color-700: var(--mycolor-700);
+  --color-800: var(--mycolor-800);
+  --color-900: var(--mycolor-900);
+
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans);
@@ -56,16 +67,23 @@
 }
 
 :root {
+  --mycolor-900: oklch(0.05 0 0); /* أسود جدًا */
+  --mycolor-800: oklch(0.15 0 0);
+  --mycolor-700: oklch(0.25 0 0);
+  --mycolor-600: oklch(0.35 0 0);
+  --mycolor-500: oklch(0.5 0 0); /* رمادي متوسط */
+  --mycolor-400: oklch(0.65 0 0);
+  --mycolor-300: oklch(0.75 0 0);
+  --mycolor-200: oklch(0.85 0 0);
+  --mycolor-100: oklch(0.92 0 0);
+  --mycolor-50: oklch(0.97 0 0); /* أبيض جدًا */ /* غامق جدًا */
   --radius: 0.625rem;
   --card: oklch(1 0 0);
   --card-foreground: oklch(0.145 0 0);
   --popover: oklch(1 0 0);
   --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.205 0 0);
   --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.97 0 0);
   --secondary-foreground: oklch(0.205 0 0);
-  --muted: oklch(0.97 0 0);
   --muted-foreground: oklch(0.556 0 0);
   --accent: oklch(0.97 0 0);
   --accent-foreground: oklch(0.205 0 0);

@@ -2,11 +2,11 @@ import "@/app/globals.css";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import SidebarPage from "@/app/component/NewSideBar/page";
 import ExitButton from "@/app/component/exitbutton/page"; // 👈 add this import
-
+import param from "@/param.json";
 export const dynamic = "force-dynamic";
 
 export const metadata = {
-  title: "DR. Amel",
+  title: param.title,
   description: "make world better",
 };
 

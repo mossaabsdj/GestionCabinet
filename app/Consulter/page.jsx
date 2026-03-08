@@ -78,10 +78,10 @@ export default function PatientDashboard() {
   const [viderForm, setViderForm] = useState(false);
   const [Age, setAge] = useState();
   const [date, setDate] = useState(
-    new Date().toISOString().split("T")[0] // "YYYY-MM-DD"
+    new Date().toISOString().split("T")[0], // "YYYY-MM-DD"
   );
   const [time, setTime] = useState(
-    new Date().toTimeString().slice(0, 5) // "HH:MM"
+    new Date().toTimeString().slice(0, 5), // "HH:MM"
   );
   const [config, setConfig] = useState({
     title: "Payment Successful!",
@@ -124,7 +124,7 @@ export default function PatientDashboard() {
   }, [selectedPatient]);
 
   const filteredPatients = patientsData.filter((p) =>
-    p.nom.toLowerCase().includes(search.toLowerCase())
+    p.nom.toLowerCase().includes(search.toLowerCase()),
   );
   const handleChange = (value) => {
     const att = selectedtab === "Visites" ? "visites" : "ord";
@@ -159,7 +159,7 @@ export default function PatientDashboard() {
 
   function handleFileTypeChange(index, value) {
     setFiles((prev) =>
-      prev.map((f, i) => (i === index ? { ...f, type: value } : f))
+      prev.map((f, i) => (i === index ? { ...f, type: value } : f)),
     );
   }
 
@@ -272,7 +272,7 @@ export default function PatientDashboard() {
         setsuccessopen(false);
         const err = await response.json();
         throw new Error(
-          err.error || "Erreur lors de la création de la consultation"
+          err.error || "Erreur lors de la création de la consultation",
         );
       }
 
@@ -541,7 +541,7 @@ export default function PatientDashboard() {
             icon: Clock,
             label: "Rendez-vous lié",
             value: `${new Date(c.rendezVous.date).toLocaleDateString(
-              "fr-FR"
+              "fr-FR",
             )} - ${c.rendezVous.description || "Non spécifié"}`,
             unite: "",
           }
@@ -551,7 +551,7 @@ export default function PatientDashboard() {
     // Filter out fields with no value
     return fields
       .filter(
-        (f) => f && f.value !== null && f.value !== undefined && f.value !== ""
+        (f) => f && f.value !== null && f.value !== undefined && f.value !== "",
       )
       .map((f) => {
         if (f.type === "textarea") {
@@ -628,7 +628,7 @@ export default function PatientDashboard() {
   if (loading) return <LoadingScreen />;
 
   return (
-    <div className="flex min-h-screen bg-gradient-to-br from-purple-50 via-white to-purple-100">
+    <div className="flex min-h-screen bg-gradient-to-br from-[var(--color-50)] via-white to-[var(--color-100)]">
       {visitsinfo && (
         <VisitsInfoModal
           patientId={selectedPatient?.id}
@@ -663,7 +663,7 @@ export default function PatientDashboard() {
               className="bg-white rounded-2xl p-6 max-w-md w-full shadow-2xl"
             >
               <div className="flex items-center justify-between mb-4">
-                <h2 className="text-2xl font-bold text-purple-800 flex items-center gap-2">
+                <h2 className="text-2xl font-bold text-[var(--color-800)] flex items-center gap-2">
                   <Keyboard size={24} />
                   Raccourcis clavier
                 </h2>
@@ -691,10 +691,10 @@ export default function PatientDashboard() {
                     initial={{ x: -20, opacity: 0 }}
                     animate={{ x: 0, opacity: 1 }}
                     transition={{ delay: i * 0.05 }}
-                    className="flex justify-between items-center p-3 bg-purple-50 rounded-lg"
+                    className="flex justify-between items-center p-3 bg-[var(--color-50)] rounded-lg"
                   >
                     <span className="text-gray-700">{shortcut.desc}</span>
-                    <kbd className="px-3 py-1 bg-white border border-purple-300 rounded-md text-sm font-semibold text-purple-700 shadow-sm">
+                    <kbd className="px-3 py-1 bg-white border border-[var(--color-300)] rounded-md text-sm font-semibold text-[var(--color-700)] shadow-sm">
                       {shortcut.key}
                     </kbd>
                   </motion.div>
@@ -722,14 +722,14 @@ export default function PatientDashboard() {
         initial={{ x: -100, opacity: 0 }}
         animate={{ x: 0, opacity: 1 }}
         transition={{ duration: 0.5, ease: "easeOut" }}
-        className="w-60 h-screen bg-purple-100 rounded-tr-4xl p-6 pl-2 pr-2  pr-0flex flex-col border-r border-purple-200 fixed "
+        className="w-60 h-screen bg-purple-100 rounded-tr-4xl p-6 pl-2 pr-2  pr-0flex flex-col border-r border-[var(--color-200)] fixed "
       >
         <div className="flex justify-between items-center mb-6">
           <motion.h2
             initial={{ scale: 0.8, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             transition={{ delay: 0.2 }}
-            className="text-2xl font-bold text-purple-800"
+            className="text-2xl font-bold text-[var(--color-800)]"
           >
             Patients
           </motion.h2>
@@ -740,7 +740,7 @@ export default function PatientDashboard() {
           >
             <Button
               onClick={() => setIsAddOpen(true)}
-              className="rounded-full p-2 bg-purple-600 hover:bg-purple-700"
+              className="rounded-full p-2 bg-[var(--color-600)] hover:bg-[var(--color-700)]"
             >
               <Plus size={16} />
             </Button>
@@ -786,8 +786,8 @@ export default function PatientDashboard() {
                 onClick={() => fetchPatientById(patient.id)} // fetch full details
                 className={`p-3 mb-2 rounded-lg cursor-pointer flex flex-col transition-all duration-200 ${
                   selectedPatient?.id === patient.id
-                    ? "bg-purple-600 text-white shadow-lg"
-                    : "bg-white text-gray-800 hover:bg-purple-100"
+                    ? "bg-[var(--color-600)] text-white shadow-lg"
+                    : "bg-white text-gray-800 hover:bg-[var(--color-100)]"
                 }`}
               >
                 <p className="font-medium flex items-center gap-2">
@@ -810,7 +810,7 @@ export default function PatientDashboard() {
           whileHover={{ scale: 1.1 }}
           whileTap={{ scale: 0.9 }}
           onClick={() => setShowShortcuts(true)}
-          className="fixed bottom-6 right-6 bg-purple-600 hover:bg-purple-700 text-white rounded-full p-4 shadow-lg z-40"
+          className="fixed bottom-6 right-6 bg-[var(--color-600)] hover:bg-[var(--color-700)] text-white rounded-full p-4 shadow-lg z-40"
           title="Raccourcis clavier (Ctrl+/)"
         >
           <Keyboard size={24} />
@@ -829,18 +829,18 @@ export default function PatientDashboard() {
                 initial={{ opacity: 0, y: -5 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ type: "spring", stiffness: 250, damping: 15 }}
-                className="text-3xl font-bold text-purple-800"
+                className="text-3xl font-bold text-[var(--color-800)]"
               >
                 {selectedPatient?.nom}
               </motion.h1>
 
-              <span className="px-3 py-1 text-sm rounded-full bg-purple-100 text-purple-800 font-semibold">
+              <span className="px-3 py-1 text-sm rounded-full bg-purple-100 text-[var(--color-800)] font-semibold">
                 {Age}
               </span>
             </div>
 
             <p className="text-gray-500 text-sm flex items-center gap-2">
-              <ClipboardList size={16} className="text-purple-600" />
+              <ClipboardList size={16} className="text-[var(--color-600)]" />
               {!NewConsultation ? "Dernier diagnostic" : "Nouveau diagnostic"}
             </p>
           </div>
@@ -873,14 +873,14 @@ export default function PatientDashboard() {
             ) : selectedtab === "Analyses et Résultats" ? (
               <Button
                 onClick={() => setShowAddDialogNewAnalyse(true)}
-                className="flex items-center gap-2 bg-purple-600 hover:bg-purple-700 text-white font-medium px-5 py-2 rounded-xl shadow-md transition"
+                className="flex items-center gap-2 bg-[var(--color-600)] hover:bg-[var(--color-700)] text-white font-medium px-5 py-2 rounded-xl shadow-md transition"
               >
                 <Plus className="mr-2 h-4 w-4" /> Nouvelle analyse
               </Button>
             ) : selectedtab === "Prescriptions et Bilans" ? (
               <Button
                 onClick={() => setnewordanance(true)}
-                className="flex items-center gap-2 bg-purple-600 hover:bg-purple-700 text-white font-medium px-5 py-2 rounded-xl shadow-md transition"
+                className="flex items-center gap-2 bg-[var(--color-600)] hover:bg-[var(--color-700)] text-white font-medium px-5 py-2 rounded-xl shadow-md transition"
               >
                 <Plus className="mr-2 h-4 w-4" /> Nouvelle Prescription/Bilan
               </Button>
@@ -891,7 +891,7 @@ export default function PatientDashboard() {
                   setNewConsultation(true);
                   setselectedtab("+ Nouvelle Consultation");
                 }}
-                className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg font-semibold flex items-center gap-2"
+                className="bg-[var(--color-600)] hover:bg-[var(--color-700)] text-white px-4 py-2 rounded-lg font-semibold flex items-center gap-2"
               >
                 <Plus size={18} />
                 Nouvelle Consultation
@@ -905,7 +905,7 @@ export default function PatientDashboard() {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.3 }}
-          className="flex flex-wrap sm:flex-nowrap border-b border-purple-200 mb-6 overflow-x-auto scrollbar-hide"
+          className="flex flex-wrap sm:flex-nowrap border-b border-[var(--color-200)] mb-6 overflow-x-auto scrollbar-hide"
         >
           {[
             "Informations Patient",
@@ -928,8 +928,8 @@ export default function PatientDashboard() {
               }}
               className={`px-2 sm:px-2 py-2 text-sm sm:text-base font-medium border-b-2 transition-all duration-200 whitespace-nowrap ${
                 tab === selectedtab
-                  ? "text-purple-600 border-purple-600"
-                  : "text-gray-600 border-transparent hover:text-purple-600 hover:border-purple-300"
+                  ? "text-[var(--color-600)] border-[var(--color-600)]"
+                  : "text-gray-600 border-transparent hover:text-[var(--color-600)] hover:border-[var(--color-300)]"
               }`}
             >
               {tab}
@@ -990,7 +990,7 @@ export default function PatientDashboard() {
                     >
                       <div className="flex items-center justify-between mb-4">
                         {/* Section Title */}
-                        <h3 className="text-xl font-semibold text-purple-700 flex items-center gap-2">
+                        <h3 className="text-xl font-semibold text-[var(--color-700)] flex items-center gap-2">
                           <section.icon size={20} /> {section.title}
                         </h3>
 
@@ -1000,7 +1000,7 @@ export default function PatientDashboard() {
                             type="button"
                             onClick={() => setVisitsinfo(true)}
                             disabled={!date || !time}
-                            className="p-2 rounded-xl bg-purple-500 text-white shadow-sm hover:bg-purple-700 disabled:opacity-60 disabled:cursor-not-allowed transition-colors flex items-center justify-center"
+                            className="p-2 rounded-xl bg-[var(--color-500)] text-white shadow-sm hover:bg-[var(--color-700)] disabled:opacity-60 disabled:cursor-not-allowed transition-colors flex items-center justify-center"
                           >
                             <Files size={18} />
                           </button>
@@ -1031,7 +1031,7 @@ export default function PatientDashboard() {
                                 <div className="flex justify-between w-full">
                                   <div className="flex flex-row items-center">
                                     <info.icon
-                                      className={`text-purple-500 ${
+                                      className={`text-[var(--color-500)] ${
                                         isEmpty ? "text-gray-400" : ""
                                       }`}
                                       size={20}
@@ -1167,7 +1167,7 @@ export default function PatientDashboard() {
                 setDataTimeModel(false);
               }}
               disabled={!date || !time}
-              className="px-5 py-2.5 text-base rounded-xl bg-purple-600 text-white font-medium shadow-sm hover:bg-purple-700 disabled:opacity-60 disabled:cursor-not-allowed transition-colors"
+              className="px-5 py-2.5 text-base rounded-xl bg-[var(--color-600)] text-white font-medium shadow-sm hover:bg-[var(--color-700)] disabled:opacity-60 disabled:cursor-not-allowed transition-colors"
             >
               Enregistrer la consultation
             </button>

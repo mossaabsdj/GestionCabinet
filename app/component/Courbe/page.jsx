@@ -2771,9 +2771,9 @@ export default function GrowthCharts({ patientID }) {
       <div id="charts-print">
         <div className="space-y-8 print:space-y-0 print:pb-0">
           {/* --- Poids --- */}
-          <Card className="border-purple-300 shadow-md">
+          <Card className="border-[var(--color-300)] shadow-md">
             <CardHeader>
-              <CardTitle className="text-purple-700">
+              <CardTitle className="text-[var(--color-700)]">
                 Courbe de Poids (OMS 2007 {selectedPatient?.sexe})
               </CardTitle>
             </CardHeader>
@@ -2805,7 +2805,7 @@ export default function GrowthCharts({ patientID }) {
                         strokeWidth={key === "m" ? 2.5 : 1.5}
                         dot={false}
                       />
-                    )
+                    ),
                   )}
                   <Line
                     data={childPoints}
@@ -2854,7 +2854,7 @@ export default function GrowthCharts({ patientID }) {
                         strokeWidth={key === "m" ? 2.5 : 1.5}
                         dot={false}
                       />
-                    )
+                    ),
                   )}
                   <Line
                     data={childPoints}
@@ -2867,10 +2867,7 @@ export default function GrowthCharts({ patientID }) {
               </ResponsiveContainer>
             </CardContent>
           </Card>
-          {/* --- Périmètre crânien
-          
-          
-          --- */}
+          {/* --- Périmètre crânien --- */}
         </div>
       </div>
 
@@ -2878,7 +2875,7 @@ export default function GrowthCharts({ patientID }) {
       <div className="flex justify-center print:hidden">
         <button
           onClick={handlePrint}
-          className="bg-purple-600 hover:bg-purple-700 text-white px-6 py-2 rounded-lg font-semibold"
+          className="bg-[var(--color-600)] hover:bg-[var(--color-700)] text-white px-6 py-2 rounded-lg font-semibold"
         >
           Imprimer les courbes
         </button>

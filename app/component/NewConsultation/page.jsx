@@ -239,7 +239,7 @@ export default function NewConsultationPage({
             onChange={handleChange}
             rows={3}
             placeholder="Ex: Fièvre, toux, contrôle, etc."
-            className="w-full rounded-lg border px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-purple-300"
+            className="w-full rounded-lg border px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-300)]"
           />
         </div>
 
@@ -251,7 +251,7 @@ export default function NewConsultationPage({
             value={form.note}
             onChange={handleChange}
             rows={4}
-            className="w-full rounded-lg border px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-purple-300"
+            className="w-full rounded-lg border px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-300)]"
           />
         </div>
 
@@ -265,7 +265,7 @@ export default function NewConsultationPage({
             value={form.developpementPsychomoteur}
             onChange={handleChange}
             rows={2}
-            className="w-full rounded-lg border px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-purple-300"
+            className="w-full rounded-lg border px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-300)]"
           />
         </div>
 
@@ -275,7 +275,7 @@ export default function NewConsultationPage({
             <Card key={info.label} className="flex items-center gap-3 p-3">
               <div className="flex justify-between w-full">
                 <div className="flex flex-row items-center">
-                  <info.icon className="text-purple-500" size={20} />
+                  <info.icon className="text-[var(--color-500)]" size={20} />
                   <span className="text-gray-500 ml-2">{info.label}</span>
                 </div>
                 <div className="flex items-center gap-1">
@@ -284,7 +284,7 @@ export default function NewConsultationPage({
                     name={info.name}
                     value={info.value}
                     onChange={handleChange}
-                    className="text-right w-20 border-b focus:outline-none focus:border-purple-400 bg-transparent"
+                    className="text-right w-20 border-b focus:outline-none focus:border-[var(--color-400)] bg-transparent"
                   />
                   {info.unite && (
                     <span className="text-gray-400 text-sm ml-1">
@@ -296,33 +296,34 @@ export default function NewConsultationPage({
             </Card>
           ))}
         </div>
+
         <div className="py-4">
-          {" "}
           {/* Collapsible Rendez-vous Section */}
           <div className="mb-6 border rounded-lg">
             <button
               type="button"
               onClick={() => setShowRendezVous((prev) => !prev)}
-              className="w-full flex justify-between items-center p-3 bg-purple-50 hover:bg-purple-100 rounded-t-lg"
+              className="w-full flex justify-between items-center p-3 bg-[var(--color-50)] hover:bg-[var(--color-100)] rounded-t-lg"
             >
-              <div className="flex items-center gap-2 text-purple-700 font-medium">
+              <div className="flex items-center gap-2 text-[var(--color-700)] font-medium">
                 <Calendar size={18} />
                 <span>Rendez-vous</span>
               </div>
               {showRendezVous ? (
-                <ChevronUp size={20} className="text-purple-600" />
+                <ChevronUp size={20} className="text-[var(--color-600)]" />
               ) : (
-                <ChevronDown size={20} className="text-purple-600" />
+                <ChevronDown size={20} className="text-[var(--color-600)]" />
               )}
             </button>
           </div>
+
           {showRendezVous && (
-            <div className="px-4 space-y-2  dark:bg-gray-900 rounded-b-lg">
+            <div className="px-4 space-y-2 dark:bg-gray-900 rounded-b-lg">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <Card className="flex items-center gap-3 p-3">
                   <div className="flex justify-between w-full">
                     <div className="flex flex-row items-center">
-                      <Calendar className="text-purple-500" size={20} />
+                      <Calendar className="text-[var(--color-500)]" size={20} />
                       <span className="text-gray-500 ml-2">
                         Date du rendez-vous
                       </span>
@@ -332,7 +333,7 @@ export default function NewConsultationPage({
                       name="rendezVousDate"
                       value={form.rendezVousDate}
                       onChange={handleChange}
-                      className="text-right w-48 border-b focus:outline-none focus:border-purple-400 bg-transparent"
+                      className="text-right w-48 border-b focus:outline-none focus:border-[var(--color-400)] bg-transparent"
                     />
                   </div>
                 </Card>
@@ -340,7 +341,7 @@ export default function NewConsultationPage({
                 <Card className="flex items-center gap-3 p-3">
                   <div className="flex justify-between w-full">
                     <div className="flex flex-row items-center">
-                      <Clock className="text-purple-500" size={20} />
+                      <Clock className="text-[var(--color-500)]" size={20} />
                       <span className="text-gray-500 ml-2">Description</span>
                     </div>
                     <input
@@ -349,7 +350,7 @@ export default function NewConsultationPage({
                       value={form.rendezVousDescription}
                       onChange={handleChange}
                       placeholder="Ex: Contrôle, suivi..."
-                      className="text-right w-48 border-b focus:outline-none focus:border-purple-400 bg-transparent"
+                      className="text-right w-48 border-b focus:outline-none focus:border-[var(--color-400)] bg-transparent"
                     />
                   </div>
                 </Card>
@@ -357,6 +358,7 @@ export default function NewConsultationPage({
             </div>
           )}
         </div>
+
         {/* ====================== */}
         {/* 💊 ORDONNANCE & 🔬 BILAN SECTIONS */}
         {/* ====================== */}
@@ -366,8 +368,8 @@ export default function NewConsultationPage({
             <button
               type="button"
               onClick={() => setShowNewOrdonnance(true)}
-              className="flex items-center gap-2 px-4 py-2 rounded-lg bg-purple-600 
-         text-white hover:bg-purple-700 transition"
+              className="flex items-center gap-2 px-4 py-2 rounded-lg bg-[var(--color-600)] 
+         text-white hover:bg-[var(--color-700)] transition"
             >
               <Plus className="w-4 h-4" />
               Ajouter une ordonnance / bilan
@@ -383,9 +385,9 @@ export default function NewConsultationPage({
 
           {/* === Ordonnance Summary Card === */}
           {form?.ordonnance && form.ordonnance.items?.length > 0 && (
-            <div className="flex items-center justify-between bg-purple-50 border border-purple-100 rounded-xl p-4 shadow-sm">
+            <div className="flex items-center justify-between bg-[var(--color-50)] border border-[var(--color-100)] rounded-xl p-4 shadow-sm">
               <div className="flex flex-col sm:flex-row sm:items-center gap-4">
-                <div className="flex items-center gap-2 text-purple-700">
+                <div className="flex items-center gap-2 text-[var(--color-700)]">
                   <FileText size={20} />
                   <span className="font-semibold">
                     Ordonnance:{" "}
@@ -473,7 +475,7 @@ export default function NewConsultationPage({
             type="button"
             onClick={handleSave}
             disabled={saving}
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-purple-600 text-white hover:bg-purple-700 disabled:opacity-60"
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-[var(--color-600)] text-white hover:bg-[var(--color-700)] disabled:opacity-60"
           >
             <Save className="w-4 h-4" />
             {saving ? "Enregistrement..." : "Enregistrer"}

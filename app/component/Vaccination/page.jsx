@@ -55,7 +55,7 @@ export default function Vaccination({ patientId, refrech, setrefrech }) {
       if (!res.ok) throw new Error("Erreur lors de la suppression");
 
       setVaccinations((prev) =>
-        prev.filter((v) => v.id !== selectedVaccine.id)
+        prev.filter((v) => v.id !== selectedVaccine.id),
       );
       setOpenDialog(false);
       setSelectedVaccine(null);
@@ -89,11 +89,11 @@ export default function Vaccination({ patientId, refrech, setrefrech }) {
           Aucune vaccination trouvée pour ce patient.
         </p>
       ) : (
-        <div className="bg-white rounded-xl shadow-lg overflow-hidden border border-purple-100">
+        <div className="bg-white rounded-xl shadow-lg overflow-hidden border border-[var(--color-100)]">
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
-                <tr className="bg-gradient-to-r from-purple-600 to-purple-500 text-white">
+                <tr className="bg-gradient-to-r from-[var(--color-600)] to-[var(--color-500)] text-white">
                   <th className="text-left px-6 py-4 font-semibold text-sm uppercase tracking-wider">
                     Vaccin
                   </th>
@@ -115,14 +115,14 @@ export default function Vaccination({ patientId, refrech, setrefrech }) {
                 {vaccinations.map((vaccine, index) => (
                   <tr
                     key={vaccine.id}
-                    className={`transition-colors hover:bg-purple-50 ${
+                    className={`transition-colors hover:bg-[var(--color-50)] ${
                       index % 2 === 0 ? "bg-white" : "bg-gray-50"
                     }`}
                   >
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-3">
-                        <div className="p-2 bg-purple-100 rounded-full">
-                          <Syringe className="w-4 h-4 text-purple-700" />
+                        <div className="p-2 bg-[var(--color-100)] rounded-full">
+                          <Syringe className="w-4 h-4 text-[var(--color-700)]" />
                         </div>
                         <span className="font-semibold text-gray-900">
                           {vaccine.vaccine.name}
@@ -131,15 +131,18 @@ export default function Vaccination({ patientId, refrech, setrefrech }) {
                     </td>
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-2 text-sm text-gray-700 font-medium">
-                        <CalendarClock size={16} className="text-purple-500" />
+                        <CalendarClock
+                          size={16}
+                          className="text-[var(--color-500)]"
+                        />
                         {new Date(vaccine.dateGiven).toLocaleDateString(
-                          "fr-FR"
+                          "fr-FR",
                         )}
                       </div>
                     </td>
                     <td className="px-6 py-4">
                       {vaccine.doseNumber ? (
-                        <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-purple-100 text-purple-800">
+                        <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-[var(--color-100)] text-[var(--color-800)]">
                           Dose {vaccine.doseNumber}
                         </span>
                       ) : (
@@ -183,12 +186,12 @@ export default function Vaccination({ patientId, refrech, setrefrech }) {
       <Dialog open={openDialog} onOpenChange={setOpenDialog}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle className="text-purple-700">
+            <DialogTitle className="text-[var(--color-700)]">
               Supprimer la vaccination
             </DialogTitle>
             <DialogDescription>
               Êtes-vous sûr de vouloir supprimer{" "}
-              <span className="font-semibold text-purple-700">
+              <span className="font-semibold text-[var(--color-700)]">
                 {selectedVaccine?.vaccine.name}
               </span>
               ? Cette action est irréversible.
@@ -204,7 +207,7 @@ export default function Vaccination({ patientId, refrech, setrefrech }) {
             </Button>
             <Button
               onClick={handleDelete}
-              className="bg-purple-600 hover:bg-purple-700 text-white"
+              className="bg-[var(--color-600)] hover:bg-[var(--color-700)] text-white"
             >
               Supprimer
             </Button>

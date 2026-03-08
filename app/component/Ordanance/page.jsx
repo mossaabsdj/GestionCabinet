@@ -83,7 +83,7 @@ export default function OrdBilanPage({ patientId, query, selectedPatient }) {
   useEffect(() => {
     if (tab === "ord") {
       const filtred = ordonnances?.filter((v) =>
-        v.id.toString().includes(query)
+        v.id.toString().includes(query),
       );
       setFiltredOrd(filtred);
     }
@@ -155,7 +155,7 @@ export default function OrdBilanPage({ patientId, query, selectedPatient }) {
         "nextConsultationId" +
           nextConsultationId +
           "/nextOrdonnanceId" +
-          nextOrdonnanceId
+          nextOrdonnanceId,
       );
       window.electron?.printOrdonnance({
         consultationId: nextConsultationId,
@@ -259,7 +259,7 @@ export default function OrdBilanPage({ patientId, query, selectedPatient }) {
 
       // نصنع نسخة جديدة من items
       const updatedItems = b.items.map((item, index) =>
-        index === itemIndex ? { ...item, [field]: value } : item
+        index === itemIndex ? { ...item, [field]: value } : item,
       );
 
       return { ...b, items: updatedItems };
@@ -273,16 +273,15 @@ export default function OrdBilanPage({ patientId, query, selectedPatient }) {
         ? {
             ...prev,
             items: prev.items.map((item, index) =>
-              index === itemIndex ? { ...item, [field]: value } : item
+              index === itemIndex ? { ...item, [field]: value } : item,
             ),
           }
-        : prev
+        : prev,
     );
   };
 
   if (!patientId)
     return <p className="text-gray-500 text-center mt-10">Aucun patient.</p>;
-
   return (
     <div className="p-0 max-w-6xl mx-auto">
       <Tabs
@@ -291,16 +290,16 @@ export default function OrdBilanPage({ patientId, query, selectedPatient }) {
         onValueChange={setTab}
         className="w-full"
       >
-        <TabsList className="grid w-full grid-cols-2 bg-purple-100 p-1 rounded-lg">
+        <TabsList className="grid w-full grid-cols-2 bg-[var(--color-100)] p-1 rounded-lg">
           <TabsTrigger
             value="ord"
-            className="rounded-md data-[state=active]:bg-white data-[state=active]:text-purple-700"
+            className="rounded-md data-[state=active]:bg-white data-[state=active]:text-[var(--color-700)]"
           >
             Ordonnances
           </TabsTrigger>
           <TabsTrigger
             value="bilan"
-            className="rounded-md data-[state=active]:bg-white data-[state=active]:text-purple-700"
+            className="rounded-md data-[state=active]:bg-white data-[state=active]:text-[var(--color-700)]"
           >
             Bilans reçus
           </TabsTrigger>
@@ -313,11 +312,11 @@ export default function OrdBilanPage({ patientId, query, selectedPatient }) {
               Aucune ordonnance trouvée.
             </p>
           ) : (
-            <div className="bg-white rounded-xl shadow-lg overflow-hidden border border-purple-100">
+            <div className="bg-white rounded-xl shadow-lg overflow-hidden border border-[var(--color-100)]">
               <div className="overflow-x-auto">
                 <table className="w-full">
                   <thead>
-                    <tr className="bg-gradient-to-r bg-purple-400 text-white">
+                    <tr className="bg-gradient-to-r bg-[var(--color-400)] text-white">
                       <th className="text-left px-6 py-4 font-semibold text-sm uppercase tracking-wider">
                         #
                       </th>
@@ -339,21 +338,24 @@ export default function OrdBilanPage({ patientId, query, selectedPatient }) {
                         }
                       >
                         <tr
-                          className={`cursor-pointer transition-colors hover:bg-purple-50 ${
+                          className={`cursor-pointer transition-colors hover:bg-[var(--color-50)] ${
                             index % 2 === 0 ? "bg-white" : "bg-gray-50"
                           }`}
                           onClick={() => setSelectedOrdonnance(ord)}
                         >
                           <td className="px-6 py-4">
-                            <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold bg-purple-100 text-purple-800">
+                            <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold bg-[var(--color-100)] text-[var(--color-800)]">
                               Ordonnance #{ord.id}
                             </span>
                           </td>
                           <td className="px-6 py-4">
                             <div className="flex items-center gap-2 text-sm text-gray-700 font-medium">
-                              <Calendar size={16} className="text-purple-500" />
+                              <Calendar
+                                size={16}
+                                className="text-[var(--color-500)]"
+                              />
                               {new Date(ord.createdAt).toLocaleDateString(
-                                "fr-FR"
+                                "fr-FR",
                               )}
                             </div>
                           </td>
@@ -374,16 +376,16 @@ export default function OrdBilanPage({ patientId, query, selectedPatient }) {
 
                         <DialogContent className="sm:min-w-4xl w-full bg-white rounded-xl p-6 shadow-lg">
                           <DialogHeader>
-                            <DialogTitle className="text-purple-700 text-lg font-semibold">
+                            <DialogTitle className="text-[var(--color-700)] text-lg font-semibold">
                               Détails de l'Ordonnance #{ord.id}
                             </DialogTitle>
                           </DialogHeader>
 
                           {ord.items?.length > 0 ? (
                             <>
-                              <div className="mt-4 border border-purple-100 rounded-xl overflow-hidden">
+                              <div className="mt-4 border border-[var(--color-100)] rounded-xl overflow-hidden">
                                 <table className="w-full border-collapse text-sm">
-                                  <thead className="bg-purple-100 text-purple-700">
+                                  <thead className="bg-[var(--color-100)] text-[var(--color-700)]">
                                     <tr>
                                       <th className="text-left py-3 px-4 font-semibold">
                                         Médicament
@@ -403,7 +405,7 @@ export default function OrdBilanPage({ patientId, query, selectedPatient }) {
                                     {ord.items.map((item, i) => (
                                       <tr
                                         key={i}
-                                        className="border-b border-purple-100 hover:bg-purple-50 transition-colors"
+                                        className="border-b border-[var(--color-100)] hover:bg-[var(--color-50)] transition-colors"
                                       >
                                         <td className="py-3 px-4 font-medium text-gray-800">
                                           {item.medicament?.nom || "—"}
@@ -428,7 +430,7 @@ export default function OrdBilanPage({ patientId, query, selectedPatient }) {
                                   onClick={() =>
                                     handlePrintOrdonnanceElectron(ord)
                                   }
-                                  className="bg-purple-600 hover:bg-purple-700 text-white"
+                                  className="bg-[var(--color-600)] hover:bg-[var(--color-700)] text-white"
                                 >
                                   🖨️ Imprimer l'Ordonnance
                                 </Button>
@@ -460,7 +462,7 @@ export default function OrdBilanPage({ patientId, query, selectedPatient }) {
               <div className="overflow-x-auto">
                 <table className="w-full">
                   <thead>
-                    <tr className="bg-purple-400  text-white">
+                    <tr className="bg-[var(--color-400)] text-white">
                       <th className="text-left px-6 py-4 font-semibold text-sm uppercase tracking-wider">
                         #
                       </th>
@@ -486,15 +488,18 @@ export default function OrdBilanPage({ patientId, query, selectedPatient }) {
                           onClick={() => setSelectedBilan(bilan)}
                         >
                           <td className="px-6 py-4">
-                            <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold bg-purple-100 text-purple-800">
+                            <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold bg-[var(--color-100)] text-[var(--color-800)]">
                               Bilan reçu #{bilan.id}
                             </span>
                           </td>
                           <td className="px-6 py-4">
                             <div className="flex items-center gap-2 text-sm text-gray-700 font-medium">
-                              <Calendar size={16} className="text-purple-500" />
+                              <Calendar
+                                size={16}
+                                className="text-[var(--color-500)]"
+                              />
                               {new Date(bilan.createdAt).toLocaleDateString(
-                                "fr-FR"
+                                "fr-FR",
                               )}
                             </div>
                           </td>
@@ -557,7 +562,7 @@ export default function OrdBilanPage({ patientId, query, selectedPatient }) {
                                                   selectedBilan.id,
                                                   i,
                                                   "resultat",
-                                                  e.target.value
+                                                  e.target.value,
                                                 )
                                               }
                                               className="w-full border rounded-lg px-3 py-1 focus:ring-2 focus:ring-green-500"
@@ -572,7 +577,7 @@ export default function OrdBilanPage({ patientId, query, selectedPatient }) {
                                                   selectedBilan.id,
                                                   i,
                                                   "remarque",
-                                                  e.target.value
+                                                  e.target.value,
                                                 )
                                               }
                                               className="w-full border rounded-lg px-3 py-1 focus:ring-2 focus:ring-green-500"
@@ -594,7 +599,6 @@ export default function OrdBilanPage({ patientId, query, selectedPatient }) {
                                   >
                                     🖨️ Imprimer le Bilan
                                   </Button>
-
                                   <Button
                                     onClick={() =>
                                       handleSaveBilan(selectedBilan)

@@ -68,10 +68,10 @@ export default function AddPatientModal({ open, onClose, onAdd }) {
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="max-w-2xl max-h-[97vh] rounded-2xl p-4  shadow-lg">
         <DialogHeader className="flex flex-col items-center space-y-2">
-          <div className="p-2 bg-purple-100 rounded-full shadow-md">
-            <Stethoscope className="w-7 h-7 text-purple-700" />
+          <div className="p-2 bg-[var(--color-100)] rounded-full shadow-md">
+            <Stethoscope className="w-7 h-7 text-[var(--color-700)]" />
           </div>
-          <DialogTitle className="text-2xl font-bold text-purple-800">
+          <DialogTitle className="text-2xl font-bold text-[var(--color-800)]">
             Nouveau Patient
           </DialogTitle>
         </DialogHeader>
@@ -79,33 +79,35 @@ export default function AddPatientModal({ open, onClose, onAdd }) {
         <form onSubmit={handleSubmit} className="mt-2 space-y-4">
           {/* Nom obligatoire */}
           <div>
-            <Label className="text-purple-700 font-medium">Nom *</Label>
+            <Label className="text-[var(--color-700)] font-medium">Nom *</Label>
             <Input
               placeholder="Nom complet"
               value={form.nom}
               onChange={(e) => setForm({ ...form, nom: e.target.value })}
               required
-              className="h-12 px-4 mt-1 rounded-xl border-gray-300 focus:ring-2 focus:ring-purple-500"
+              className="h-12 px-4 mt-1 rounded-xl border-gray-300 focus:ring-2 focus:ring-[var(--color-500)]"
             />
           </div>
 
           {/* Grid layout for Age + Téléphone */}
           <div className="grid grid-cols-2 gap-6">
             <div>
-              <Label className="text-purple-700">Date de naissance</Label>
+              <Label className="text-[var(--color-700)]">
+                Date de naissance
+              </Label>
               <Input
                 type="date"
                 value={form.dateDeNaissance}
                 onChange={(e) =>
                   setForm({ ...form, dateDeNaissance: e.target.value })
                 }
-                className="h-12 px-4 mt-1 rounded-xl border-gray-300 focus:ring-2 focus:ring-purple-500"
+                className="h-12 px-4 mt-1 rounded-xl border-gray-300 focus:ring-2 focus:ring-[var(--color-500)]"
               />
             </div>
             <div>
-              <Label className="text-purple-700 font-medium">
+              <Label className="text-[var(--color-700)] font-medium">
                 {" "}
-                Sexe de l’enfant
+                Sexe de l'enfant
               </Label>
               <Select
                 value={form.sexe}
@@ -214,7 +216,7 @@ export default function AddPatientModal({ open, onClose, onAdd }) {
             </Button>
             <Button
               type="submit"
-              className="h-12 px-6 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-medium"
+              className="h-12 px-6 rounded-xl bg-[var(--color-600)] hover:bg-[var(--color-700)] text-white font-medium"
             >
               Ajouter
             </Button>

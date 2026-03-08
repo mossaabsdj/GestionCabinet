@@ -110,7 +110,7 @@ export default function PrescriptionModal({
       if (!response.ok) {
         const err = await response.json();
         throw new Error(
-          err.error || "Erreur lors du chargement des bilans types"
+          err.error || "Erreur lors du chargement des bilans types",
         );
       }
 
@@ -212,7 +212,7 @@ export default function PrescriptionModal({
     }
     const q = labQuery.trim().toLowerCase();
     const filtered = bilans.filter(
-      (e) => e.nom.toLowerCase().includes(q) && !labItems.includes(e)
+      (e) => e.nom.toLowerCase().includes(q) && !labItems.includes(e),
     );
     setLabSuggestions(filtered);
     setHighlightedLabIdx(filtered.length > 0 ? 0 : -1);
@@ -223,7 +223,7 @@ export default function PrescriptionModal({
     if (e.key === "ArrowDown") {
       e.preventDefault();
       setHighlightedMedIdx((idx) =>
-        idx + 1 < suggestions.length ? idx + 1 : idx
+        idx + 1 < suggestions.length ? idx + 1 : idx,
       );
     } else if (e.key === "ArrowUp") {
       e.preventDefault();
@@ -241,7 +241,7 @@ export default function PrescriptionModal({
     if (e.key === "ArrowDown") {
       e.preventDefault();
       setHighlightedLabIdx((idx) =>
-        idx + 1 < labSuggestions.length ? idx + 1 : idx
+        idx + 1 < labSuggestions.length ? idx + 1 : idx,
       );
     } else if (e.key === "ArrowUp") {
       e.preventDefault();
@@ -255,7 +255,7 @@ export default function PrescriptionModal({
   function addMedication() {
     if (!selectedMed) return;
     const exists = prescriptionItems.some(
-      (it) => it.nom.toLowerCase() === selectedMed.nom.toLowerCase()
+      (it) => it.nom.toLowerCase() === selectedMed.nom.toLowerCase(),
     );
 
     if (exists) {
@@ -290,7 +290,7 @@ export default function PrescriptionModal({
 
   function removeItem(id) {
     setPrescriptionItems(
-      prescriptionItems.filter((i) => i.medicamentId !== id)
+      prescriptionItems.filter((i) => i.medicamentId !== id),
     );
   }
 
@@ -579,8 +579,8 @@ export default function PrescriptionModal({
       setBilans((prev) => [created, ...prev]);
       //setNewBilan({ nom: "" });
     } catch (err) {
-      console.error("Erreur lors de l’ajout", err);
-      showAlert("Erreur", "Impossible d’ajouter le bilan.");
+      console.error("Erreur lors de l'ajout", err);
+      showAlert("Erreur", "Impossible d'ajouter le bilan.");
     } finally {
       setLoading(false);
     }
@@ -636,8 +636,8 @@ export default function PrescriptionModal({
       //  setNewMedicament({ nom: "" });
       setNewMedicament(false);
     } catch (err) {
-      console.error("Erreur lors de l’ajout", err);
-      showAlert("Erreur", "Impossible d’ajouter le médicament.");
+      console.error("Erreur lors de l'ajout", err);
+      showAlert("Erreur", "Impossible d'ajouter le médicament.");
     } finally {
       setLoading(false);
     }
@@ -652,7 +652,7 @@ export default function PrescriptionModal({
           transition={{ duration: 0.3 }}
         >
           <Tabs defaultValue="ordonnance">
-            <TabsList className="grid grid-cols-3 bg-gradient-to-r from-purple-100 to-purple-50 text-purple-700 rounded-xl p-1 shadow-sm">
+            <TabsList className="grid grid-cols-3 bg-gradient-to-r from-[var(--color-100)] to-[var(--color-50)] text-[var(--color-700)] rounded-xl p-1 shadow-sm">
               <TabsTrigger
                 value="ordonnance"
                 className="rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-md transition-all duration-200"
@@ -684,14 +684,14 @@ export default function PrescriptionModal({
                 initial="hidden"
                 animate="visible"
               >
-                <Card className="mt-3 border-purple-300 shadow-lg hover:shadow-xl transition-shadow duration-300">
-                  <CardHeader className="flex flex-row items-center justify-between bg-gradient-to-r from-purple-50 to-white rounded-t-lg">
-                    <CardTitle className="text-purple-700 flex items-center gap-2">
-                      <Plus size={20} className="text-purple-500" /> Rédiger une
-                      ordonnance
+                <Card className="mt-3 border-[var(--color-300)] shadow-lg hover:shadow-xl transition-shadow duration-300">
+                  <CardHeader className="flex flex-row items-center justify-between bg-gradient-to-r from-[var(--color-50)] to-white rounded-t-lg">
+                    <CardTitle className="text-[var(--color-700)] flex items-center gap-2">
+                      <Plus size={20} className="text-[var(--color-500)]" />{" "}
+                      Rédiger une ordonnance
                     </CardTitle>
                     <Button
-                      className="bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 shadow-md hover:shadow-lg transition-all duration-200"
+                      className="bg-gradient-to-r from-[var(--color-500)] to-[var(--color-600)] hover:from-[var(--color-600)] hover:to-[var(--color-700)] shadow-md hover:shadow-lg transition-all duration-200"
                       onClick={handlePrintElectron}
                       size="sm"
                     >
@@ -703,7 +703,7 @@ export default function PrescriptionModal({
                       <div className="md:col-span-2 relative">
                         <Label
                           htmlFor="med-search"
-                          className="text-purple-700 font-medium"
+                          className="text-[var(--color-700)] font-medium"
                         >
                           Médicament
                         </Label>
@@ -715,11 +715,11 @@ export default function PrescriptionModal({
                             value={query}
                             onChange={(e) => setQuery(e.target.value)}
                             onKeyDown={handleMedKeyDown}
-                            className="focus:ring-2 focus:ring-purple-400 border-purple-200 transition-all duration-200"
+                            className="focus:ring-2 focus:ring-[var(--color-400)] border-[var(--color-200)] transition-all duration-200"
                             autoComplete="off"
                           />
                           <motion.div
-                            className="absolute right-3 top-3 pointer-events-none text-purple-500"
+                            className="absolute right-3 top-3 pointer-events-none text-[var(--color-500)]"
                             animate={{ scale: query ? 1.1 : 1 }}
                             transition={{ duration: 0.2 }}
                           >
@@ -734,7 +734,7 @@ export default function PrescriptionModal({
                               animate={{ opacity: 1, y: 0, scale: 1 }}
                               exit={{ opacity: 0, y: -10, scale: 0.95 }}
                               transition={{ duration: 0.2 }}
-                              className="absolute z-50 w-full mt-2 bg-white border border-purple-200 rounded-xl shadow-2xl max-h-56 overflow-auto"
+                              className="absolute z-50 w-full mt-2 bg-white border border-[var(--color-200)] rounded-xl shadow-2xl max-h-56 overflow-auto"
                             >
                               {suggestions.length > 0 ? (
                                 suggestions.map((s, idx) => (
@@ -745,8 +745,8 @@ export default function PrescriptionModal({
                                     transition={{ delay: idx * 0.03 }}
                                     className={`px-4 py-3 flex justify-between items-center cursor-pointer transition-all duration-150 ${
                                       idx === highlightedMedIdx
-                                        ? "bg-purple-100 border-l-4 border-purple-500"
-                                        : "hover:bg-purple-50"
+                                        ? "bg-[var(--color-100)] border-l-4 border-[var(--color-500)]"
+                                        : "hover:bg-[var(--color-50)]"
                                     }`}
                                     onMouseEnter={() =>
                                       setHighlightedMedIdx(idx)
@@ -761,11 +761,11 @@ export default function PrescriptionModal({
                                     }}
                                   >
                                     <div>
-                                      <div className="font-semibold text-purple-700">
+                                      <div className="font-semibold text-[var(--color-700)]">
                                         {s.nom}
                                       </div>
                                     </div>
-                                    <div className="text-xs text-purple-500 font-medium bg-purple-50 px-2 py-1 rounded">
+                                    <div className="text-xs text-[var(--color-500)] font-medium bg-[var(--color-50)] px-2 py-1 rounded">
                                       sélectionner
                                     </div>
                                   </motion.li>
@@ -778,7 +778,7 @@ export default function PrescriptionModal({
                                   <button
                                     onClick={() => setNewMedicament(true)}
                                     className="inline-flex items-center gap-2 px-3 py-1.5 text-sm font-medium 
-               text-white bg-purple-600 hover:bg-purple-700 rounded-lg 
+               text-white bg-[var(--color-600)] hover:bg-[var(--color-700)] rounded-lg 
                transition-all duration-150 shadow-sm"
                                   >
                                     <Plus className="w-4 h-4" />
@@ -800,14 +800,14 @@ export default function PrescriptionModal({
                       )}
 
                       <div>
-                        <Label className="text-purple-700 font-medium">
+                        <Label className="text-[var(--color-700)] font-medium">
                           Type d'ordonnance
                         </Label>
                         <Select
                           onValueChange={(v) => setType(v)}
                           defaultValue={type}
                         >
-                          <SelectTrigger className="w-full border-purple-300 focus:ring-2 focus:ring-purple-400">
+                          <SelectTrigger className="w-full border-[var(--color-300)] focus:ring-2 focus:ring-[var(--color-400)]">
                             <SelectValue placeholder="Choisir" />
                           </SelectTrigger>
                           <SelectContent>
@@ -829,7 +829,7 @@ export default function PrescriptionModal({
               <Dialog open={openMedDialog} onOpenChange={setOpenMedDialog}>
                 <DialogContent className="sm:max-w-2xl">
                   <DialogHeader>
-                    <DialogTitle className="text-purple-700 text-xl">
+                    <DialogTitle className="text-[var(--color-700)] text-xl">
                       {selectedMed?.nom}{" "}
                       {selectedMed && `(${selectedMed.form})`}
                     </DialogTitle>
@@ -843,13 +843,13 @@ export default function PrescriptionModal({
                     <div className="grid gap-4">
                       {/* === DOSAGE === */}
                       <div>
-                        <Label className="text-purple-700 font-medium">
+                        <Label className="text-[var(--color-700)] font-medium">
                           Dosage
                         </Label>
                         <select
                           value={tmpDose}
                           onChange={(e) => setTmpDose(e.target.value)}
-                          className="border border-purple-200 rounded-lg p-2 w-full focus:ring-2 focus:ring-purple-400 transition-all"
+                          className="border border-[var(--color-200)] rounded-lg p-2 w-full focus:ring-2 focus:ring-[var(--color-400)] transition-all"
                         >
                           <option value="">-- Sélectionner --</option>
 
@@ -874,7 +874,7 @@ export default function PrescriptionModal({
                           <input
                             type="text"
                             placeholder="Entrer un dosage personnalisé (ex: 12.5 mg)"
-                            className="mt-2 w-full rounded-lg border border-purple-200 p-2 focus:ring-2 focus:ring-purple-400 transition-all"
+                            className="mt-2 w-full rounded-lg border border-[var(--color-200)] p-2 focus:ring-2 focus:ring-[var(--color-400)] transition-all"
                             value={customDose}
                             onChange={(e) => setCustomDose(e.target.value)}
                           />
@@ -883,11 +883,11 @@ export default function PrescriptionModal({
 
                       {/* === POSOLOGIE === */}
                       <div>
-                        <Label className="text-purple-700 font-medium">
+                        <Label className="text-[var(--color-700)] font-medium">
                           Posologie (rythme de prise)
                         </Label>
                         <select
-                          className="w-full rounded-lg border border-purple-200 px-3 py-2 focus:ring-2 focus:ring-purple-400 transition-all"
+                          className="w-full rounded-lg border border-[var(--color-200)] px-3 py-2 focus:ring-2 focus:ring-[var(--color-400)] transition-all"
                           value={tmpfreq}
                           onChange={(e) => setTmpfreq(e.target.value)}
                         >
@@ -906,7 +906,7 @@ export default function PrescriptionModal({
                           <input
                             type="text"
                             placeholder="Entrer une posologie personnalisée"
-                            className="mt-2 w-full rounded-lg border border-purple-200 p-2 focus:ring-2 focus:ring-purple-400 transition-all"
+                            className="mt-2 w-full rounded-lg border border-[var(--color-200)] p-2 focus:ring-2 focus:ring-[var(--color-400)] transition-all"
                             value={customFreq}
                             onChange={(e) => setCustomFreq(e.target.value)}
                           />
@@ -915,11 +915,11 @@ export default function PrescriptionModal({
 
                       {/* === DURÉE === */}
                       <div>
-                        <Label className="text-purple-700 font-medium">
+                        <Label className="text-[var(--color-700)] font-medium">
                           Durée
                         </Label>
                         <select
-                          className="w-full rounded-lg border border-purple-200 px-3 py-2 focus:ring-2 focus:ring-purple-400 transition-all"
+                          className="w-full rounded-lg border border-[var(--color-200)] px-3 py-2 focus:ring-2 focus:ring-[var(--color-400)] transition-all"
                           value={tmpDuration}
                           onChange={(e) => setTmpDuration(e.target.value)}
                         >
@@ -942,7 +942,7 @@ export default function PrescriptionModal({
                           <input
                             type="text"
                             placeholder="Entrer une durée personnalisée (ex: 21 jours)"
-                            className="mt-2 w-full rounded-lg border border-purple-200 p-2 focus:ring-2 focus:ring-purple-400 transition-all"
+                            className="mt-2 w-full rounded-lg border border-[var(--color-200)] p-2 focus:ring-2 focus:ring-[var(--color-400)] transition-all"
                             value={customDuration}
                             onChange={(e) => setCustomDuration(e.target.value)}
                           />
@@ -950,11 +950,11 @@ export default function PrescriptionModal({
                       </div>
 
                       <div>
-                        <Label className="text-purple-700 font-medium">
+                        <Label className="text-[var(--color-700)] font-medium">
                           Quantité (boîtes)
                         </Label>
                         <select
-                          className="w-full rounded-lg border border-purple-200 px-3 py-2 focus:ring-2 focus:ring-purple-400 transition-all"
+                          className="w-full rounded-lg border border-[var(--color-200)] px-3 py-2 focus:ring-2 focus:ring-[var(--color-400)] transition-all"
                           value={tmpQuantite}
                           onChange={(e) => setTmpQuantite(e.target.value)}
                         >
@@ -975,7 +975,7 @@ export default function PrescriptionModal({
                             type="number"
                             min={1}
                             placeholder="Entrer une quantité personnalisée"
-                            className="mt-2 w-full rounded-lg border border-purple-200 p-2 focus:ring-2 focus:ring-purple-400 transition-all"
+                            className="mt-2 w-full rounded-lg border border-[var(--color-200)] p-2 focus:ring-2 focus:ring-[var(--color-400)] transition-all"
                             value={customQuantite}
                             onChange={(e) => setCustomQuantite(e.target.value)}
                           />
@@ -988,12 +988,12 @@ export default function PrescriptionModal({
                     <Button
                       variant="outline"
                       onClick={() => setOpenMedDialog(false)}
-                      className="border-purple-300 text-purple-700 hover:bg-purple-50"
+                      className="border-[var(--color-300)] text-[var(--color-700)] hover:bg-[var(--color-50)]"
                     >
                       Annuler
                     </Button>
                     <Button
-                      className="bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 shadow-md"
+                      className="bg-gradient-to-r from-[var(--color-600)] to-[var(--color-700)] hover:from-[var(--color-700)] hover:to-[var(--color-800)] shadow-md"
                       onClick={addMedication}
                     >
                       <Plus size={16} className="mr-2" /> Ajouter
@@ -1002,11 +1002,11 @@ export default function PrescriptionModal({
                 </DialogContent>
               </Dialog>
 
-              <Card className="mt-1 border-purple-200 h-[390px] flex flex-col shadow-md rounded-xl">
-                <CardHeader className="py-1 bg-gradient-to-r from-purple-50 to-white">
-                  <CardTitle className="text-purple-700 flex items-center justify-between text-sm sm:text-base">
+              <Card className="mt-1 border-[var(--color-200)] h-[390px] flex flex-col shadow-md rounded-xl">
+                <CardHeader className="py-1 bg-gradient-to-r from-[var(--color-50)] to-white">
+                  <CardTitle className="text-[var(--color-700)] flex items-center justify-between text-sm sm:text-base">
                     <span>Ordonnance — Aperçu</span>
-                    <span className="text-xs sm:text-sm bg-purple-100 text-purple-700 px-2 py-0.5 rounded-full">
+                    <span className="text-xs sm:text-sm bg-[var(--color-100)] text-[var(--color-700)] px-2 py-0.5 rounded-full">
                       {totalMeds} médicament{totalMeds > 1 ? "s" : ""}
                     </span>
                   </CardTitle>
@@ -1039,15 +1039,15 @@ export default function PrescriptionModal({
                             animate="visible"
                             exit="exit"
                             layout
-                            className="flex items-center justify-between bg-white border border-purple-100 rounded-xl p-3 shadow-sm hover:shadow-md hover:border-purple-300 transition-all duration-300"
+                            className="flex items-center justify-between bg-white border border-[var(--color-100)] rounded-xl p-3 shadow-sm hover:shadow-md hover:border-[var(--color-300)] transition-all duration-300"
                           >
                             <div className="flex flex-col flex-1">
                               <div className="flex items-center gap-2">
-                                <div className="w-6 h-6 rounded-full bg-gradient-to-br from-purple-400 to-purple-600 flex items-center justify-center text-white font-semibold text-xs">
+                                <div className="w-6 h-6 rounded-full bg-gradient-to-br from-[var(--color-400)] to-[var(--color-600)] flex items-center justify-center text-white font-semibold text-xs">
                                   {index + 1}
                                 </div>
                                 <div>
-                                  <span className="text-sm font-semibold text-purple-700">
+                                  <span className="text-sm font-semibold text-[var(--color-700)]">
                                     {it.nom}
                                   </span>
                                   <span className="text-xs text-gray-500 font-medium ml-1">
@@ -1057,7 +1057,7 @@ export default function PrescriptionModal({
                               </div>
 
                               <div className="text-xs text-gray-600 mt-1 ml-8 space-x-1">
-                                <span className="bg-purple-50 px-1.5 py-0.5 rounded">
+                                <span className="bg-[var(--color-50)] px-1.5 py-0.5 rounded">
                                   {it.frequence || "—"}
                                 </span>
                                 <span className="bg-blue-50 px-1.5 py-0.5 rounded">
@@ -1114,9 +1114,9 @@ export default function PrescriptionModal({
                       {prescriptionItems.map((it) => (
                         <li
                           key={it.medicamentId}
-                          className="flex flex-col p-3 border rounded-md hover:bg-purple-50 transition-colors ord-print-item"
+                          className="flex flex-col p-3 border rounded-md hover:bg-[var(--color-50)] transition-colors ord-print-item"
                         >
-                          <div className="font-medium text-purple-700 ord-print-item-title">
+                          <div className="font-medium text-[var(--color-700)] ord-print-item-title">
                             {it.nom}{" "}
                             <span className="text-gray-600 font-normal">
                               {it.dosage}
@@ -1124,7 +1124,7 @@ export default function PrescriptionModal({
                           </div>
                           <div className="text-sm text-gray-700 mt-1 ord-print-item-details">
                             {it.frequence} • {it.duree} •{" "}
-                            <span className="text-purple-700 font-bold">
+                            <span className="text-[var(--color-700)] font-bold">
                               {it.quantite} boîte{it.quantite > 1 ? "s" : ""}
                             </span>
                           </div>
@@ -1146,14 +1146,14 @@ export default function PrescriptionModal({
                 initial="hidden"
                 animate="visible"
               >
-                <Card className="mt-4 border-purple-300 shadow-lg hover:shadow-xl transition-shadow duration-300">
-                  <CardHeader className="flex flex-row items-center justify-between bg-gradient-to-r from-purple-50 to-white rounded-t-lg">
-                    <CardTitle className="text-purple-700 flex items-center gap-2">
-                      <Plus size={20} className="text-purple-500" /> Rédiger un
-                      bilan ou une analyse
+                <Card className="mt-4 border-[var(--color-300)] shadow-lg hover:shadow-xl transition-shadow duration-300">
+                  <CardHeader className="flex flex-row items-center justify-between bg-gradient-to-r from-[var(--color-50)] to-white rounded-t-lg">
+                    <CardTitle className="text-[var(--color-700)] flex items-center gap-2">
+                      <Plus size={20} className="text-[var(--color-500)]" />{" "}
+                      Rédiger un bilan ou une analyse
                     </CardTitle>
                     <Button
-                      className="bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 shadow-md hover:shadow-lg transition-all duration-200"
+                      className="bg-gradient-to-r from-[var(--color-500)] to-[var(--color-600)] hover:from-[var(--color-600)] hover:to-[var(--color-700)] shadow-md hover:shadow-lg transition-all duration-200"
                       onClick={handlePrintBilanElectron}
                       size="sm"
                     >
@@ -1165,7 +1165,7 @@ export default function PrescriptionModal({
                       <div className="md:col-span-2 relative">
                         <Label
                           htmlFor="lab-search"
-                          className="text-purple-700 font-medium"
+                          className="text-[var(--color-700)] font-medium"
                         >
                           Examen / Analyse
                         </Label>
@@ -1177,11 +1177,11 @@ export default function PrescriptionModal({
                             value={labQuery}
                             onChange={(e) => setLabQuery(e.target.value)}
                             onKeyDown={handleLabKeyDown}
-                            className="focus:ring-2 focus:ring-purple-400 border-purple-200 transition-all duration-200"
+                            className="focus:ring-2 focus:ring-[var(--color-400)] border-[var(--color-200)] transition-all duration-200"
                             autoComplete="off"
                           />
                           <motion.div
-                            className="absolute right-3 top-3 pointer-events-none text-purple-500"
+                            className="absolute right-3 top-3 pointer-events-none text-[var(--color-500)]"
                             animate={{ scale: labQuery ? 1.1 : 1 }}
                             transition={{ duration: 0.2 }}
                           >
@@ -1195,7 +1195,7 @@ export default function PrescriptionModal({
                               animate={{ opacity: 1, y: 0, scale: 1 }}
                               exit={{ opacity: 0, y: -10, scale: 0.95 }}
                               transition={{ duration: 0.2 }}
-                              className="absolute z-50 w-full mt-2 bg-white border border-purple-200 rounded-xl shadow-2xl max-h-56 overflow-auto"
+                              className="absolute z-50 w-full mt-2 bg-white border border-[var(--color-200)] rounded-xl shadow-2xl max-h-56 overflow-auto"
                             >
                               {labSuggestions.length > 0 ? (
                                 labSuggestions.map((exam, idx) => (
@@ -1206,8 +1206,8 @@ export default function PrescriptionModal({
                                     transition={{ delay: idx * 0.03 }}
                                     className={`px-4 py-3 flex justify-between items-center cursor-pointer transition-all duration-150 ${
                                       idx === highlightedLabIdx
-                                        ? "bg-purple-100 border-l-4 border-purple-500"
-                                        : "hover:bg-purple-50"
+                                        ? "bg-[var(--color-100)] border-l-4 border-[var(--color-500)]"
+                                        : "hover:bg-[var(--color-50)]"
                                     }`}
                                     onMouseEnter={() =>
                                       setHighlightedLabIdx(idx)
@@ -1218,10 +1218,10 @@ export default function PrescriptionModal({
                                         el.scrollIntoView({ block: "nearest" });
                                     }}
                                   >
-                                    <span className="font-semibold text-purple-700">
+                                    <span className="font-semibold text-[var(--color-700)]">
                                       {exam.nom}
                                     </span>
-                                    <span className="text-xs text-purple-500 font-medium bg-purple-50 px-2 py-1 rounded">
+                                    <span className="text-xs text-[var(--color-500)] font-medium bg-[var(--color-50)] px-2 py-1 rounded">
                                       ajouter
                                     </span>
                                   </motion.li>
@@ -1234,7 +1234,7 @@ export default function PrescriptionModal({
                                   <button
                                     onClick={() => setNewBilan(true)}
                                     className="inline-flex items-center gap-2 px-3 py-1.5 text-sm font-medium 
-               text-white bg-purple-600 hover:bg-purple-700 rounded-lg 
+               text-white bg-[var(--color-600)] hover:bg-[var(--color-700)] rounded-lg 
                transition-all duration-150 shadow-sm"
                                   >
                                     <Plus className="w-4 h-4" />
@@ -1255,14 +1255,14 @@ export default function PrescriptionModal({
                             onClose={() => setNewBilan(false)}
                           />
                         )}
-                        <Label className="text-purple-700 font-medium">
+                        <Label className="text-[var(--color-700)] font-medium">
                           Type de bilan
                         </Label>
                         <Select
                           onValueChange={(v) => setSelectedBilanType(v)}
                           defaultValue={SelectedbilanType || "autre"}
                         >
-                          <SelectTrigger className="w-full border-purple-300 focus:ring-2 focus:ring-purple-400">
+                          <SelectTrigger className="w-full border-[var(--color-300)] focus:ring-2 focus:ring-[var(--color-400)]">
                             <SelectValue placeholder="Choisir le type" />
                           </SelectTrigger>
                           <SelectContent>
@@ -1277,11 +1277,11 @@ export default function PrescriptionModal({
                       </div>
                     </div>
 
-                    <Card className="mt-6 border-purple-200 shadow-md">
-                      <CardHeader className="bg-gradient-to-r from-purple-50 to-white">
-                        <CardTitle className="text-purple-700 flex items-center justify-between">
+                    <Card className="mt-6 border-[var(--color-200)] shadow-md">
+                      <CardHeader className="bg-gradient-to-r from-[var(--color-50)] to-white">
+                        <CardTitle className="text-[var(--color-700)] flex items-center justify-between">
                           <span>Bilans & Analyses — Aperçu</span>
-                          <span className="text-sm bg-purple-100 text-purple-700 px-3 py-1 rounded-full">
+                          <span className="text-sm bg-[var(--color-100)] text-[var(--color-700)] px-3 py-1 rounded-full">
                             {labItems.length} examen
                             {labItems.length > 1 ? "s" : ""}
                           </span>
@@ -1317,14 +1317,14 @@ export default function PrescriptionModal({
                                   animate="visible"
                                   exit="exit"
                                   layout
-                                  className="flex items-center justify-between border border-purple-100 rounded-xl p-3 hover:bg-purple-50 hover:border-purple-300 transition-all duration-300 bg-white shadow-sm"
+                                  className="flex items-center justify-between border border-[var(--color-100)] rounded-xl p-3 hover:bg-[var(--color-50)] hover:border-[var(--color-300)] transition-all duration-300 bg-white shadow-sm"
                                 >
                                   <div className="flex items-center gap-2 flex-1">
                                     <div className="w-6 h-6 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center text-white font-bold text-xs">
                                       {index + 1}
                                     </div>
                                     <div>
-                                      <div className="font-semibold text-purple-700 text-sm">
+                                      <div className="font-semibold text-[var(--color-700)] text-sm">
                                         {exam.nom}
                                       </div>
                                       <div className="text-xs text-gray-500">
@@ -1380,7 +1380,7 @@ export default function PrescriptionModal({
                         ) : (
                           labItems.map((exam) => (
                             <div key={exam.id} className="bilan-print-item">
-                              <div className="font-medium text-purple-700">
+                              <div className="font-medium text-[var(--color-700)]">
                                 {exam.nom}
                               </div>
                               <div className="text-sm text-gray-500">
@@ -1406,13 +1406,13 @@ export default function PrescriptionModal({
                 initial="hidden"
                 animate="visible"
               >
-                <Card className="mt-4 border-purple-300 shadow-lg">
-                  <CardHeader className="flex flex-row items-center justify-between bg-gradient-to-r from-purple-50 to-white rounded-t-lg">
-                    <CardTitle className="text-purple-700">
+                <Card className="mt-4 border-[var(--color-300)] shadow-lg">
+                  <CardHeader className="flex flex-row items-center justify-between bg-gradient-to-r from-[var(--color-50)] to-white rounded-t-lg">
+                    <CardTitle className="text-[var(--color-700)]">
                       📄 Justification médicale / Arrêt de travail
                     </CardTitle>
                     <Button
-                      className="bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 shadow-md hover:shadow-lg transition-all duration-200"
+                      className="bg-gradient-to-r from-[var(--color-500)] to-[var(--color-600)] hover:from-[var(--color-600)] hover:to-[var(--color-700)] shadow-md hover:shadow-lg transition-all duration-200"
                       onClick={handlePrintJustif}
                       size="sm"
                     >
@@ -1422,14 +1422,14 @@ export default function PrescriptionModal({
                   <CardContent className="pt-6">
                     <div className="grid grid-cols-1 gap-4">
                       <div>
-                        <Label className="text-purple-700 font-medium">
+                        <Label className="text-[var(--color-700)] font-medium">
                           Type de justification
                         </Label>
                         <Select
                           onValueChange={(v) => setJustifType(v)}
                           defaultValue={justifType}
                         >
-                          <SelectTrigger className="w-full border-purple-300 focus:ring-2 focus:ring-purple-400">
+                          <SelectTrigger className="w-full border-[var(--color-300)] focus:ring-2 focus:ring-[var(--color-400)]">
                             <SelectValue placeholder="Choisir le type" />
                           </SelectTrigger>
                           <SelectContent>
@@ -1444,7 +1444,7 @@ export default function PrescriptionModal({
                       <div>
                         <Label
                           htmlFor="justif-text"
-                          className="text-purple-700 font-medium"
+                          className="text-[var(--color-700)] font-medium"
                         >
                           Texte
                         </Label>
@@ -1453,7 +1453,7 @@ export default function PrescriptionModal({
                           rows={8}
                           value={justifText}
                           onChange={(e) => setJustifText(e.target.value)}
-                          className="w-full border-2 border-purple-200 rounded-xl p-4 mt-2 focus:ring-2 focus:ring-purple-400 focus:border-purple-400 transition-all"
+                          className="w-full border-2 border-[var(--color-200)] rounded-xl p-4 mt-2 focus:ring-2 focus:ring-[var(--color-400)] focus:border-[var(--color-400)] transition-all"
                           placeholder="Ex : Arrêt de travail de 7 jours..."
                         />
                       </div>
@@ -1503,7 +1503,7 @@ export default function PrescriptionModal({
               Tout réinitialiser
             </Button>
             <Button
-              className="bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 shadow-lg hover:shadow-xl transition-all duration-200"
+              className="bg-gradient-to-r from-[var(--color-600)] to-[var(--color-700)] hover:from-[var(--color-700)] hover:to-[var(--color-800)] shadow-lg hover:shadow-xl transition-all duration-200"
               onClick={handleSave}
             >
               Sauvegarder tout
@@ -1519,7 +1519,7 @@ export default function PrescriptionModal({
         <Dialog open={existDialog} onOpenChange={setExistDialog}>
           <DialogContent className="max-w-sm rounded-2xl">
             <DialogHeader>
-              <DialogTitle className="text-purple-700">
+              <DialogTitle className="text-[var(--color-700)]">
                 Médicament existant
               </DialogTitle>
               <DialogDescription className="text-gray-600">
@@ -1530,7 +1530,7 @@ export default function PrescriptionModal({
               <Button
                 variant="outline"
                 onClick={() => setExistDialog(false)}
-                className="text-purple-700 border-purple-300 hover:bg-purple-50"
+                className="text-[var(--color-700)] border-[var(--color-300)] hover:bg-[var(--color-50)]"
               >
                 OK
               </Button>

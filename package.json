@@ -1,23 +1,23 @@
 {
-  "name": "dr-amel-pediatre",
-  "version": "3.0.0",
-  "description": "Application de gestion médicale pour le cabinet du Dr Amel (Pédiatre).",
+  "name": "pediatre",
+  "version": "4.0.2",
+  "description": "Application de gestion médicale pour le cabinet  (Pédiatre).",
   "author": "Mossaab Saad Djaballahe",
   "private": true,
   "main": "main.js",
   "scripts": {
     "dev": "next dev",
     "build": "next build",
-    "release": "electron-builder --publish onTagOrDraft",
+    "release": "electron-builder --publish always",
     "start": "next start",
     "electron:dev": "concurrently \"npm run dev\" \"npm run electron\"",
     "electron": "electron main.js",
-    "electron-build": "electron-builder",
+    "electron-build": "electron-builder --dir",
     "lint": "next lint"
   },
   "build": {
     "appId": "com.mossaabsdj.dr-amel-pediatre",
-    "productName": "Dr Amel Pediatre",
+    "productName": "Dr_Pediatre",
     "files": [
       ".next/**",
       "main.js",
@@ -38,8 +38,17 @@
       "app/generated/prisma/**",
       "package.json"
     ],
+    "extraFiles": [
+      {
+        "from": "public/",
+        "to": "public"
+      },
+      {
+        "from": "param.json",
+        "to": "param.json"
+      }
+    ],
     "asarUnpack": [
-      "public",
       "app/generated/prisma",
       "node_modules/@prisma/engines"
     ],
@@ -60,7 +69,8 @@
     "publish": {
       "provider": "github",
       "owner": "mossaabsdj",
-      "repo": "GestionCabinet"
+      "repo": "GestionCabinet",
+      "releaseType": "draft"
     }
   },
   "dependencies": {
@@ -78,6 +88,7 @@
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "cmdk": "^1.1.1",
+    "electron-updater": "^6.6.2",
     "express": "^5.1.0",
     "jspdf": "^3.0.3",
     "lucide-react": "^0.544.0",

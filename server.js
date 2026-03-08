@@ -9,7 +9,7 @@ const port = process.env.PORT || 3000;
 
 app.prepare().then(() => {
   const server = express();
-
+  console.log("server here");
   server.all("*splat", (req, res) => {
     handle(req, res);
   });
