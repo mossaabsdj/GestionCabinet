@@ -21,11 +21,12 @@ export default function ModernSearchBar({
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
-        className="w-full pl-10 pr-4 py-2 rounded-full border border-purple-300 
-                   focus:ring-2 focus:ring-purple-400 focus:outline-none
+        className="w-full pl-10 pr-4 py-2 rounded-full border border-[var(--color-300)] 
+                   focus:ring-2 focus:ring-[var(--color-400)] focus:outline-none
                    shadow-sm bg-white text-gray-700 placeholder-gray-400 
                    transition duration-200"
       />
     </motion.div>
   );
 }
+

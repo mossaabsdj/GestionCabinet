@@ -32,6 +32,7 @@ import {
   ClipboardList,
   Sparkles,
 } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 export default function PatientVisits({ patientId, query, fetchPatientById }) {
   const [visits, setVisits] = useState([]);
@@ -43,6 +44,7 @@ export default function PatientVisits({ patientId, query, fetchPatientById }) {
   const [editedData, setEditedData] = useState({});
   const printRef = useRef();
   const bilanPrintRef = useRef();
+  const justifPrintRef = useRef();
 
   // 🔄 Filter by query
   useEffect(() => {
@@ -62,6 +64,147 @@ export default function PatientVisits({ patientId, query, fetchPatientById }) {
       console.error("❌ Erreur:", err);
     }
   };
+  const handlePrintElectron = async () => {
+    console.log(selectedPatient);
+    try {
+      if (!prescriptionItems || prescriptionItems.length === 0) {
+        //alert("Aucune donnée à imprimer");
+        return;
+      }
+      const fullname = selectedPatient.nom;
+      let prenom = "";
+      let nom = "";
+
+      if (fullname.trim()) {
+        const parts = fullname.trim().split(" ");
+        if (parts.length === 1) {
+          // only one word provided
+          nom = parts[0];
+        } else {
+          // assume last word is family name (Dib Amel → prenom: Amel, nom: Dib)
+          prenom = parts.slice(0, -1).join(" ");
+          nom = parts[parts.length - 1];
+        }
+      }
+      const datenaissance = selectedPatient.dateDeNaissance;
+      const age = calculateAge(datenaissance);
+      // 1️⃣ Fetch last consultation + ordonnance IDs from your API
+      const res = await fetch("/api/last-records");
+      if (!res.ok)
+        throw new Error("Erreur lors de la récupération des identifiants");
+      const data = await res.json();
+
+      // 2️⃣ Compute next IDs (safe even if null)
+      const nextConsultationId = (data.lastConsultationId || 0) + 1;
+      const nextOrdonnanceId = (data.lastOrdonnanceId || 0) + 1;
+
+      console.log("🩺 Next Consultation ID:", nextConsultationId);
+      console.log("💊 Next Ordonnance ID:", nextOrdonnanceId);
+      console.log(nom + "-" + prenom + "-" + age);
+      // 3️⃣ Send to Electron printer
+      window.electron?.printOrdonnance({
+        consultationId: nextConsultationId,
+        ordonnanceId: nextOrdonnanceId,
+        nom: nom,
+        prenom: prenom,
+        age: age,
+        items: prescriptionItems.map((it) => ({
+          name: it.nom,
+          dosage: it.dosage,
+          duration: it.duree,
+          frequency: it.frequence,
+          quantity: it.quantite,
+        })),
+      });
+    } catch (error) {
+      console.error("Erreur lors de l'impression de l'ordonnance:", error);
+      //  alert("Erreur lors de l'impression de l'ordonnance.");
+    }
+  };
+  const handlePrintBilanElectron = async () => {
+    try {
+      if (!labItems || labItems.length === 0) {
+        //  alert("Aucun examen à imprimer");
+        return;
+      }
+
+      // 🧒 Split patient name into nom / prenom
+      const fullname = selectedPatient.nom || "";
+      let prenom = "";
+      let nom = "";
+
+      if (fullname.trim()) {
+        const parts = fullname.trim().split(" ");
+        if (parts.length === 1) nom = parts[0];
+        else {
+          prenom = parts.slice(0, -1).join(" ");
+          nom = parts[parts.length - 1];
+        }
+      }
+
+      // 🍼 Compute age (pediatric format)
+      const datenaissance = selectedPatient.dateDeNaissance;
+      const age = calculateAge(datenaissance);
+
+      // 🧾 Fetch last IDs
+      const res = await fetch("/api/last-records");
+      if (!res.ok)
+        throw new Error("Erreur lors de la récupération des identifiants");
+      const data = await res.json();
+
+      const nextBilanId = (data.lastBilanId || 0) + 1;
+      const nextConsultationId = (data.lastConsultationId || 0) + 1;
+
+      console.log("🧪 Next Bilan ID:", nextBilanId);
+      console.log("🩺 Next Consultation ID:", nextConsultationId);
+      console.log(`👶 ${nom} - ${prenom} - ${age}`);
+
+      // 🖨️ Send to Electron for printing
+      window.electron?.printBilan({
+        bilanId: nextBilanId,
+        consultationId: nextConsultationId,
+        nom,
+        prenom,
+        age,
+        items: labItems.map((exam) => ({
+          id: exam.id,
+          nom: exam.nom,
+        })),
+      });
+    } catch (error) {
+      console.error("Erreur lors de l'impression du bilan:", error);
+      // alert("Erreur lors de l'impression du bilan.");
+    }
+  };
+
+  function handlePrintJustif() {
+    if (!justifPrintRef.current) return;
+    const printContents = justifPrintRef.current.innerHTML;
+    const win = window.open("", "PRINT", "height=700,width=900");
+    win.document.write(`
+      <html>
+        <head>
+          <title>Justification médicale - Dr DIB Amel</title>
+          <style>
+            body { font-family: 'Segoe UI', Arial, sans-serif; background: #f8f8fa; margin: 0; }
+            .justif-print-header { text-align: center; padding: 24px 0 8px; border-bottom: 2px solid #7c3aed; }
+            .justif-print-title { font-size: 2rem; color: #7c3aed; font-weight: bold; margin-bottom: 4px; }
+            .justif-print-doc { font-size: 1.1rem; color: #444; margin-bottom: 2px; }
+            .justif-print-date { font-size: 0.95rem; color: #888; margin-bottom: 12px; }
+            .justif-print-text { margin: 32px 0; font-size: 1.1rem; color: #444; background: #fff; border-radius: 8px; padding: 24px; box-shadow: 0 2px 8px #e9e9f3; }
+            .justif-print-footer { text-align: right; font-size: 1rem; color: #7c3aed; margin-top: 32px; border-top: 1px solid #e0e0e0; padding-top: 12px; }
+          </style>
+        </head>
+        <body>
+          ${printContents}
+        </body>
+      </html>
+    `);
+    win.document.close();
+    win.focus();
+    win.print();
+    win.close();
+  }
 
   useEffect(() => {
     if (!patientId) return;
@@ -287,7 +430,7 @@ export default function PatientVisits({ patientId, query, fetchPatientById }) {
 
     return allFields.filter(
       (field) =>
-        field.value !== null && field.value !== undefined && field.value !== ""
+        field.value !== null && field.value !== undefined && field.value !== "",
     );
   };
 
@@ -311,7 +454,7 @@ export default function PatientVisits({ patientId, query, fetchPatientById }) {
           .map((info, idx) => (
             <div key={idx} className="bg-white rounded-lg shadow-sm p-4">
               <div className="flex items-center gap-2 mb-2">
-                <info.icon className="text-purple-500" size={18} />
+                <info.icon className="text-[var(--color-500)]" size={18} />
                 <span className="text-gray-700 font-medium text-sm">
                   {info.label}
                 </span>
@@ -319,7 +462,7 @@ export default function PatientVisits({ patientId, query, fetchPatientById }) {
               {isEditing ? (
                 <textarea
                   rows={3}
-                  className="w-full border border-gray-300 rounded-lg p-3 text-sm bg-gray-50 focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                  className="w-full border border-gray-300 rounded-lg p-3 text-sm bg-gray-50 focus:ring-2 focus:ring-[var(--color-500)] focus:border-[var(--color-500)]"
                   value={editedData[info.field] ?? visit[info.field] ?? ""}
                   onChange={(e) => handleChange(info.field, e.target.value)}
                 />
@@ -341,7 +484,10 @@ export default function PatientVisits({ patientId, query, fetchPatientById }) {
                 className="flex items-center justify-between p-3 hover:shadow-md transition-shadow"
               >
                 <div className="flex flex-row items-center">
-                  <info.icon className="text-purple-500 mr-2" size={18} />
+                  <info.icon
+                    className="text-[var(--color-500)] mr-2"
+                    size={18}
+                  />
                   <span className="text-gray-600 text-sm">{info.label}</span>
                 </div>
                 <div className="text-right text-gray-800">
@@ -349,7 +495,7 @@ export default function PatientVisits({ patientId, query, fetchPatientById }) {
                     <input
                       type="number"
                       step="0.01"
-                      className="border border-gray-300 rounded px-2 py-1 w-20 text-sm focus:ring-2 focus:ring-purple-500"
+                      className="border border-gray-300 rounded px-2 py-1 w-20 text-sm focus:ring-2 focus:ring-[var(--color-500)]"
                       value={editedData[info.field] ?? visit[info.field] ?? ""}
                       onChange={(e) => handleChange(info.field, e.target.value)}
                     />
@@ -373,11 +519,11 @@ export default function PatientVisits({ patientId, query, fetchPatientById }) {
           Aucune consultation trouvée.
         </p>
       ) : (
-        <div className="bg-white rounded-xl shadow-lg overflow-hidden border border-purple-100">
+        <div className="bg-white rounded-xl shadow-lg overflow-hidden border border-[var(--color-100)]">
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
-                <tr className="bg-gradient-to-r bg-purple-400 text-white">
+                <tr className="bg-gradient-to-r bg-[var(--color-400)] text-white">
                   <th className="text-left px-6 py-4 font-semibold text-sm uppercase tracking-wider">
                     #
                   </th>
@@ -399,24 +545,27 @@ export default function PatientVisits({ patientId, query, fetchPatientById }) {
                       setEditedData(visit);
                       setIsEditing(false);
                     }}
-                    className={`cursor-pointer transition-colors hover:bg-purple-50 ${
+                    className={`cursor-pointer transition-colors hover:bg-[var(--color-50)] ${
                       index % 2 === 0 ? "bg-white" : "bg-gray-50"
                     }`}
                   >
                     <td className="px-6 py-4">
-                      <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold bg-purple-100 text-purple-800">
+                      <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold bg-[var(--color-100)] text-[var(--color-800)]">
                         Consultation #{visit.id}
                       </span>
                     </td>
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-2 text-sm text-gray-700 font-medium">
-                        <Calendar size={16} className="text-purple-500" />
+                        <Calendar
+                          size={16}
+                          className="text-[var(--color-500)]"
+                        />
                         {new Date(visit.createdAt).toLocaleDateString("fr-FR")}
                       </div>
                     </td>
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-2 text-sm text-gray-700 font-medium">
-                        <Clock size={16} className="text-purple-500" />
+                        <Clock size={16} className="text-[var(--color-500)]" />
                         {new Date(visit.createdAt).toLocaleTimeString("fr-FR", {
                           hour: "2-digit",
                           minute: "2-digit",
@@ -441,14 +590,14 @@ export default function PatientVisits({ patientId, query, fetchPatientById }) {
           setIsEditing(false);
         }}
       >
-        <DialogContent className="min-w-7xl h-11/12  w-full bg-gradient-to-br from-purple-50 to-white rounded-2xl p-8 overflow-y-auto shadow-2xl">
+        <DialogContent className="min-w-7xl h-11/12  w-full bg-gradient-to-br from-[var(--color-50)] to-white rounded-2xl p-8 overflow-y-auto shadow-2xl">
           {selectedVisit && (
             <>
               <DialogHeader>
                 <div className="flex flex-col gap-4">
                   {/* Title and Navigation Row */}
                   <div className="flex justify-between items-center">
-                    <DialogTitle className="text-2xl font-bold text-purple-700">
+                    <DialogTitle className="text-2xl font-bold text-[var(--color-700)]">
                       Consultation #{selectedVisit.id}
                     </DialogTitle>
 
@@ -461,7 +610,7 @@ export default function PatientVisits({ patientId, query, fetchPatientById }) {
                           className={`p-3 rounded-lg transition-all font-semibold ${
                             currentVisitIndex === 0
                               ? "bg-gray-100 text-gray-300 cursor-not-allowed"
-                              : "bg-purple-500 text-white hover:bg-purple-600 shadow-md hover:shadow-lg"
+                              : "bg-[var(--color-500)] text-white hover:bg-[var(--color-600)] shadow-md hover:shadow-lg"
                           }`}
                           title="Précédente"
                         >
@@ -480,7 +629,7 @@ export default function PatientVisits({ patientId, query, fetchPatientById }) {
                           className={`p-3 rounded-lg transition-all font-semibold ${
                             currentVisitIndex === filtredData.length - 1
                               ? "bg-gray-100 text-gray-300 cursor-not-allowed"
-                              : "bg-purple-500 text-white hover:bg-purple-600 shadow-md hover:shadow-lg"
+                              : "bg-[var(--color-500)] text-white hover:bg-[var(--color-600)] shadow-md hover:shadow-lg"
                           }`}
                           title="Suivante"
                         >
@@ -531,7 +680,7 @@ export default function PatientVisits({ patientId, query, fetchPatientById }) {
                     {isEditing ? (
                       <input
                         type="datetime-local"
-                        className="border-2 border-purple-200 rounded-xl px-4 py-2.5 text-sm bg-white shadow-sm focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                        className="border-2 border-[var(--color-200)] rounded-xl px-4 py-2.5 text-sm bg-white shadow-sm focus:ring-2 focus:ring-[var(--color-500)] focus:border-[var(--color-500)]"
                         value={
                           editedData.createdAt
                             ? typeof editedData.createdAt === "string" &&
@@ -541,22 +690,22 @@ export default function PatientVisits({ patientId, query, fetchPatientById }) {
                                   .toISOString()
                                   .slice(0, 16)
                             : selectedVisit.createdAt
-                            ? new Date(selectedVisit.createdAt)
-                                .toISOString()
-                                .slice(0, 16)
-                            : ""
+                              ? new Date(selectedVisit.createdAt)
+                                  .toISOString()
+                                  .slice(0, 16)
+                              : ""
                         }
                         onChange={(e) => {
                           handleChange("createdAt", e.target.value);
                         }}
                       />
                     ) : (
-                      <div className="inline-flex items-center gap-3 rounded-xl bg-white px-5 py-2.5 border-2 border-purple-100 shadow-md">
-                        <Calendar className="w-5 h-5 text-purple-600" />
-                        <span className="text-xs uppercase tracking-wider text-purple-600 font-semibold">
+                      <div className="inline-flex items-center gap-3 rounded-xl bg-white px-5 py-2.5 border-2 border-[var(--color-100)] shadow-md">
+                        <Calendar className="w-5 h-5 text-[var(--color-600)]" />
+                        <span className="text-xs uppercase tracking-wider text-[var(--color-600)] font-semibold">
                           Date & heure
                         </span>
-                        <span className="text-base font-bold text-purple-900">
+                        <span className="text-base font-bold text-[var(--color-900)]">
                           {selectedVisit.createdAt
                             ? new Date(selectedVisit.createdAt).toLocaleString(
                                 "fr-FR",
@@ -566,7 +715,7 @@ export default function PatientVisits({ patientId, query, fetchPatientById }) {
                                   year: "numeric",
                                   hour: "2-digit",
                                   minute: "2-digit",
-                                }
+                                },
                               )
                             : "—"}
                         </span>
@@ -579,7 +728,7 @@ export default function PatientVisits({ patientId, query, fetchPatientById }) {
               {/* 🗓️ Rendez-vous */}
               {(selectedVisit.rendezVous || isEditing) && (
                 <div className="mt-4 bg-white p-3 rounded-lg shadow-sm">
-                  <h4 className="text-purple-700 font-semibold flex items-center gap-2 mb-2">
+                  <h4 className="text-[var(--color-700)] font-semibold flex items-center gap-2 mb-2">
                     <Calendar size={18} /> Rendez-vous
                   </h4>
                   {isEditing ? (
@@ -619,7 +768,7 @@ export default function PatientVisits({ patientId, query, fetchPatientById }) {
                           onChange={(e) =>
                             handleChange(
                               "rendezVousDescription",
-                              e.target.value
+                              e.target.value,
                             )
                           }
                         />
@@ -630,7 +779,7 @@ export default function PatientVisits({ patientId, query, fetchPatientById }) {
                       <b>Date :</b>{" "}
                       {selectedVisit.rendezVous?.date
                         ? new Date(
-                            selectedVisit.rendezVous.date
+                            selectedVisit.rendezVous.date,
                           ).toLocaleDateString("fr-FR")
                         : "—"}{" "}
                       | <b>Description :</b>{" "}
@@ -648,14 +797,14 @@ export default function PatientVisits({ patientId, query, fetchPatientById }) {
               {/* ====================== */}
               {selectedVisit?.bilanRecip?.items?.length > 0 && (
                 <div ref={bilanPrintRef} className="mt-5">
-                  <h3 className="text-purple-700 font-semibold text-md flex items-center gap-2">
+                  <h3 className="text-[var(--color-700)] font-semibold text-md flex items-center gap-2">
                     <FlaskConical size={18} /> Bilans / Analyses #
                     {selectedVisit.bilanRecip.id}
                   </h3>
                   <div className="mt-2 bg-white rounded-lg shadow-sm p-3">
                     <table className="w-full text-sm border-collapse">
                       <thead>
-                        <tr className="border-b bg-purple-50">
+                        <tr className="border-b bg-[var(--color-50)]">
                           <th className="text-left p-2">Bilan</th>
                           <th className="text-left p-2">Résultat</th>
                           <th className="text-left p-2">Remarque</th>
@@ -684,24 +833,23 @@ export default function PatientVisits({ patientId, query, fetchPatientById }) {
               {selectedVisit?.ordonnance?.items?.length > 0 && (
                 <div ref={printRef} className="mt-5">
                   <div className="flex flex-row justify-between">
-                    <h3 className="text-purple-700 font-semibold text-md flex items-center gap-2">
+                    <h3 className="text-[var(--color-700)] font-semibold text-md flex items-center gap-2">
                       <Pill size={18} /> Ordonnance #
                       {selectedVisit.ordonnance.id}
                     </h3>
-                    <button
-                      onClick={() => {
-                        // handlePrintElectron();
-                      }}
-                      className="text-purple-600 hover:text-purple-800 text-sm"
+                    <Button
+                      className="bg-gradient-to-r from-[var(--color-500)] to-[var(--color-600)] hover:from-[var(--color-600)] hover:to-[var(--color-700)] shadow-md hover:shadow-lg transition-all duration-200"
+                      onClick={handlePrintElectron}
+                      size="sm"
                     >
-                      Imprimer
-                    </button>
+                      🖨️ Imprimer
+                    </Button>
                   </div>
 
                   <div className="mt-2 bg-white rounded-lg shadow-sm p-3">
                     <table className="w-full text-sm border-collapse">
                       <thead>
-                        <tr className="border-b bg-purple-50">
+                        <tr className="border-b bg-[var(--color-50)]">
                           <th className="text-left p-2">Médicament</th>
                           <th className="text-left p-2">Dosage</th>
                           <th className="text-left p-2">Fréquence</th>
@@ -767,3 +915,4 @@ export default function PatientVisits({ patientId, query, fetchPatientById }) {
     </div>
   );
 }
+

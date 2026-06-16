@@ -44,7 +44,7 @@ const SuccessDialog = ({
         animate={{ opacity: 1, scale: 1, y: 0 }}
         exit={{ opacity: 0, scale: 0.9, y: 20 }}
         transition={{ type: "spring", duration: 0.5 }}
-        className="relative bg-gradient-to-br from-purple-50 to-white rounded-2xl shadow-2xl max-w-md w-full p-8 border border-purple-100"
+        className="relative bg-gradient-to-br from-[var(--color-50)] to-white rounded-2xl shadow-2xl max-w-md w-full p-8 border border-[var(--color-100)]"
       >
         <div className="flex flex-col items-center text-center space-y-5">
           {loading ? (
@@ -58,8 +58,8 @@ const SuccessDialog = ({
                   ease: "linear",
                 }}
               >
-                <div className="rounded-full bg-gradient-to-br from-purple-100 to-purple-50 p-4 shadow-lg">
-                  <Loader2 className="h-16 w-16 text-purple-600" />
+                <div className="rounded-full bg-gradient-to-br from-[var(--color-100)] to-[var(--color-50)] p-4 shadow-lg">
+                  <Loader2 className="h-16 w-16 text-[var(--color-600)]" />
                 </div>
               </motion.div>
 
@@ -90,8 +90,8 @@ const SuccessDialog = ({
                   delay: 0.1,
                 }}
               >
-                <div className="rounded-full bg-gradient-to-br from-purple-100 to-purple-50 p-4 shadow-lg">
-                  <Icon className="h-16 w-16 text-purple-600" />
+                <div className="rounded-full bg-gradient-to-br from-[var(--color-100)] to-[var(--color-50)] p-4 shadow-lg">
+                  <Icon className="h-16 w-16 text-[var(--color-600)]" />
                 </div>
               </motion.div>
 
@@ -117,7 +117,7 @@ const SuccessDialog = ({
 // Demo component
 export default function Demo({ config, dialogOpen, setDialogOpen, loading }) {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-50 via-white to-purple-50 p-8">
+    <div className="min-h-screen bg-gradient-to-br from-[var(--color-50)] via-white to-[var(--color-50)] p-8">
       <AnimatePresence>
         {dialogOpen && (
           <SuccessDialog
@@ -135,3 +135,4 @@ export default function Demo({ config, dialogOpen, setDialogOpen, loading }) {
     </div>
   );
 }
+

@@ -172,3 +172,4 @@ export async function DELETE(request) {
     await prisma.$disconnect();
   }
 }
+

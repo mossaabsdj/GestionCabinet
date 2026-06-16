@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { Database, UploadCloud, DownloadCloud } from "lucide-react";
+import { Database, UploadCloud, DownloadCloud, Palette } from "lucide-react";
 import {
   Card,
   CardHeader,
@@ -10,6 +10,14 @@ import {
   CardDescription,
   CardContent,
 } from "@/components/ui/card";
+import {
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectContent,
+  SelectItem,
+} from "@/components/ui/select";
+import { useTheme, themes } from "@/context/theme-context";
 
 // === Animation ===
 const fadeIn = {
@@ -41,7 +49,7 @@ export default function ParametrePage() {
   };
 
   // === Handle Restore ===
-  const handleRestore = async () => {
+const handleRestore = async () => {
     try {
       setLoading(true);
       setMessage("Importation de la base de données en cours...");
@@ -49,10 +57,16 @@ export default function ParametrePage() {
       setMessage("✅ Base de données restaurée avec succès !");
     } catch (error) {
       console.error(error);
-      setMessage("❌ Échec de l’importation !");
+      setMessage("❌ Échec de l'importation !");
     } finally {
       setLoading(false);
     }
+  };
+
+  const { theme, setTheme } = useTheme();
+
+  const handleThemeChange = (value) => {
+    setTheme(value);
   };
 
   return (
@@ -60,7 +74,7 @@ export default function ParametrePage() {
       <motion.div initial="hidden" animate="visible" variants={fadeIn}>
         {/* Header */}
         <div className="flex items-center gap-3 mb-8">
-          <div className="p-3 bg-purple-600 rounded-xl">
+          <div className="p-3 bg-[var(--color-600)] rounded-xl">
             <Database className="w-6 h-6 text-white" />
           </div>
           <div>
@@ -69,6 +83,44 @@ export default function ParametrePage() {
               Sauvegarde et restauration de la base de données
             </p>
           </div>
+        </div>
+
+        {/* Theme Section */}
+        <div className="mb-8">
+          <div className="flex items-center gap-3 mb-4">
+            <Palette className="w-5 h-5 text-[var(--color-600)]" />
+            <h2 className="text-lg font-semibold text-gray-900">Thème et Apparence</h2>
+          </div>
+          <Card className="border border-gray-200 shadow-sm">
+            <CardHeader>
+              <CardTitle className="text-base font-medium text-gray-800">
+                Sélection du thème
+              </CardTitle>
+              <CardDescription className="text-sm text-gray-600">
+                Choisissez le thème de l'application
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Select value={theme} onValueChange={handleThemeChange}>
+                <SelectTrigger className="w-full md:w-64">
+                  <SelectValue placeholder="Sélectionner un thème" />
+                </SelectTrigger>
+                <SelectContent position="popper">
+                  {themes.map((t) => (
+                    <SelectItem key={t.value} value={t.value}>
+                      <div className="flex items-center gap-2">
+                        <div
+                          className="w-4 h-4 rounded-full"
+                          style={{ backgroundColor: t.color }}
+                        />
+                        <span>{t.name}</span>
+                      </div>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </CardContent>
+          </Card>
         </div>
 
         {/* Card Section */}
@@ -146,3 +198,4 @@ export default function ParametrePage() {
     </div>
   );
 }
+

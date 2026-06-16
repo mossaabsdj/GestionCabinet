@@ -1,8 +1,10 @@
 import "@/app/globals.css";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import SidebarPage from "@/app/component/NewSideBar/page";
-import ExitButton from "@/app/component/exitbutton/page"; // 👈 add this import
+import ExitButton from "@/app/component/exitbutton/page";
 import param from "@/param.json";
+import { ThemeProvider } from "@/context/theme-context";
+
 export const dynamic = "force-dynamic";
 
 export const metadata = {
@@ -13,17 +15,20 @@ export const metadata = {
 export default function RootLayout({ children }) {
   return (
     <html lang="en">
-      <body className="flex min-h-screen bg-gradient-to-br from-purple-50 via-white to-purple-100">
-        <SidebarProvider>
-          <div className="flex w-full h-screen overflow-hidden relative">
-            {/* Left Sidebar */}
-            <SidebarPage />
+      <body className="flex min-h-screen bg-gradient-to-br from-[var(--color-50)] via-white to-[var(--color-100)]">
+        <ThemeProvider>
+          <SidebarProvider>
+            <div className="flex w-full h-screen overflow-hidden relative">
+              {/* Left Sidebar */}
+              <SidebarPage />
 
-            {/* Main content */}
-            <main className="flex-1 p-0 overflow-auto">{children}</main>
-          </div>
-        </SidebarProvider>
+              {/* Main content */}
+              <main className="flex-1 p-0 overflow-auto">{children}</main>
+            </div>
+          </SidebarProvider>
+        </ThemeProvider>
       </body>
     </html>
   );
 }
+

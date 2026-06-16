@@ -188,7 +188,7 @@ export default function DashboardPage() {
         {/* === HEADER === */}
         <motion.div variants={fadeIn} className="mb-8">
           <div className="flex items-center gap-3">
-            <div className="p-3 bg-purple-600 rounded-xl">
+            <div className="p-3 bg-[var(--color-600)] rounded-xl">
               <dashboardHeader.icon className="w-6 h-6 text-white" />
             </div>
             <div>
@@ -212,8 +212,8 @@ export default function DashboardPage() {
               <Card className="border border-gray-200 hover:shadow-md transition-shadow">
                 <CardHeader className="space-y-3">
                   <div className="flex items-center justify-between">
-                    <div className="p-2.5 bg-purple-100 rounded-lg">
-                      <card.icon className="w-5 h-5 text-purple-600" />
+                    <div className="p-2.5 bg-[var(--color-100)] rounded-lg">
+                      <card.icon className="w-5 h-5 text-[var(--color-600)]" />
                     </div>
                   </div>
                   <div>
@@ -383,7 +383,7 @@ export default function DashboardPage() {
               <select
                 value={mounthofstats}
                 onChange={(e) => setmounthofstats(Number(e.target.value))}
-                className="border border-gray-300 rounded-md text-sm px-2 py-1 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                className="border border-gray-300 rounded-md text-sm px-2 py-1 focus:outline-none focus:ring-2 focus:ring-[var(--color-500)]"
               >
                 {monthNames.map((m, i) => (
                   <option key={i} value={i + 1}>
@@ -425,8 +425,8 @@ export default function DashboardPage() {
           <motion.div variants={fadeIn} className="w-full">
             <Card className="border border-gray-200 shadow-sm hover:shadow-md transition-all w-full h-full flex flex-col">
               <CardHeader className="flex items-center gap-3">
-                <div className="p-3 bg-purple-100 rounded-xl">
-                  <Pill className="w-5 h-5 text-purple-600" />
+                <div className="p-3 bg-[var(--color-100)] rounded-xl">
+                  <Pill className="w-5 h-5 text-[var(--color-600)]" />
                 </div>
                 <div>
                   <CardTitle className="text-lg font-semibold text-gray-900">
@@ -450,14 +450,14 @@ export default function DashboardPage() {
                         className="flex items-center justify-between py-3 px-2 hover:bg-gray-50 rounded-lg transition"
                       >
                         <div className="flex items-center gap-3">
-                          <div className="w-8 h-8 flex items-center justify-center bg-purple-100 text-purple-600 font-semibold rounded-full">
+                          <div className="w-8 h-8 flex items-center justify-center bg-[var(--color-100)] text-[var(--color-600)] font-semibold rounded-full">
                             {i + 1}
                           </div>
                           <span className="text-gray-800 font-medium truncate max-w-[200px]">
                             {item.name}
                           </span>
                         </div>
-                        <span className="text-sm font-semibold text-purple-600">
+                        <span className="text-sm font-semibold text-[var(--color-600)]">
                           {item.value}x
                         </span>
                       </li>
@@ -519,3 +519,4 @@ export default function DashboardPage() {
     </div>
   );
 }
+

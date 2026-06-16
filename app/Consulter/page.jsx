@@ -722,7 +722,7 @@ export default function PatientDashboard() {
         initial={{ x: -100, opacity: 0 }}
         animate={{ x: 0, opacity: 1 }}
         transition={{ duration: 0.5, ease: "easeOut" }}
-        className="w-60 h-screen bg-purple-100 rounded-tr-4xl p-6 pl-2 pr-2  pr-0flex flex-col border-r border-[var(--color-200)] fixed "
+        className="w-60 h-screen bg-[var(--color-50)] rounded-tr-4xl p-6 pl-2 pr-2  pr-0flex flex-col border-r  border-[var(--color-200)] fixed "
       >
         <div className="flex justify-between items-center mb-6">
           <motion.h2
@@ -771,7 +771,7 @@ export default function PatientDashboard() {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.4 }}
-          className="overflow-y-auto p-1 flex-1 h-[calc(100vh-120px)]"
+          className="overflow-y-auto  p-1 flex-1 h-[calc(100vh-120px)]"
         >
           <AnimatePresence>
             {filteredPatients.map((patient, index) => (
@@ -834,7 +834,7 @@ export default function PatientDashboard() {
                 {selectedPatient?.nom}
               </motion.h1>
 
-              <span className="px-3 py-1 text-sm rounded-full bg-purple-100 text-[var(--color-800)] font-semibold">
+              <span className="px-3 py-1 text-sm rounded-full bg-[var(--color-100)] text-[var(--color-800)] font-semibold">
                 {Age}
               </span>
             </div>
@@ -1127,7 +1127,7 @@ export default function PatientDashboard() {
                 <span className="font-medium text-slate-700">Date</span>
                 <input
                   type="date"
-                  className="w-full px-4 py-3 rounded-xl border border-slate-200 bg-white text-slate-900 text-base shadow-sm focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all"
+                  className="w-full px-4 py-3 rounded-xl border border-slate-200 bg-white text-slate-900 text-base shadow-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-500)] focus:border-[var(--color-500)] transition-all"
                   value={date}
                   onChange={(e) => setDate(e.target.value)}
                 />
@@ -1138,7 +1138,7 @@ export default function PatientDashboard() {
                 <span className="font-medium text-slate-700">Heure</span>
                 <input
                   type="time"
-                  className="w-full px-4 py-3 rounded-xl border border-slate-200 bg-white text-slate-900 text-base shadow-sm focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all"
+                  className="w-full px-4 py-3 rounded-xl border border-slate-200 bg-white text-slate-900 text-base shadow-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-500)] focus:border-[var(--color-500)] transition-all"
                   value={time}
                   onChange={(e) => setTime(e.target.value)}
                 />
@@ -1177,3 +1177,4 @@ export default function PatientDashboard() {
     </div>
   );
 }
+

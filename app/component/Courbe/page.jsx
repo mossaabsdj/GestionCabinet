@@ -2902,3 +2902,4 @@ export default function GrowthCharts({ patientID }) {
     </div>
   );
 }
+

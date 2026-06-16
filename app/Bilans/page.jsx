@@ -113,7 +113,7 @@ export default function BilansPage() {
   if (loading) return <LoadingScreen />;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-50 via-white to-purple-100 p-6">
+    <div className="min-h-screen bg-gradient-to-br from-[var(--color-50)] via-white to-[var(--color-100)] p-6">
       {/* Header */}
       <DialogAlert
         open={alertData.open}
@@ -123,11 +123,11 @@ export default function BilansPage() {
       />
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-4">
-          <div className="p-3 bg-purple-100 rounded-full shadow-md">
-            <ClipboardList className="w-6 h-6 text-purple-700" />
+          <div className="p-3 bg-[var(--color-100)] rounded-full shadow-md">
+            <ClipboardList className="w-6 h-6 text-[var(--color-700)]" />
           </div>
           <div>
-            <h2 className="text-2xl font-bold text-purple-800">Bilans</h2>
+            <h2 className="text-2xl font-bold text-[var(--color-800)]">Bilans</h2>
             <p className="text-sm text-muted-foreground">
               Gestion des bilans médicaux
             </p>
@@ -136,15 +136,15 @@ export default function BilansPage() {
 
         <Dialog>
           <DialogTrigger asChild>
-            <Button className="flex items-center gap-2 bg-purple-600 hover:bg-purple-700 text-white shadow">
+            <Button className="flex items-center gap-2 bg-[var(--color-600)] hover:bg-[var(--color-700)] text-white shadow">
               <Plus className="w-4 h-4" />
               Ajouter
             </Button>
           </DialogTrigger>
 
-          <DialogContent className="sm:max-w-md backdrop-blur-md bg-white/90 border border-purple-200 shadow-lg">
+          <DialogContent className="sm:max-w-md backdrop-blur-md bg-white/90 border border-[var(--color-200)] shadow-lg">
             <DialogHeader>
-              <DialogTitle className="text-purple-700 font-semibold flex items-center gap-2">
+              <DialogTitle className="text-[var(--color-700)] font-semibold flex items-center gap-2">
                 <ClipboardList className="w-5 h-5" />
                 Nouveau Bilan
               </DialogTitle>
@@ -158,7 +158,7 @@ export default function BilansPage() {
                   placeholder="Ex: Bilan sanguin"
                   value={newBilan.nom}
                   onChange={(e) => setNewBilan({ nom: e.target.value })}
-                  className="focus:ring-purple-500"
+                  className="focus:ring-[var(--color-500)]"
                 />
               </div>
             </div>
@@ -167,7 +167,7 @@ export default function BilansPage() {
               <DialogClose asChild>
                 <Button
                   variant="outline"
-                  className="border-purple-300 text-purple-700"
+                  className="border-[var(--color-300)] text-[var(--color-700)]"
                 >
                   Annuler
                 </Button>
@@ -182,7 +182,7 @@ export default function BilansPage() {
                       ?.click()
                   );
                 }}
-                className="bg-purple-600 hover:bg-purple-700 text-white"
+                className="bg-[var(--color-600)] hover:bg-[var(--color-700)] text-white"
               >
                 {loading ? "Ajout..." : "Confirmer"}
               </Button>
@@ -192,7 +192,7 @@ export default function BilansPage() {
       </div>
 
       {/* Search */}
-      <Card className="mb-6 border-purple-200 shadow-sm">
+      <Card className="mb-6 border-[var(--color-200)] shadow-sm">
         <CardContent>
           <div className="flex items-center gap-4">
             <Label>Rechercher</Label>
@@ -202,11 +202,11 @@ export default function BilansPage() {
                 placeholder="Nom du bilan..."
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
-                className="pl-10 w-64 focus:ring-purple-500"
+                className="pl-10 w-64 focus:ring-[var(--color-500)]"
               />
             </div>
 
-            <div className="ml-auto px-4 py-2 text-purple-700 bg-purple-50 border border-purple-200 rounded-xl shadow font-semibold">
+            <div className="ml-auto px-4 py-2 text-[var(--color-700)] bg-[var(--color-50)] border border-[var(--color-200)] rounded-xl shadow font-semibold">
               Total : {totalCount}
             </div>
           </div>
@@ -214,19 +214,19 @@ export default function BilansPage() {
       </Card>
 
       {/* Table */}
-      <Card className="border-purple-200 shadow-md">
+      <Card className="border-[var(--color-200)] shadow-md">
         <CardContent>
-          <div className="rounded-lg border border-purple-100 max-h-96 overflow-y-auto">
+          <div className="rounded-lg border border-[var(--color-100)] max-h-96 overflow-y-auto">
             <Table className="w-full border-collapse">
-              <TableHeader className="sticky top-0 bg-gradient-to-r from-purple-50 to-purple-100">
+              <TableHeader className="sticky top-0 bg-gradient-to-r from-[var(--color-50)] to-[var(--color-100)]">
                 <TableRow>
-                  <TableHead className="px-4 py-3 font-bold text-purple-800 border-b border-purple-200">
+                  <TableHead className="px-4 py-3 font-bold text-[var(--color-800)] border-b border-[var(--color-200)]">
                     Nom
                   </TableHead>
-                  <TableHead className="px-4 py-3 font-bold text-purple-800 border-b border-purple-200">
+                  <TableHead className="px-4 py-3 font-bold text-[var(--color-800)] border-b border-[var(--color-200)]">
                     Créé le
                   </TableHead>
-                  <TableHead className="px-4 py-3 font-bold text-purple-800 border-b border-purple-200 text-center">
+                  <TableHead className="px-4 py-3 font-bold text-[var(--color-800)] border-b border-[var(--color-200)] text-center">
                     Actions
                   </TableHead>
                 </TableRow>
@@ -241,7 +241,7 @@ export default function BilansPage() {
                   </TableRow>
                 )}
                 {filteredBilans.map((b) => (
-                  <TableRow key={b.id} className="hover:bg-purple-50/50">
+                  <TableRow key={b.id} className="hover:bg-[var(--color-50)]/50">
                     <TableCell>{b.nom}</TableCell>
                     <TableCell>{formatDate(b.createdAt)}</TableCell>
                     <TableCell>
@@ -264,3 +264,4 @@ export default function BilansPage() {
     </div>
   );
 }
+

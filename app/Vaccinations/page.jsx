@@ -111,7 +111,7 @@ export default function VaccinationsPage() {
   if (loading) return <LoadingScreen />;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-50 via-white to-purple-100 p-6">
+    <div className="min-h-screen bg-gradient-to-br from-[var(--color-50)] via-white to-[var(--color-100)] p-6">
       <DialogAlert
         open={alertData.open}
         onClose={() => setAlertData({ ...alertData, open: false })}
@@ -131,11 +131,11 @@ export default function VaccinationsPage() {
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-4">
-          <div className="p-3 bg-purple-100 rounded-full shadow-md">
-            <Syringe className="w-6 h-6 text-purple-700" />
+          <div className="p-3 bg-[var(--color-100)] rounded-full shadow-md">
+            <Syringe className="w-6 h-6 text-[var(--color-700)]" />
           </div>
           <div>
-            <h2 className="text-2xl font-bold text-purple-800">Vaccinations</h2>
+            <h2 className="text-2xl font-bold text-[var(--color-800)]">Vaccinations</h2>
             <p className="text-sm text-gray-500">
               Gestion des noms et dates de vaccination
             </p>
@@ -144,14 +144,14 @@ export default function VaccinationsPage() {
 
         <Button
           onClick={() => setIsAddOpen(true)}
-          className="flex items-center gap-2 bg-purple-600 hover:bg-purple-700 text-white shadow rounded-xl"
+          className="flex items-center gap-2 bg-[var(--color-600)] hover:bg-[var(--color-700)] text-white shadow rounded-xl"
         >
           <Plus className="w-4 h-4" /> Ajouter
         </Button>
       </div>
 
       {/* Search */}
-      <Card className="mb-6 border-purple-200 shadow-sm">
+      <Card className="mb-6 border-[var(--color-200)] shadow-sm">
         <CardContent>
           <div className="flex items-center gap-4">
             <Label>Rechercher</Label>
@@ -161,10 +161,10 @@ export default function VaccinationsPage() {
                 placeholder="Nom du vaccin..."
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
-                className="pl-10 w-64 focus:ring-purple-500"
+                className="pl-10 w-64 focus:ring-[var(--color-500)]"
               />
             </div>
-            <div className="ml-auto px-4 py-2 text-purple-700 bg-purple-50 border border-purple-200 rounded-xl shadow font-semibold">
+            <div className="ml-auto px-4 py-2 text-[var(--color-700)] bg-[var(--color-50)] border border-[var(--color-200)] rounded-xl shadow font-semibold">
               Total : {totalCount}
             </div>
           </div>
@@ -172,19 +172,19 @@ export default function VaccinationsPage() {
       </Card>
 
       {/* Table */}
-      <Card className="border-purple-200 shadow-md">
+      <Card className="border-[var(--color-200)] shadow-md">
         <CardContent>
-          <div className="rounded-lg border border-purple-100 max-h-96 overflow-y-auto">
+          <div className="rounded-lg border border-[var(--color-100)] max-h-96 overflow-y-auto">
             <Table className="w-full border-collapse">
-              <TableHeader className="sticky top-0 bg-gradient-to-r from-purple-50 to-purple-100">
+              <TableHeader className="sticky top-0 bg-gradient-to-r from-[var(--color-50)] to-[var(--color-100)]">
                 <TableRow>
-                  <TableHead className="px-4 py-3 font-bold text-purple-800 border-b border-purple-200">
+                  <TableHead className="px-4 py-3 font-bold text-[var(--color-800)] border-b border-[var(--color-200)]">
                     Nom du vaccin
                   </TableHead>
-                  <TableHead className="px-4 py-3 font-bold text-purple-800 border-b border-purple-200">
+                  <TableHead className="px-4 py-3 font-bold text-[var(--color-800)] border-b border-[var(--color-200)]">
                     Date de création
                   </TableHead>
-                  <TableHead className="px-4 py-3 font-bold text-purple-800 border-b border-purple-200 text-center">
+                  <TableHead className="px-4 py-3 font-bold text-[var(--color-800)] border-b border-[var(--color-200)] text-center">
                     Actions
                   </TableHead>
                 </TableRow>
@@ -199,7 +199,7 @@ export default function VaccinationsPage() {
                   </TableRow>
                 ) : (
                   filteredVaccinations.map((v) => (
-                    <TableRow key={v.id} className="hover:bg-purple-50/50">
+                    <TableRow key={v.id} className="hover:bg-[var(--color-50)]/50">
                       <TableCell>{v.name}</TableCell>
                       <TableCell>
                         {formatDate(v.createdAt || v.dateGiven)}
@@ -223,3 +223,4 @@ export default function VaccinationsPage() {
     </div>
   );
 }
+

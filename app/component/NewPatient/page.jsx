@@ -226,3 +226,4 @@ export default function AddPatientModal({ open, onClose, onAdd }) {
     </Dialog>
   );
 }
+

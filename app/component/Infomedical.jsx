@@ -310,7 +310,7 @@ export default function PatientVisits({
 
     return allFields.filter(
       (field) =>
-        field.value !== null && field.value !== undefined && field.value !== ""
+        field.value !== null && field.value !== undefined && field.value !== "",
     );
   };
 
@@ -334,7 +334,7 @@ export default function PatientVisits({
           .map((info, idx) => (
             <div key={idx} className="bg-white rounded-lg shadow-sm p-4">
               <div className="flex items-center gap-2 mb-2">
-                <info.icon className="text-purple-500" size={18} />
+                <info.icon className="text-[var(--color-500)]" size={18} />
                 <span className="text-gray-700 font-medium text-sm">
                   {info.label}
                 </span>
@@ -342,7 +342,7 @@ export default function PatientVisits({
               {isEditing ? (
                 <textarea
                   rows={3}
-                  className="w-full border border-gray-300 rounded-lg p-3 text-sm bg-gray-50 focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                  className="w-full border border-gray-300 rounded-lg p-3 text-sm bg-gray-50 focus:ring-2 focus:ring-[var(--color-500)] focus:border-[var(--color-500)]"
                   value={editedData[info.field] ?? visit[info.field] ?? ""}
                   onChange={(e) => handleChange(info.field, e.target.value)}
                 />
@@ -364,7 +364,7 @@ export default function PatientVisits({
                 className="flex items-center justify-between p-3 hover:shadow-md transition-shadow"
               >
                 <div className="flex flex-row items-center">
-                  <info.icon className="text-purple-500 mr-2" size={18} />
+                  <info.icon className="text-[var(--color-500)] mr-2" size={18} />
                   <span className="text-gray-600 text-sm">{info.label}</span>
                 </div>
                 <div className="text-right text-gray-800">
@@ -372,7 +372,7 @@ export default function PatientVisits({
                     <input
                       type="number"
                       step="0.01"
-                      className="border border-gray-300 rounded px-2 py-1 w-20 text-sm focus:ring-2 focus:ring-purple-500"
+                      className="border border-gray-300 rounded px-2 py-1 w-20 text-sm focus:ring-2 focus:ring-[var(--color-500)]"
                       value={editedData[info.field] ?? visit[info.field] ?? ""}
                       onChange={(e) => handleChange(info.field, e.target.value)}
                     />
@@ -401,14 +401,14 @@ export default function PatientVisits({
           setIsEditing(false);
         }}
       >
-        <DialogContent className="min-w-7xl h-11/12  w-full bg-gradient-to-br from-purple-50 to-white rounded-2xl p-8 overflow-y-auto shadow-2xl">
+        <DialogContent className="min-w-7xl h-11/12  w-full bg-gradient-to-br from-[var(--color-50)] to-white rounded-2xl p-8 overflow-y-auto custom-scrollbar shadow-2xl">
           {selectedVisit && (
             <>
               <DialogHeader>
                 <div className="flex flex-col gap-4">
                   {/* Title and Navigation Row */}
                   <div className="flex justify-between items-center">
-                    <DialogTitle className="text-2xl font-bold text-purple-700">
+                    <DialogTitle className="text-2xl font-bold text-[var(--color-700)]">
                       Consultation #{selectedVisit.id}
                     </DialogTitle>
 
@@ -421,7 +421,7 @@ export default function PatientVisits({
                           className={`p-3 rounded-lg transition-all font-semibold ${
                             currentVisitIndex === 0
                               ? "bg-gray-100 text-gray-300 cursor-not-allowed"
-                              : "bg-purple-500 text-white hover:bg-purple-600 shadow-md hover:shadow-lg"
+                              : "bg-[var(--color-500)] text-white hover:bg-[var(--color-600)] shadow-md hover:shadow-lg"
                           }`}
                           title="Précédente"
                         >
@@ -440,7 +440,7 @@ export default function PatientVisits({
                           className={`p-3 rounded-lg transition-all font-semibold ${
                             currentVisitIndex === filtredData.length - 1
                               ? "bg-gray-100 text-gray-300 cursor-not-allowed"
-                              : "bg-purple-500 text-white hover:bg-purple-600 shadow-md hover:shadow-lg"
+                              : "bg-[var(--color-500)] text-white hover:bg-[var(--color-600)] shadow-md hover:shadow-lg"
                           }`}
                           title="Suivante"
                         >
@@ -491,7 +491,7 @@ export default function PatientVisits({
                     {isEditing ? (
                       <input
                         type="datetime-local"
-                        className="border-2 border-purple-200 rounded-xl px-4 py-2.5 text-sm bg-white shadow-sm focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                        className="border-2 border-[var(--color-200)] rounded-xl px-4 py-2.5 text-sm bg-white shadow-sm focus:ring-2 focus:ring-[var(--color-500)] focus:border-[var(--color-500)]"
                         value={
                           editedData.createdAt
                             ? typeof editedData.createdAt === "string" &&
@@ -501,22 +501,22 @@ export default function PatientVisits({
                                   .toISOString()
                                   .slice(0, 16)
                             : selectedVisit.createdAt
-                            ? new Date(selectedVisit.createdAt)
-                                .toISOString()
-                                .slice(0, 16)
-                            : ""
+                              ? new Date(selectedVisit.createdAt)
+                                  .toISOString()
+                                  .slice(0, 16)
+                              : ""
                         }
                         onChange={(e) => {
                           handleChange("createdAt", e.target.value);
                         }}
                       />
                     ) : (
-                      <div className="inline-flex items-center gap-3 rounded-xl bg-white px-5 py-2.5 border-2 border-purple-100 shadow-md">
-                        <Calendar className="w-5 h-5 text-purple-600" />
-                        <span className="text-xs uppercase tracking-wider text-purple-600 font-semibold">
+                      <div className="inline-flex items-center gap-3 rounded-xl bg-white px-5 py-2.5 border-2 border-[var(--color-100)] shadow-md">
+                        <Calendar className="w-5 h-5 text-[var(--color-600)]" />
+                        <span className="text-xs uppercase tracking-wider text-[var(--color-600)] font-semibold">
                           Date & heure
                         </span>
-                        <span className="text-base font-bold text-purple-900">
+                        <span className="text-base font-bold text-[var(--color-900)]">
                           {selectedVisit.createdAt
                             ? new Date(selectedVisit.createdAt).toLocaleString(
                                 "fr-FR",
@@ -526,7 +526,7 @@ export default function PatientVisits({
                                   year: "numeric",
                                   hour: "2-digit",
                                   minute: "2-digit",
-                                }
+                                },
                               )
                             : "—"}
                         </span>
@@ -539,7 +539,7 @@ export default function PatientVisits({
               {/* 🗓️ Rendez-vous */}
               {(selectedVisit.rendezVous || isEditing) && (
                 <div className="mt-4 bg-white p-3 rounded-lg shadow-sm">
-                  <h4 className="text-purple-700 font-semibold flex items-center gap-2 mb-2">
+                  <h4 className="text-[var(--color-700)] font-semibold flex items-center gap-2 mb-2">
                     <Calendar size={18} /> Rendez-vous
                   </h4>
                   {isEditing ? (
@@ -579,7 +579,7 @@ export default function PatientVisits({
                           onChange={(e) =>
                             handleChange(
                               "rendezVousDescription",
-                              e.target.value
+                              e.target.value,
                             )
                           }
                         />
@@ -590,7 +590,7 @@ export default function PatientVisits({
                       <b>Date :</b>{" "}
                       {selectedVisit.rendezVous?.date
                         ? new Date(
-                            selectedVisit.rendezVous.date
+                            selectedVisit.rendezVous.date,
                           ).toLocaleDateString("fr-FR")
                         : "—"}{" "}
                       | <b>Description :</b>{" "}
@@ -608,14 +608,14 @@ export default function PatientVisits({
               {/* ====================== */}
               {selectedVisit?.bilanRecip?.items?.length > 0 && (
                 <div ref={bilanPrintRef} className="mt-5">
-                  <h3 className="text-purple-700 font-semibold text-md flex items-center gap-2">
+                  <h3 className="text-[var(--color-700)] font-semibold text-md flex items-center gap-2">
                     <FlaskConical size={18} /> Bilans / Analyses #
                     {selectedVisit.bilanRecip.id}
                   </h3>
                   <div className="mt-2 bg-white rounded-lg shadow-sm p-3">
                     <table className="w-full text-sm border-collapse">
                       <thead>
-                        <tr className="border-b bg-purple-50">
+                        <tr className="border-b bg-[var(--color-50)]">
                           <th className="text-left p-2">Bilan</th>
                           <th className="text-left p-2">Résultat</th>
                           <th className="text-left p-2">Remarque</th>
@@ -644,7 +644,7 @@ export default function PatientVisits({
               {selectedVisit?.ordonnance?.items?.length > 0 && (
                 <div ref={printRef} className="mt-5">
                   <div className="flex flex-row justify-between">
-                    <h3 className="text-purple-700 font-semibold text-md flex items-center gap-2">
+                    <h3 className="text-[var(--color-700)] font-semibold text-md flex items-center gap-2">
                       <Pill size={18} /> Ordonnance #
                       {selectedVisit.ordonnance.id}
                     </h3>
@@ -652,7 +652,7 @@ export default function PatientVisits({
                       onClick={() => {
                         // handlePrintElectron();
                       }}
-                      className="text-purple-600 hover:text-purple-800 text-sm"
+                      className="text-[var(--color-600)] hover:text-[var(--color-800)] text-sm"
                     >
                       Imprimer
                     </button>
@@ -661,7 +661,7 @@ export default function PatientVisits({
                   <div className="mt-2 bg-white rounded-lg shadow-sm p-3">
                     <table className="w-full text-sm border-collapse">
                       <thead>
-                        <tr className="border-b bg-purple-50">
+                        <tr className="border-b bg-[var(--color-50)]">
                           <th className="text-left p-2">Médicament</th>
                           <th className="text-left p-2">Dosage</th>
                           <th className="text-left p-2">Fréquence</th>
@@ -728,3 +728,4 @@ export default function PatientVisits({
     </div>
   );
 }
+

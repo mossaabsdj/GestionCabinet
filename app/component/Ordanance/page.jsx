@@ -659,3 +659,4 @@ export default function OrdBilanPage({ patientId, query, selectedPatient }) {
     </div>
   );
 }
+

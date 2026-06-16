@@ -425,7 +425,7 @@ export default function DashboardPage() {
           <motion.div variants={fadeIn} className="w-full">
             <Card className="border border-gray-200 shadow-sm hover:shadow-md transition-all w-full h-full flex flex-col">
               <CardHeader className="flex items-center gap-3">
-                <div className="p-3 bg-purple-100 rounded-xl">
+                <div className="p-3 bg-[var(--color-100)] rounded-xl">
                   <Pill className="w-5 h-5 text-[var(--color-600)]" />
                 </div>
                 <div>
@@ -450,7 +450,7 @@ export default function DashboardPage() {
                         className="flex items-center justify-between py-3 px-2 hover:bg-gray-50 rounded-lg transition"
                       >
                         <div className="flex items-center gap-3">
-                          <div className="w-8 h-8 flex items-center justify-center bg-purple-100 text-[var(--color-600)] font-semibold rounded-full">
+                          <div className="w-8 h-8 flex items-center justify-center bg-[var(--color-100)] text-[var(--color-600)] font-semibold rounded-full">
                             {i + 1}
                           </div>
                           <span className="text-gray-800 font-medium truncate max-w-[200px]">
@@ -519,3 +519,4 @@ export default function DashboardPage() {
     </div>
   );
 }
+

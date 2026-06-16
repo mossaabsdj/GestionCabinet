@@ -31,15 +31,15 @@ export default function AddVaccinationModal({
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-2xl rounded-2xl p-6 shadow-lg border border-purple-200">
+      <DialogContent className="max-w-2xl rounded-2xl p-6 shadow-lg border border-[var(--color-200)]">
         <DialogHeader className="flex flex-col items-center space-y-3">
           {/* Icon */}
-          <div className="p-4 bg-purple-100 rounded-full shadow-md">
-            <Syringe className="w-7 h-7 text-purple-700" />
+          <div className="p-4 bg-[var(--color-100)] rounded-full shadow-md">
+            <Syringe className="w-7 h-7 text-[var(--color-700)]" />
           </div>
 
           {/* Title */}
-          <DialogTitle className="text-2xl font-bold text-purple-800">
+          <DialogTitle className="text-2xl font-bold text-[var(--color-800)]">
             Nouvelle Vaccination
           </DialogTitle>
 
@@ -52,7 +52,7 @@ export default function AddVaccinationModal({
         {/* Form */}
         <form onSubmit={handleSubmit} className="mt-4 space-y-6">
           <div>
-            <Label className="text-purple-700 font-medium">
+            <Label className="text-[var(--color-700)] font-medium">
               Nom du vaccin *
             </Label>
             <Input
@@ -62,7 +62,7 @@ export default function AddVaccinationModal({
                 setForm({ ...form, vaccineName: e.target.value })
               }
               required
-              className="h-12 px-4 mt-1 rounded-xl border-gray-300 focus:ring-2 focus:ring-purple-500"
+              className="h-12 px-4 mt-1 rounded-xl border-gray-300 focus:ring-2 focus:ring-[var(--color-500)]"
             />
           </div>
 
@@ -78,7 +78,7 @@ export default function AddVaccinationModal({
             </Button>
             <Button
               type="submit"
-              className="h-12 px-6 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-medium"
+              className="h-12 px-6 rounded-xl bg-[var(--color-600)] hover:bg-[var(--color-700)] text-white font-medium"
             >
               Ajouter
             </Button>
@@ -88,3 +88,4 @@ export default function AddVaccinationModal({
     </Dialog>
   );
 }
+

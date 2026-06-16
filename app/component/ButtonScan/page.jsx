@@ -56,26 +56,26 @@ export default function ButtonScan() {
     <>
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogTrigger asChild>
-          <Button className="bg-purple-600 hover:bg-purple-700 text-white rounded-lg px-6 py-3 font-semibold shadow-lg">
+          <Button className="bg-[var(--color-600)] hover:bg-[var(--color-700)] text-white rounded-lg px-6 py-3 font-semibold shadow-lg">
             📄 Ajouter un Document Médical
           </Button>
         </DialogTrigger>
-        <DialogContent className="sm:max-w-md rounded-2xl shadow-2xl border border-purple-200">
+        <DialogContent className="sm:max-w-md rounded-2xl shadow-2xl border border-[var(--color-200)]">
           <DialogHeader className="text-center">
-            <DialogTitle className="text-xl font-bold text-purple-700">
+            <DialogTitle className="text-xl font-bold text-[var(--color-700)]">
               📂 Sélection du document
             </DialogTitle>
           </DialogHeader>
           <div className="flex flex-col gap-4 mt-6">
             <Button
               onClick={() => openFilePicker("application/pdf")}
-              className="bg-gradient-to-r from-purple-500 to-purple-700 hover:from-purple-600 hover:to-purple-800 text-white w-full py-3 rounded-xl font-semibold shadow-md transition"
+              className="bg-gradient-to-r from-[var(--color-50)] to-[var(--color-700)] hover:from-[var(--color-600)] hover:to-[var(--color-800)] text-white w-full py-3 rounded-xl font-semibold shadow-md transition"
             >
               📑 Bilan (PDF de laboratoire)
             </Button>
             <Button
               onClick={() => openFilePicker("image/*")}
-              className="bg-gradient-to-r from-purple-400 to-purple-600 hover:from-purple-500 hover:to-purple-700 text-white w-full py-3 rounded-xl font-semibold shadow-md transition"
+              className="bg-gradient-to-r from-[var(--color-400)] to-[var(--color-600)] hover:from-[var(--color-50)] hover:to-[var(--color-700)] text-white w-full py-3 rounded-xl font-semibold shadow-md transition"
             >
               📷 Scanner (Image radiologique → PDF)
             </Button>
@@ -92,3 +92,4 @@ export default function ButtonScan() {
     </>
   );
 }
+

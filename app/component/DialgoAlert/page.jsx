@@ -14,10 +14,10 @@ import { AlertTriangle } from "lucide-react";
 export default function DialogAlert({ open, onClose, title, message }) {
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-md bg-white/90 backdrop-blur-md border border-purple-200 shadow-lg">
+      <DialogContent className="sm:max-w-md bg-white/90 backdrop-blur-md border border-[var(--color-200)] shadow-lg">
         <DialogHeader className="flex items-center gap-2">
-          <AlertTriangle className="w-5 h-5 text-purple-600" />
-          <DialogTitle className="text-purple-700 font-semibold">
+          <AlertTriangle className="w-5 h-5 text-[var(--color-600)]" />
+          <DialogTitle className="text-[var(--color-700)] font-semibold">
             {title || "Alerte"}
           </DialogTitle>
         </DialogHeader>
@@ -28,7 +28,7 @@ export default function DialogAlert({ open, onClose, title, message }) {
         <DialogFooter>
           <Button
             onClick={onClose}
-            className="bg-purple-600 hover:bg-purple-700 text-white"
+            className="bg-[var(--color-600)] hover:bg-[var(--color-700)] text-white"
           >
             OK
           </Button>
@@ -37,3 +37,4 @@ export default function DialogAlert({ open, onClose, title, message }) {
     </Dialog>
   );
 }
+

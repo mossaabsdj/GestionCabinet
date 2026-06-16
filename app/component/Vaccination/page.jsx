@@ -217,3 +217,4 @@ export default function Vaccination({ patientId, refrech, setrefrech }) {
     </div>
   );
 }
+

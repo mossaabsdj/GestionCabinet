@@ -116,7 +116,7 @@ export default function PatientModal({ open, onClose, patient = {} }) {
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="min-w-5xl rounded-2xl p-6">
         <DialogHeader>
-          <DialogTitle className="text-2xl font-bold text-purple-700">
+          <DialogTitle className="text-2xl font-bold text-[var(--color-700)]">
             🧑‍⚕️ Détails du patient
           </DialogTitle>
         </DialogHeader>
@@ -252,7 +252,7 @@ export default function PatientModal({ open, onClose, patient = {} }) {
           </Button>
           <Button
             onClick={handleSave}
-            className="bg-purple-600 hover:bg-purple-700"
+            className="bg-[var(--color-600)] hover:bg-[var(--color-700)]"
           >
             Enregistrer
           </Button>
@@ -261,3 +261,4 @@ export default function PatientModal({ open, onClose, patient = {} }) {
     </Dialog>
   );
 }
+

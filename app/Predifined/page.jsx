@@ -498,8 +498,8 @@ export default function TypesPage() {
   // render table
   const renderTable = (section, data) => (
     <div className="overflow-x-auto ">
-      <table className="w-full text-sm border border-purple-200 rounded-lg">
-        <thead className="bg-purple-100 text-purple-700 font-semibold">
+      <table className="w-full text-sm border border-[var(--color-200)] rounded-lg">
+        <thead className="bg-[var(--color-100)] text-[var(--color-700)] font-semibold">
           <tr>
             <th className="px-4 py-2 text-left">Nom du type</th>
             <th className="px-4 py-2">Aperçu</th>
@@ -526,7 +526,7 @@ export default function TypesPage() {
                   <Button
                     size="sm"
                     variant="outline"
-                    className="border-purple-400 text-purple-700"
+                    className="border-[var(--color-400)] text-[var(--color-700)]"
                     onClick={() => openEdit(section, t)}
                   >
                     Modifier
@@ -550,26 +550,26 @@ export default function TypesPage() {
   return (
     <div className="max-w-full mx-auto py-12 px-6">
       <Tabs defaultValue="ord" className="w-full">
-        <TabsList className="mb-6 grid grid-cols-3 gap-2 bg-purple-100 rounded-xl">
-          <TabsTrigger value="ord" className="text-purple-800 font-semibold">
+        <TabsList className="mb-6 grid grid-cols-3 gap-2 bg-[var(--color-100)] rounded-xl">
+          <TabsTrigger value="ord" className="text-[var(--color-800)] font-semibold">
             Ordonnances
           </TabsTrigger>
-          <TabsTrigger value="bilan" className="text-purple-800 font-semibold">
+          <TabsTrigger value="bilan" className="text-[var(--color-800)] font-semibold">
             Bilans
           </TabsTrigger>
           <TabsTrigger
             disabled
             value="justif"
-            className="text-purple-800 font-semibold"
+            className="text-[var(--color-800)] font-semibold"
           >
             Justifs
           </TabsTrigger>
         </TabsList>
 
         <TabsContent value="ord">
-          <Card className="mb-8 shadow-lg border-purple-200 border">
+          <Card className="mb-8 shadow-lg border-[var(--color-200)] border">
             <CardHeader className="flex items-center justify-between">
-              <CardTitle className="text-purple-700 font-bold">
+              <CardTitle className="text-[var(--color-700)] font-bold">
                 Types d’ordonnance
               </CardTitle>
               <SearchBarPage
@@ -580,7 +580,7 @@ export default function TypesPage() {
 
               <Button
                 size="sm"
-                className="bg-purple-600 hover:bg-purple-700 text-white"
+                className="bg-[var(--color-600)] hover:bg-[var(--color-700)] text-white"
                 onClick={() => openAdd("ord")}
               >
                 Ajouter
@@ -599,9 +599,9 @@ export default function TypesPage() {
         </TabsContent>
 
         <TabsContent value="bilan">
-          <Card className="mb-8 shadow-lg border-purple-200 border">
+          <Card className="mb-8 shadow-lg border-[var(--color-200)] border">
             <CardHeader className="flex items-center justify-between">
-              <CardTitle className="text-purple-700 font-bold">
+              <CardTitle className="text-[var(--color-700)] font-bold">
                 Types de bilan
               </CardTitle>
               <SearchBarPage
@@ -612,7 +612,7 @@ export default function TypesPage() {
 
               <Button
                 size="sm"
-                className="bg-purple-600 hover:bg-purple-700 text-white"
+                className="bg-[var(--color-600)] hover:bg-[var(--color-700)] text-white"
                 onClick={() => openAdd("bilan")}
               >
                 Ajouter
@@ -631,14 +631,14 @@ export default function TypesPage() {
         </TabsContent>
 
         <TabsContent value="justif">
-          <Card className="mb-8 shadow-lg border-purple-200 border">
+          <Card className="mb-8 shadow-lg border-[var(--color-200)] border">
             <CardHeader className="flex items-center justify-between">
-              <CardTitle className="text-purple-700 font-bold">
+              <CardTitle className="text-[var(--color-700)] font-bold">
                 Types de justifications
               </CardTitle>
               <Button
                 size="sm"
-                className="bg-purple-600 hover:bg-purple-700 text-white"
+                className="bg-[var(--color-600)] hover:bg-[var(--color-700)] text-white"
                 onClick={() => openAdd("justif")}
               >
                 Ajouter
@@ -714,11 +714,11 @@ export default function TypesPage() {
                   {selectedMeds.map((m) => (
                     <div
                       key={m.id}
-                      className="flex justify-between items-center bg-white hover:bg-purple-50 transition-colors px-3 py-2 rounded-xl shadow-sm border border-gray-100"
+                      className="flex justify-between items-center bg-white hover:bg-[var(--color-50)] transition-colors px-3 py-2 rounded-xl shadow-sm border border-gray-100"
                     >
                       {/* Left section: icon + med name */}
                       <div className="flex items-center gap-2">
-                        <Pill className="w-5 h-5 text-purple-500" />
+                        <Pill className="w-5 h-5 text-[var(--color-500)]" />
                         <span className="font-medium text-gray-800">
                           {m.nom}
                         </span>
@@ -726,25 +726,25 @@ export default function TypesPage() {
 
                       {/* Middle section: med details */}
                       <div className="flex items-center gap-3 text-sm text-gray-600">
-                        <p className="px-2 py-0.5 bg-purple-100 text-purple-700 rounded-md">
+                        <p className="px-2 py-0.5 bg-[var(--color-100)] text-[var(--color-700)] rounded-md">
                           {m.tmpStrength === "custom"
                             ? m.tmpCustomStrength
                             : m.tmpStrength || m.frequence || "-"}
                         </p>
 
-                        <p className="px-2 py-0.5 bg-purple-100 text-purple-700 rounded-md">
+                        <p className="px-2 py-0.5 bg-[var(--color-100)] text-[var(--color-700)] rounded-md">
                           {m.tmpDose === "custom"
                             ? m.tmpCustomDose
                             : m.tmpDose || m.dosage || "-"}
                         </p>
 
-                        <p className="px-2 py-0.5 bg-purple-100 text-purple-700 rounded-md">
+                        <p className="px-2 py-0.5 bg-[var(--color-100)] text-[var(--color-700)] rounded-md">
                           {m.tmpDuration === "custom"
                             ? m.tmpCustomDuration
                             : m.tmpDuration || m.duree || "-"}
                         </p>
 
-                        <p className="px-2 py-0.5 bg-purple-200 text-purple-800 font-semibold rounded-md">
+                        <p className="px-2 py-0.5 bg-[var(--color-200)] text-[var(--color-800)] font-semibold rounded-md">
                           × {m.tmpQuantite || m.quantite || 1}
                         </p>
                       </div>
@@ -811,11 +811,11 @@ export default function TypesPage() {
                 {selectedBilans.map((b) => (
                   <div
                     key={b.id}
-                    className="flex justify-between items-center bg-white hover:bg-purple-50 transition-colors px-3 py-2 rounded-xl shadow-sm border border-gray-100"
+                    className="flex justify-between items-center bg-white hover:bg-[var(--color-50)] transition-colors px-3 py-2 rounded-xl shadow-sm border border-gray-100"
                   >
                     {/* Left section: icon + bilan name */}
                     <div className="flex items-center gap-2">
-                      <TestTube className="w-5 h-5 text-purple-500" />
+                      <TestTube className="w-5 h-5 text-[var(--color-500)]" />
                       <span className="font-medium text-gray-800">{b.nom}</span>
                     </div>
 
@@ -863,7 +863,7 @@ export default function TypesPage() {
 
           <DialogFooter className="mt-4">
             <Button
-              className="bg-purple-600 hover:bg-purple-700 text-white"
+              className="bg-[var(--color-600)] hover:bg-[var(--color-700)] text-white"
               onClick={handleSave}
             >
               {modal.mode === "add" ? "Ajouter" : "Mettre à jour"}
@@ -882,7 +882,7 @@ export default function TypesPage() {
       <Dialog open={openMedDialog} onOpenChange={setOpenMedDialog}>
         <DialogContent className="sm:max-w-2xl">
           <DialogHeader>
-            <DialogTitle className="text-purple-700">
+            <DialogTitle className="text-[var(--color-700)]">
               {selectedMed?.nom} {selectedMed && `(${selectedMed.form})`}
             </DialogTitle>
             <p className="text-sm text-gray-500">
@@ -1042,7 +1042,7 @@ export default function TypesPage() {
               Annuler
             </Button>
             <Button
-              className="bg-purple-600 hover:bg-purple-700"
+              className="bg-[var(--color-600)] hover:bg-[var(--color-700)]"
               onClick={addMedication}
             >
               <Plus size={16} className="mr-2" /> Ajouter
@@ -1083,3 +1083,4 @@ export default function TypesPage() {
     </div>
   );
 }
+
