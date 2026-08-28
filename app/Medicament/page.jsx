@@ -1,12 +1,16 @@
 "use client";
 
 import { useState, useMemo, useEffect } from "react";
-import { Search, Plus, Trash, Pill } from "lucide-react";
+import { Search, Plus, Trash, Pill, Download, Upload } from "lucide-react";
 import AddMedicamentModal from "@/app/component/NewMedicament/page";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import LoadingScreen from "../component/LoadingScreen/page";
+
+import DialogPage from "@/app/component/DialogPage/page";
+import DialogAlert from "@/app/component/DialgoAlert/page";
 import {
   Table,
   TableBody,
@@ -15,10 +19,8 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import LoadingScreen from "../component/LoadingScreen/page";
 
-import DialogPage from "@/app/component/DialogPage/page";
-import DialogAlert from "@/app/component/DialgoAlert/page";
+import { exportToJSON, exportToExcel, importFromJSON, importFromExcel } from "@/lib/import-export";
 
 function formatDate(d) {
   if (!d) return "";
@@ -104,6 +106,55 @@ export default function MedicamentsPage() {
       showAlert("Erreur", "Erreur lors de la suppression.");
     }
   }
+
+  // 📤 Export Medicaments
+  const handleExportJSON = () => {
+    exportToJSON(medicaments, "medicaments.json");
+  };
+
+  const handleExportExcel = () => {
+    exportToExcel(medicaments, "medicaments.xlsx");
+  };
+
+  // 📥 Import Medicaments
+  const handleImport = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    try {
+      let importedData;
+      if (file.name.endsWith(".json")) {
+        importedData = await importFromJSON(file);
+      } else if (file.name.endsWith(".xlsx") || file.name.endsWith(".xls")) {
+        importedData = await importFromExcel(file);
+      } else {
+        showAlert("Erreur", "Format de fichier non supporté.");
+        return;
+      }
+
+      setLoading(true);
+      for (const item of importedData) {
+        if (item.nom) {
+          await fetch("/api/medicaments", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ nom: item.nom }),
+          });
+        }
+      }
+
+      const res = await fetch("/api/medicaments");
+      const data = await res.json();
+      if (Array.isArray(data)) setMedicaments(data);
+      showAlert("Succès", "Importation terminée !");
+    } catch (err) {
+      showAlert("Erreur", "Échec de l'importation.");
+    } finally {
+      setLoading(false);
+      e.target.value = "";
+    }
+  }
+
   if (loading) return <LoadingScreen />;
 
   return (
@@ -137,12 +188,41 @@ export default function MedicamentsPage() {
           </div>
         </div>
 
-        <Button
-          onClick={() => setIsAddOpen(true)}
-          className="flex items-center gap-2 bg-[var(--color-600)] hover:bg-[var(--color-700)] text-white shadow"
-        >
-          <Plus className="w-4 h-4" /> Ajouter
-        </Button>
+        <div className="flex gap-2">
+          <Button
+            onClick={handleExportJSON}
+            className="flex items-center gap-2 bg-[var(--color-500)] hover:bg-[var(--color-600)] text-white shadow"
+          >
+            <Download className="w-4 h-4" /> JSON
+          </Button>
+          <Button
+            onClick={handleExportExcel}
+            className="flex items-center gap-2 bg-[var(--color-500)] hover:bg-[var(--color-600)] text-white shadow"
+          >
+            <Download className="w-4 h-4" /> Excel
+          </Button>
+          <div className="relative">
+            <Button
+              onClick={() => document.getElementById("import-medicaments").click()}
+              className="flex items-center gap-2 bg-[var(--color-500)] hover:bg-[var(--color-600)] text-white shadow"
+            >
+              <Upload className="w-4 h-4" /> Importer
+            </Button>
+            <Input
+              id="import-medicaments"
+              type="file"
+              accept=".json,.xlsx,.xls"
+              onChange={handleImport}
+              className="hidden absolute inset-0"
+            />
+          </div>
+          <Button
+            onClick={() => setIsAddOpen(true)}
+            className="flex items-center gap-2 bg-[var(--color-600)] hover:bg-[var(--color-700)] text-white shadow"
+          >
+            <Plus className="w-4 h-4" /> Ajouter
+          </Button>
+        </div>
       </div>
 
       {/* Search */}

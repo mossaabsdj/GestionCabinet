@@ -318,6 +318,7 @@ export default function PrescriptionModal({
     const payload = {
       ordonnance: ordonnance,
       bilanRecip: bilanRecip,
+      justification: justifText.trim(),
     };
     onsave(payload);
     console.log("✅ Saved:", payload);
@@ -550,7 +551,7 @@ export default function PrescriptionModal({
     }
     window.addEventListener("keydown", handleShortcut);
     return () => window.removeEventListener("keydown", handleShortcut);
-  }, [prescriptionItems, labItems]);
+  }, [prescriptionItems, labItems, justifText]);
 
   // Enhanced animation variants
   const cardVariants = {
@@ -668,7 +669,6 @@ export default function PrescriptionModal({
                 Bilans & Analyses
               </TabsTrigger>
               <TabsTrigger
-                disabled
                 value="justif"
                 className="rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-md transition-all duration-200"
               >
@@ -1497,6 +1497,7 @@ export default function PrescriptionModal({
               onClick={() => {
                 setPrescriptionItems([]);
                 setLabItems([]);
+                setJustifType(undefined);
                 setJustifText("");
               }}
             >

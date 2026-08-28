@@ -270,6 +270,7 @@ export default function PatientVisits({ patientId, query, fetchPatientById }) {
           id: selectedVisit.id,
           ...formattedData,
           motifDeConsultation: editedData.motifDeConsultation || null,
+          justification: editedData.justification || null,
           rendezVousDate: editedData.rendezVousDate || null,
           rendezVousDescription: editedData.rendezVousDescription || null,
         }),
@@ -332,6 +333,13 @@ export default function PatientVisits({ patientId, query, fetchPatientById }) {
         label: "Notes",
         value: visit.note,
         field: "note",
+        type: "textarea",
+      },
+      {
+        icon: ClipboardList,
+        label: "Justification",
+        value: visit.justification,
+        field: "justification",
         type: "textarea",
       },
       {

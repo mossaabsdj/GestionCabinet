@@ -189,7 +189,8 @@ export default function PatientDashboard() {
       formData.perimetreCranien || // ✅ new
       formData.rendezVousDate || // ✅ new
       formData?.ordonnance?.items?.length > 0 ||
-      formData?.bilanRecip?.items?.length > 0;
+      formData?.bilanRecip?.items?.length > 0 ||
+      formData?.justification?.trim();
 
     if (!hasData) {
       // ❌ Replace alert with SweetAlert
@@ -236,6 +237,7 @@ export default function PatientDashboard() {
 
           // ✅ New fields
           motifDeConsultation: formData.motifDeConsultation?.trim() || null,
+          justification: formData.justification?.trim() || null,
           perimetreCranien: formData.perimetreCranien || null,
           rendezVousDate: formData.rendezVousDate || null,
           rendezVousDescription: formData.rendezVousDescription?.trim() || null,

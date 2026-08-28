@@ -1,8 +1,8 @@
 "use client";
 
 import { useState, useMemo, useEffect } from "react";
-import { Search, Plus, Syringe } from "lucide-react";
-import { Card, CardContent } from "@/components/ui/card";
+import { Search, Plus, Syringe, Download, Upload } from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -19,6 +19,8 @@ import {
 import DialogPage from "@/app/component/DialogPage/page";
 import DialogAlert from "@/app/component/DialgoAlert/page";
 import VaccinationModal from "@/app/component/VaccinationModal/page";
+
+import { exportToJSON, exportToExcel, importFromJSON, importFromExcel } from "@/lib/import-export";
 
 function formatDate(d) {
   if (!d) return "";
@@ -108,6 +110,58 @@ export default function VaccinationsPage() {
       showAlert("Erreur", "Erreur lors de la suppression.");
     }
   }
+
+  // 📤 Export Vaccinations
+  const handleExportJSON = () => {
+    exportToJSON(vaccinations, "vaccinations.json");
+  };
+
+  const handleExportExcel = () => {
+    exportToExcel(vaccinations, "vaccinations.xlsx");
+  };
+
+  // 📥 Import Vaccinations
+  const handleImport = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    try {
+      let importedData;
+      if (file.name.endsWith(".json")) {
+        importedData = await importFromJSON(file);
+      } else if (file.name.endsWith(".xlsx") || file.name.endsWith(".xls")) {
+        importedData = await importFromExcel(file);
+      } else {
+        showAlert("Erreur", "Format de fichier non supporté.");
+        return;
+      }
+
+      setLoading(true);
+      for (const item of importedData) {
+        if (item.name) {
+          await fetch("/api/Vaccine", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              name: item.name,
+              createdAt: item.createdAt || new Date().toISOString(),
+            }),
+          });
+        }
+      }
+
+      const res = await fetch("/api/Vaccine");
+      const data = await res.json();
+      if (Array.isArray(data)) setVaccinations(data);
+      showAlert("Succès", "Importation terminée !");
+    } catch (err) {
+      showAlert("Erreur", "Échec de l'importation.");
+    } finally {
+      setLoading(false);
+      e.target.value = "";
+    }
+  }
+
   if (loading) return <LoadingScreen />;
 
   return (
@@ -142,12 +196,41 @@ export default function VaccinationsPage() {
           </div>
         </div>
 
-        <Button
-          onClick={() => setIsAddOpen(true)}
-          className="flex items-center gap-2 bg-[var(--color-600)] hover:bg-[var(--color-700)] text-white shadow rounded-xl"
-        >
-          <Plus className="w-4 h-4" /> Ajouter
-        </Button>
+        <div className="flex gap-2">
+          <Button
+            onClick={handleExportJSON}
+            className="flex items-center gap-2 bg-[var(--color-500)] hover:bg-[var(--color-600)] text-white shadow rounded-xl"
+          >
+            <Download className="w-4 h-4" /> JSON
+          </Button>
+          <Button
+            onClick={handleExportExcel}
+            className="flex items-center gap-2 bg-[var(--color-500)] hover:bg-[var(--color-600)] text-white shadow rounded-xl"
+          >
+            <Download className="w-4 h-4" /> Excel
+          </Button>
+          <div className="relative">
+            <Button
+              onClick={() => document.getElementById("import-vaccinations").click()}
+              className="flex items-center gap-2 bg-[var(--color-500)] hover:bg-[var(--color-600)] text-white shadow rounded-xl"
+            >
+              <Upload className="w-4 h-4" /> Importer
+            </Button>
+            <Input
+              id="import-vaccinations"
+              type="file"
+              accept=".json,.xlsx,.xls"
+              onChange={handleImport}
+              className="hidden absolute inset-0"
+            />
+          </div>
+          <Button
+            onClick={() => setIsAddOpen(true)}
+            className="flex items-center gap-2 bg-[var(--color-600)] hover:bg-[var(--color-700)] text-white shadow rounded-xl"
+          >
+            <Plus className="w-4 h-4" /> Ajouter
+          </Button>
+        </div>
       </div>
 
       {/* Search */}

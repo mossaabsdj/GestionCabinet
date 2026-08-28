@@ -1,8 +1,8 @@
 "use client";
 
 import { useState, useMemo, useEffect } from "react";
-import { Search, Plus, Trash, ClipboardList } from "lucide-react";
-import { Card, CardContent } from "@/components/ui/card";
+import { Search, Plus, ClipboardList, Download, Upload } from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -27,6 +27,8 @@ import {
 } from "@/components/ui/dialog";
 import DialogPage from "@/app/component/DialogPage/page";
 import DialogAlert from "@/app/component/DialgoAlert/page";
+
+import { exportToJSON, exportToExcel, importFromJSON, importFromExcel } from "@/lib/import-export";
 
 function formatDate(d) {
   if (!d) return "";
@@ -110,6 +112,55 @@ export default function BilansPage() {
       showAlert("Erreur", "Erreur lors de la suppression.");
     }
   }
+
+  // 📤 Export Bilans
+  const handleExportJSON = () => {
+    exportToJSON(bilans, "bilans.json");
+  };
+
+  const handleExportExcel = () => {
+    exportToExcel(bilans, "bilans.xlsx");
+  };
+
+  // 📥 Import Bilans
+  const handleImport = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    try {
+      let importedData;
+      if (file.name.endsWith(".json")) {
+        importedData = await importFromJSON(file);
+      } else if (file.name.endsWith(".xlsx") || file.name.endsWith(".xls")) {
+        importedData = await importFromExcel(file);
+      } else {
+        showAlert("Erreur", "Format de fichier non supporté.");
+        return;
+      }
+
+      setLoading(true);
+      for (const item of importedData) {
+        if (item.nom) {
+          await fetch("/api/bilans", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ nom: item.nom }),
+          });
+        }
+      }
+
+      const res = await fetch("/api/bilans");
+      const data = await res.json();
+      if (Array.isArray(data)) setBilans(data);
+      showAlert("Succès", "Importation terminée !");
+    } catch (err) {
+      showAlert("Erreur", "Échec de l'importation.");
+    } finally {
+      setLoading(false);
+      e.target.value = "";
+    }
+  }
+
   if (loading) return <LoadingScreen />;
 
   return (
@@ -134,61 +185,90 @@ export default function BilansPage() {
           </div>
         </div>
 
-        <Dialog>
-          <DialogTrigger asChild>
-            <Button className="flex items-center gap-2 bg-[var(--color-600)] hover:bg-[var(--color-700)] text-white shadow">
-              <Plus className="w-4 h-4" />
-              Ajouter
+        <div className="flex gap-2">
+          <Button
+            onClick={handleExportJSON}
+            className="flex items-center gap-2 bg-[var(--color-500)] hover:bg-[var(--color-600)] text-white shadow"
+          >
+            <Download className="w-4 h-4" /> JSON
+          </Button>
+          <Button
+            onClick={handleExportExcel}
+            className="flex items-center gap-2 bg-[var(--color-500)] hover:bg-[var(--color-600)] text-white shadow"
+          >
+            <Download className="w-4 h-4" /> Excel
+          </Button>
+          <div className="relative">
+            <Button
+              onClick={() => document.getElementById("import-bilans").click()}
+              className="flex items-center gap-2 bg-[var(--color-500)] hover:bg-[var(--color-600)] text-white shadow"
+            >
+              <Upload className="w-4 h-4" /> Importer
             </Button>
-          </DialogTrigger>
-
-          <DialogContent className="sm:max-w-md backdrop-blur-md bg-white/90 border border-[var(--color-200)] shadow-lg">
-            <DialogHeader>
-              <DialogTitle className="text-[var(--color-700)] font-semibold flex items-center gap-2">
-                <ClipboardList className="w-5 h-5" />
-                Nouveau Bilan
-              </DialogTitle>
-            </DialogHeader>
-
-            <div className="space-y-4 py-4">
-              <div className="grid gap-2">
-                <Label htmlFor="nom">Nom du bilan</Label>
-                <Input
-                  id="nom"
-                  placeholder="Ex: Bilan sanguin"
-                  value={newBilan.nom}
-                  onChange={(e) => setNewBilan({ nom: e.target.value })}
-                  className="focus:ring-[var(--color-500)]"
-                />
-              </div>
-            </div>
-
-            <DialogFooter className="flex justify-end gap-2">
-              <DialogClose asChild>
-                <Button
-                  variant="outline"
-                  className="border-[var(--color-300)] text-[var(--color-700)]"
-                >
-                  Annuler
-                </Button>
-              </DialogClose>
-              <Button
-                disabled={loading}
-                onClick={(e) => {
-                  e.preventDefault();
-                  handleAddBilan(() =>
-                    document
-                      .querySelector("[data-state='open'] button")
-                      ?.click()
-                  );
-                }}
-                className="bg-[var(--color-600)] hover:bg-[var(--color-700)] text-white"
-              >
-                {loading ? "Ajout..." : "Confirmer"}
+            <Input
+              id="import-bilans"
+              type="file"
+              accept=".json,.xlsx,.xls"
+              onChange={handleImport}
+              className="hidden absolute inset-0"
+            />
+          </div>
+          <Dialog>
+            <DialogTrigger asChild>
+              <Button className="flex items-center gap-2 bg-[var(--color-600)] hover:bg-[var(--color-700)] text-white shadow">
+                <Plus className="w-4 h-4" />
+                Ajouter
               </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
+            </DialogTrigger>
+
+            <DialogContent className="sm:max-w-md backdrop-blur-md bg-white/90 border border-[var(--color-200)] shadow-lg">
+              <DialogHeader>
+                <DialogTitle className="text-[var(--color-700)] font-semibold flex items-center gap-2">
+                  <ClipboardList className="w-5 h-5" />
+                  Nouveau Bilan
+                </DialogTitle>
+              </DialogHeader>
+
+              <div className="space-y-4 py-4">
+                <div className="grid gap-2">
+                  <Label htmlFor="nom">Nom du bilan</Label>
+                  <Input
+                    id="nom"
+                    placeholder="Ex: Bilan sanguin"
+                    value={newBilan.nom}
+                    onChange={(e) => setNewBilan({ nom: e.target.value })}
+                    className="focus:ring-[var(--color-500)]"
+                  />
+                </div>
+              </div>
+
+              <DialogFooter className="flex justify-end gap-2">
+                <DialogClose asChild>
+                  <Button
+                    variant="outline"
+                    className="border-[var(--color-300)] text-[var(--color-700)]"
+                  >
+                    Annuler
+                  </Button>
+                </DialogClose>
+                <Button
+                  disabled={loading}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    handleAddBilan(() =>
+                      document
+                        .querySelector("[data-state='open'] button")
+                        ?.click()
+                    );
+                  }}
+                  className="bg-[var(--color-600)] hover:bg-[var(--color-700)] text-white"
+                >
+                  {loading ? "Ajout..." : "Confirmer"}
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+        </div>
       </div>
 
       {/* Search */}

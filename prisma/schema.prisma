@@ -76,6 +76,7 @@ model Consultation {
 
   // Newly added fields
   motifDeConsultation   String?
+  justification         String?
   perimetreCranien      Float?
   rendezVousId          Int?
   rendezVous            RendezVous?   @relation(fields: [rendezVousId], references: [id], onDelete: SetNull)

@@ -49,7 +49,7 @@ export default function ParametrePage() {
   };
 
   // === Handle Restore ===
-const handleRestore = async () => {
+  const handleRestore = async () => {
     try {
       setLoading(true);
       setMessage("Importation de la base de données en cours...");
@@ -89,7 +89,9 @@ const handleRestore = async () => {
         <div className="mb-8">
           <div className="flex items-center gap-3 mb-4">
             <Palette className="w-5 h-5 text-[var(--color-600)]" />
-            <h2 className="text-lg font-semibold text-gray-900">Thème et Apparence</h2>
+            <h2 className="text-lg font-semibold text-gray-900">
+              Thème et Apparence
+            </h2>
           </div>
           <Card className="border border-gray-200 shadow-sm">
             <CardHeader>
@@ -186,8 +188,8 @@ const handleRestore = async () => {
                 message.includes("✅")
                   ? "text-green-600"
                   : message.includes("❌")
-                  ? "text-red-600"
-                  : "text-gray-600"
+                    ? "text-red-600"
+                    : "text-gray-600"
               }`}
             >
               {message}
@@ -198,4 +200,3 @@ const handleRestore = async () => {
     </div>
   );
 }
-

@@ -105,6 +105,7 @@ export async function POST(req) {
         glycemie,
         developpementPsychomoteur: data.developpementPsychomoteur || null,
         motifDeConsultation: data.motifDeConsultation || null,
+        justification: data.justification || null,
         perimetreCranien,
         rendezVousId, // ✅ now always set if date given
 
@@ -190,6 +191,7 @@ export async function PUT(req) {
       glycemie,
       developpementPsychomoteur,
       motifDeConsultation,
+      justification,
       perimetreCranien,
       rendezVousId,
       rendezVousDate,
@@ -248,6 +250,7 @@ export async function PUT(req) {
         developpementPsychomoteur,
       }),
       ...(motifDeConsultation !== undefined && { motifDeConsultation }),
+      ...(justification !== undefined && { justification }),
       ...(perimetreCranien !== undefined && {
         perimetreCranien: perimetreCranien
           ? parseFloat(perimetreCranien)
