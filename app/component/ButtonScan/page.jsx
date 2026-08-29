@@ -69,13 +69,13 @@ export default function ButtonScan() {
           <div className="flex flex-col gap-4 mt-6">
             <Button
               onClick={() => openFilePicker("application/pdf")}
-              className="bg-gradient-to-r from-[var(--color-50)] to-[var(--color-700)] hover:from-[var(--color-600)] hover:to-[var(--color-800)] text-white w-full py-3 rounded-xl font-semibold shadow-md transition"
+              className="bg-gradient-to-r from-[var(--color-500)] to-[var(--color-700)] hover:from-[var(--color-600)] hover:to-[var(--color-800)] text-white w-full py-3 rounded-xl font-semibold shadow-md transition"
             >
               📑 Bilan (PDF de laboratoire)
             </Button>
             <Button
               onClick={() => openFilePicker("image/*")}
-              className="bg-gradient-to-r from-[var(--color-400)] to-[var(--color-600)] hover:from-[var(--color-50)] hover:to-[var(--color-700)] text-white w-full py-3 rounded-xl font-semibold shadow-md transition"
+              className="bg-gradient-to-r from-[var(--color-400)] to-[var(--color-600)] hover:from-[var(--color-500)] hover:to-[var(--color-700)] text-white w-full py-3 rounded-xl font-semibold shadow-md transition"
             >
               📷 Scanner (Image radiologique → PDF)
             </Button>
@@ -92,4 +92,3 @@ export default function ButtonScan() {
     </>
   );
 }
-

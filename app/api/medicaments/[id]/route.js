@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 
+export const dynamic = "force-dynamic";
+
 // ✅ Get one medicament
 export async function GET(req, { params }) {
   try {
@@ -30,7 +32,7 @@ export async function PUT(req, { params }) {
     console.error("Error updating medicament:", error);
     return NextResponse.json(
       { error: "Erreur lors de la mise à jour" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
@@ -46,8 +48,7 @@ export async function DELETE(req, { params }) {
     console.error("Error deleting medicament:", error);
     return NextResponse.json(
       { error: "Erreur lors de la suppression" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
-

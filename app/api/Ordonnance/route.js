@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 
+export const dynamic = "force-dynamic";
+
 // =========================
 // ✅ GET all or by patientId
 // =========================
@@ -26,7 +28,7 @@ export async function GET(request) {
     console.error("❌ Error fetching ordonnances:", error);
     return NextResponse.json(
       { error: "Failed to fetch ordonnances" },
-      { status: 500 }
+      { status: 500 },
     );
   } finally {
     await prisma.$disconnect();
@@ -44,7 +46,7 @@ export async function POST(request) {
     if (!patientId || !items || items.length === 0) {
       return NextResponse.json(
         { error: "patientId and at least one item are required" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -74,7 +76,7 @@ export async function POST(request) {
     console.error("❌ Error creating ordonnance:", error);
     return NextResponse.json(
       { error: "Failed to create ordonnance" },
-      { status: 500 }
+      { status: 500 },
     );
   } finally {
     await prisma.$disconnect();
@@ -92,7 +94,7 @@ export async function PUT(request) {
     if (!id) {
       return NextResponse.json(
         { error: "Ordonnance ID is required for update" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -129,7 +131,7 @@ export async function PUT(request) {
     console.error("❌ Error updating ordonnance:", error);
     return NextResponse.json(
       { error: "Failed to update ordonnance" },
-      { status: 500 }
+      { status: 500 },
     );
   } finally {
     await prisma.$disconnect();
@@ -147,7 +149,7 @@ export async function DELETE(request) {
     if (!id) {
       return NextResponse.json(
         { error: "Ordonnance ID is required for delete" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -166,10 +168,9 @@ export async function DELETE(request) {
     console.error("❌ Error deleting ordonnance:", error);
     return NextResponse.json(
       { error: "Failed to delete ordonnance" },
-      { status: 500 }
+      { status: 500 },
     );
   } finally {
     await prisma.$disconnect();
   }
 }
-

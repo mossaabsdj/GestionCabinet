@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 
+export const dynamic = "force-dynamic";
+
 // ✅ Get all medicaments
 export async function GET() {
   try {
@@ -12,7 +14,7 @@ export async function GET() {
     console.error("Error fetching medicaments:", error);
     return NextResponse.json(
       { error: "Erreur lors du chargement" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
@@ -36,8 +38,7 @@ export async function POST(req) {
     console.error("Error creating medicament:", error);
     return NextResponse.json(
       { error: "Erreur lors de la création" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
-

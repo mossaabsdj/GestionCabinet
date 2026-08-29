@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 
+export const dynamic = "force-dynamic";
+
 // =====================
 // GET /api/recettes
 // =====================
@@ -33,7 +35,7 @@ export async function GET() {
     console.error("❌ Error fetching recettes:", error);
     return NextResponse.json(
       { error: "Erreur lors du chargement des recettes types" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
@@ -49,7 +51,7 @@ export async function POST(req) {
     if (!nom || nom.trim() === "") {
       return NextResponse.json(
         { error: "Le nom de la recette est requis" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -79,7 +81,7 @@ export async function POST(req) {
     console.error("❌ Error creating recette:", error);
     return NextResponse.json(
       { error: "Erreur lors de la création de la recette" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
@@ -95,7 +97,7 @@ export async function PUT(req) {
     if (!id || !nom) {
       return NextResponse.json(
         { error: "ID et nom sont requis" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -130,7 +132,7 @@ export async function PUT(req) {
     console.error("❌ Error updating recette:", error);
     return NextResponse.json(
       { error: "Erreur lors de la mise à jour de la recette" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
@@ -146,7 +148,7 @@ export async function DELETE(req) {
     if (!id) {
       return NextResponse.json(
         { error: "ID de la recette requis" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -161,8 +163,7 @@ export async function DELETE(req) {
     console.error("❌ Error deleting recette:", error);
     return NextResponse.json(
       { error: "Erreur lors de la suppression de la recette" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
-

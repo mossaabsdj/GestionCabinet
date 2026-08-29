@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 
+export const dynamic = "force-dynamic";
+
 // ✅ GET — Fetch all or by patientId
 export async function GET(request) {
   try {
@@ -28,7 +30,7 @@ export async function GET(request) {
     console.error("❌ Error fetching bilanRecip:", error);
     return NextResponse.json(
       { error: "Erreur lors de la récupération des bilans reçus." },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
@@ -42,7 +44,7 @@ export async function POST(request) {
     if (!patientId || !consultationId) {
       return NextResponse.json(
         { error: "patientId et consultationId sont requis." },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -73,7 +75,7 @@ export async function POST(request) {
     console.error("❌ Error creating bilanRecip:", error);
     return NextResponse.json(
       { error: "Erreur lors de la création du bilan reçu." },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
@@ -86,7 +88,7 @@ export async function DELETE(request) {
     if (!id) {
       return NextResponse.json(
         { error: "L'ID du bilan est requis pour la suppression." },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -105,7 +107,7 @@ export async function DELETE(request) {
     console.error("❌ Error deleting BilanRecip:", error);
     return NextResponse.json(
       { error: "Erreur lors de la suppression du bilan reçu." },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
@@ -119,7 +121,7 @@ export async function PUT(request) {
     if (!id) {
       return NextResponse.json(
         { error: "L'ID du bilan est requis pour la mise à jour." },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -155,8 +157,7 @@ export async function PUT(request) {
     console.error("❌ Error updating BilanRecip:", error);
     return NextResponse.json(
       { error: "Erreur lors de la mise à jour du bilan reçu." },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
-

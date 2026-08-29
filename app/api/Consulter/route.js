@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 
+export const dynamic = "force-dynamic";
+
 // ====================
 // GET consultations (all or by patientId)
 // ====================
@@ -39,7 +41,7 @@ export async function GET(req) {
     console.error("GET consultations error:", error);
     return NextResponse.json(
       { error: "Failed to fetch consultations" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
@@ -163,7 +165,7 @@ export async function POST(req) {
     console.error("POST consultation error:", error);
     return NextResponse.json(
       { error: "Failed to create consultation" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
@@ -201,7 +203,7 @@ export async function PUT(req) {
     if (!id) {
       return NextResponse.json(
         { error: "L'ID de la consultation est requis" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -298,7 +300,7 @@ export async function PUT(req) {
     console.error("❌ PUT consultation error:", error);
     return NextResponse.json(
       { error: "Échec de la mise à jour de la consultation" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
@@ -338,8 +340,7 @@ export async function DELETE(req) {
     console.error("DELETE consultation error:", error);
     return NextResponse.json(
       { error: "Failed to delete consultation" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
-

@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 
+export const dynamic = "force-dynamic";
+
 // =====================
 // GET /api/bilans
 // =====================
@@ -14,7 +16,7 @@ export async function GET() {
     console.error("❌ Error fetching bilans:", error);
     return NextResponse.json(
       { error: "Erreur lors du chargement des bilans" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
@@ -36,7 +38,7 @@ export async function POST(req) {
     if (existing) {
       return NextResponse.json(
         { error: "Ce bilan existe déjà" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -49,7 +51,7 @@ export async function POST(req) {
     console.error("❌ Error creating bilan:", error);
     return NextResponse.json(
       { error: "Erreur lors de la création du bilan" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
@@ -65,7 +67,7 @@ export async function PUT(req) {
     if (!id || !nom || nom.trim() === "") {
       return NextResponse.json(
         { error: "ID et nom sont requis" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -79,7 +81,7 @@ export async function PUT(req) {
     console.error("❌ Error updating bilan:", error);
     return NextResponse.json(
       { error: "Erreur lors de la mise à jour du bilan" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
@@ -95,7 +97,7 @@ export async function DELETE(req) {
     if (!id) {
       return NextResponse.json(
         { error: "ID du bilan requis" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -106,8 +108,7 @@ export async function DELETE(req) {
     console.error("❌ Error deleting bilan:", error);
     return NextResponse.json(
       { error: "Erreur lors de la suppression du bilan" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
-

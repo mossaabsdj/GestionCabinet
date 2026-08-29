@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import path from "path";
 import { writeFile, mkdir } from "fs/promises";
 
+export const dynamic = "force-dynamic";
+
 // Ensure the uploads directory exists
 const ensureUploadsDir = async (uploadDir) => {
   try {
@@ -32,11 +34,10 @@ export const POST = async (req) => {
     console.log("File uploaded to:", filePath);
     return NextResponse.json(
       { message: "File uploaded successfully." },
-      { status: 201 }
+      { status: 201 },
     );
   } catch (error) {
     console.error("Error writing file:", error);
     return NextResponse.json({ error: "File upload failed." }, { status: 500 });
   }
 };
-

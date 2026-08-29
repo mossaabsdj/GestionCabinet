@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/dialog";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Calendar, Trash2 } from "lucide-react";
+import { printOrdonnance, printBilan } from "@/lib/printer";
 // ✅ Pediatric Age Calculation
 function calculateAge(dateString) {
   if (!dateString) return "";
@@ -157,7 +158,7 @@ export default function OrdBilanPage({ patientId, query, selectedPatient }) {
           "/nextOrdonnanceId" +
           nextOrdonnanceId,
       );
-      window.electron?.printOrdonnance({
+      printOrdonnance({
         consultationId: nextConsultationId,
         ordonnanceId: nextOrdonnanceId,
         nom,
@@ -207,7 +208,7 @@ export default function OrdBilanPage({ patientId, query, selectedPatient }) {
       const nextBilanId = bilan.id || 0;
       const nextConsultationId = bilan.consultationId || 0;
 
-      window.electron?.printBilan({
+      printBilan({
         bilanId: nextBilanId,
         consultationId: nextConsultationId,
         nom,
@@ -659,4 +660,3 @@ export default function OrdBilanPage({ patientId, query, selectedPatient }) {
     </div>
   );
 }
-

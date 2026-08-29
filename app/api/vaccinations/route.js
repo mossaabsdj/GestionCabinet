@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 
+export const dynamic = "force-dynamic";
+
 /* =====================
    🟢 GET /api/vaccinations
    ===================== */
@@ -28,7 +30,7 @@ export async function GET(req) {
     console.error("❌ Error fetching vaccinations:", error);
     return NextResponse.json(
       { error: "Erreur lors du chargement des vaccinations" },
-      { status: 500 }
+      { status: 500 },
     );
   } finally {
     await prisma.$disconnect(); // ✅ to avoid "too many connections" errors
@@ -46,7 +48,7 @@ export async function POST(req) {
     if (!patientId || !vaccineId || !dateGiven) {
       return NextResponse.json(
         { error: "Champs obligatoires manquants" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -69,7 +71,7 @@ export async function POST(req) {
     console.error("❌ Error creating vaccination:", error);
     return NextResponse.json(
       { error: "Erreur lors de la création de la vaccination" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
@@ -85,7 +87,7 @@ export async function PUT(req) {
     if (!id || !vaccineId || !dateGiven) {
       return NextResponse.json(
         { error: "Champs requis manquants pour la mise à jour" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -108,7 +110,7 @@ export async function PUT(req) {
     console.error("❌ Error updating vaccination:", error);
     return NextResponse.json(
       { error: "Erreur lors de la mise à jour de la vaccination" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
@@ -124,7 +126,7 @@ export async function DELETE(req) {
     if (!id) {
       return NextResponse.json(
         { error: "ID de la vaccination requis" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -135,8 +137,7 @@ export async function DELETE(req) {
     console.error("❌ Error deleting vaccination:", error);
     return NextResponse.json(
       { error: "Erreur lors de la suppression de la vaccination" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
-

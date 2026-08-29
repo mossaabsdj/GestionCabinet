@@ -5,11 +5,11 @@ import { createContext, useContext, useEffect, useState } from "react";
 const ThemeContext = createContext();
 
 export const themes = [
-  { name: "Default", value: "default", color: "oklch(0.6 0.15 250)" },
-  { name: "Blue", value: "blue", color: "oklch(0.6 0.18 250)" },
-  { name: "Green", value: "green", color: "oklch(0.55 0.15 150)" },
-  { name: "Purple", value: "purple", color: "oklch(0.65 0.2 300)" },
-  { name: "Orange", value: "orange", color: "oklch(0.65 0.18 40)" },
+  { name: "Cyan Médical (Par défaut)", value: "default", color: "oklch(0.52 0.14 200)" },
+  { name: "Bleu Royal", value: "blue", color: "oklch(0.52 0.16 250)" },
+  { name: "Vert Émeraude", value: "green", color: "oklch(0.52 0.14 150)" },
+  { name: "Violet Pédiatrique", value: "purple", color: "oklch(0.52 0.17 300)" },
+  { name: "Orange / Ambre", value: "orange", color: "oklch(0.56 0.16 45)" },
 ];
 
 export function ThemeProvider({ children }) {

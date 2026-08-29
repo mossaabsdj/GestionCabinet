@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 
+export const dynamic = "force-dynamic";
+
 // =====================
 // GET /api/patients
 // =====================
@@ -25,7 +27,7 @@ export async function GET(request) {
       if (!patient) {
         return NextResponse.json(
           { error: "Patient non trouvé" },
-          { status: 404 }
+          { status: 404 },
         );
       }
 
@@ -47,7 +49,7 @@ export async function GET(request) {
     console.error("❌ Error fetching patients:", error);
     return NextResponse.json(
       { error: "Erreur lors du chargement des patients" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
@@ -92,7 +94,7 @@ export async function POST(req) {
     console.error("❌ Error creating patient:", error);
     return NextResponse.json(
       { error: "Erreur lors de la création du patient" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
@@ -119,7 +121,7 @@ export async function PUT(req) {
     if (!id || !nom || nom.trim() === "") {
       return NextResponse.json(
         { error: "ID et nom sont requis" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -147,7 +149,7 @@ export async function PUT(req) {
     console.error("❌ Error updating patient:", error);
     return NextResponse.json(
       { error: "Erreur lors de la mise à jour du patient" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
@@ -163,7 +165,7 @@ export async function DELETE(req) {
     if (!id) {
       return NextResponse.json(
         { error: "ID du patient requis" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -174,8 +176,7 @@ export async function DELETE(req) {
     console.error("❌ Error deleting patient:", error);
     return NextResponse.json(
       { error: "Erreur lors de la suppression du patient" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
-

@@ -29,10 +29,15 @@ const Sidebar = ({
   const [activeItem, setActiveItem] = useState(items[0]?.url || "");
   const [hoveredItem, setHoveredItem] = useState(null);
   const handleExit = () => {
-    if (window?.electron?.exit) {
+    if (typeof window !== "undefined" && window?.electron?.exit) {
       window.electron.exit();
-    } else {
-      alert("Exit unavailable outside Electron.");
+    } else if (typeof window !== "undefined") {
+      const confirmClose = window.confirm(
+        "Voulez-vous quitter l'application ?",
+      );
+      if (confirmClose) {
+        window.close();
+      }
     }
   };
   const handleItemClick = (item) => {
@@ -102,7 +107,7 @@ const Sidebar = ({
                   ${
                     isActive
                       ? "bg-gradient-to-r from-[var(--color-600)] to-[var(--color-500)] shadow-lg"
-                      : "hover:bg-[var(--color-700)]"
+                      : "hover:bg-white/10"
                   }
                 `}
               >
@@ -113,8 +118,10 @@ const Sidebar = ({
 
                 {/* Icon */}
                 <Icon
-                  className={`w-5 h-5 ${
-                    isActive ? "text-white" : "text-[var(--color-700)]"
+                  className={`w-5 h-5 transition-colors ${
+                    isActive
+                      ? "text-white"
+                      : "text-white/70 group-hover:text-white"
                   }`}
                 />
 
@@ -126,8 +133,8 @@ const Sidebar = ({
                       animate={{ opacity: 1 }}
                       exit={{ opacity: 0 }}
                       transition={{ duration: 0.2 }}
-                      className={`flex-1 text-left font-medium ${
-                        isActive ? "text-white" : "text-[var(--color-200)]"
+                      className={`flex-1 text-left font-medium transition-colors ${
+                        isActive ? "text-white font-semibold" : "text-white/80"
                       }`}
                     >
                       {item.title}
@@ -217,4 +224,3 @@ export default function App() {
     </div>
   );
 }
-

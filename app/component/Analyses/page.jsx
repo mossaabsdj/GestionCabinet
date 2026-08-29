@@ -33,10 +33,15 @@ export default function Analyses({
   const [basePath, setBasePath] = useState("");
 
   useEffect(() => {
-    // Get Electron path only once
-    window.electron.getAppPath().then((path) => {
-      setBasePath(path);
-    });
+    // Get Electron path only if available
+    if (typeof window !== "undefined" && window?.electron?.getAppPath) {
+      window.electron
+        .getAppPath()
+        .then((path) => {
+          setBasePath(path);
+        })
+        .catch(() => setBasePath(""));
+    }
   }, []);
   // ✅ Fetch files (filtered by patient)
   const fetchFiles = async () => {
@@ -90,13 +95,16 @@ export default function Analyses({
     if (patientID) fetchFiles();
   }, [patientID]);
 
-  // ✅ Open file in new tab
-  const openFile = (fullPath) => {
-    console.log("path" + fullPath);
-    if (window.electron?.openFile) {
+  // ✅ Open file in new tab or Electron shell
+  const openFile = (fileName) => {
+    if (!fileName) return;
+    if (typeof window !== "undefined" && window?.electron?.openFile) {
+      const fullPath = basePath
+        ? `${basePath}/public/uploads/${fileName}`
+        : fileName;
       window.electron.openFile(fullPath);
-    } else {
-      console.error("openFile not available in electronAPI");
+    } else if (typeof window !== "undefined") {
+      window.open(`/uploads/${fileName}`, "_blank");
     }
   };
 
@@ -210,9 +218,7 @@ export default function Analyses({
                     className={`cursor-pointer transition-colors hover:bg-[var(--color-50)] ${
                       index % 2 === 0 ? "bg-white" : "bg-gray-50"
                     }`}
-                    onClick={() =>
-                      openFile(`${basePath}/public/uploads/${file.fichier}`)
-                    }
+                    onClick={() => openFile(file.fichier)}
                   >
                     <td className="px-6 py-4">
                       <span className="text-sm font-medium text-gray-900">
@@ -362,4 +368,3 @@ export default function Analyses({
     </div>
   );
 }
-

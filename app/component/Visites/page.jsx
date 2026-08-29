@@ -33,6 +33,7 @@ import {
   Sparkles,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { printOrdonnance, printBilan } from "@/lib/printer";
 
 export default function PatientVisits({ patientId, query, fetchPatientById }) {
   const [visits, setVisits] = useState([]);
@@ -101,8 +102,8 @@ export default function PatientVisits({ patientId, query, fetchPatientById }) {
       console.log("🩺 Next Consultation ID:", nextConsultationId);
       console.log("💊 Next Ordonnance ID:", nextOrdonnanceId);
       console.log(nom + "-" + prenom + "-" + age);
-      // 3️⃣ Send to Electron printer
-      window.electron?.printOrdonnance({
+      // 3️⃣ Send to printer (Electron or Web)
+      printOrdonnance({
         consultationId: nextConsultationId,
         ordonnanceId: nextOrdonnanceId,
         nom: nom,
@@ -159,8 +160,8 @@ export default function PatientVisits({ patientId, query, fetchPatientById }) {
       console.log("🩺 Next Consultation ID:", nextConsultationId);
       console.log(`👶 ${nom} - ${prenom} - ${age}`);
 
-      // 🖨️ Send to Electron for printing
-      window.electron?.printBilan({
+      // 🖨️ Send to printer (Electron or Web)
+      printBilan({
         bilanId: nextBilanId,
         consultationId: nextConsultationId,
         nom,
@@ -923,4 +924,3 @@ export default function PatientVisits({ patientId, query, fetchPatientById }) {
     </div>
   );
 }
-

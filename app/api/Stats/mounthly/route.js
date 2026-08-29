@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 
+export const dynamic = "force-dynamic";
+
 export async function GET(req) {
   try {
     const { searchParams } = new URL(req.url);
@@ -10,7 +12,7 @@ export async function GET(req) {
     if (!monthParam || monthParam < 1 || monthParam > 12) {
       return NextResponse.json(
         { error: "Paramètre 'month' invalide (doit être entre 1 et 12)" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -46,4 +48,3 @@ export async function GET(req) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }
-

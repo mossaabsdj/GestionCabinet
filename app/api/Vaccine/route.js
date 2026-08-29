@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 
+export const dynamic = "force-dynamic";
+
 export async function GET() {
   try {
     const vaccines = await prisma.vaccine.findMany({
@@ -11,7 +13,7 @@ export async function GET() {
     console.error("GET /api/vaccines error:", error);
     return NextResponse.json(
       { error: "Erreur lors du chargement des vaccins" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
@@ -27,7 +29,7 @@ export async function POST(req) {
     if (!name || name.trim() === "") {
       return NextResponse.json(
         { error: "Le nom du vaccin est requis" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -36,7 +38,7 @@ export async function POST(req) {
     if (existing) {
       return NextResponse.json(
         { error: "Ce vaccin existe déjà" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -49,7 +51,7 @@ export async function POST(req) {
     console.error("POST /api/vaccines error:", error);
     return NextResponse.json(
       { error: "Erreur lors de l’ajout du vaccin" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
@@ -65,7 +67,7 @@ export async function DELETE(req) {
     if (!id) {
       return NextResponse.json(
         { error: "ID du vaccin manquant" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -75,8 +77,7 @@ export async function DELETE(req) {
     console.error("DELETE /api/vaccines error:", error);
     return NextResponse.json(
       { error: "Erreur lors de la suppression du vaccin" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
-
