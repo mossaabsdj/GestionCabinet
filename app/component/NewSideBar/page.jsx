@@ -1,6 +1,6 @@
 "use client";
-import React, { useState } from "react";
-import { useRouter } from "next/navigation";
+import React, { useState, useEffect } from "react";
+import { useRouter, usePathname } from "next/navigation";
 import param from "@/param.json";
 
 import { motion, AnimatePresence } from "framer-motion";
@@ -16,6 +16,7 @@ import {
   LogOut,
   Settings,
   Calendar,
+  Sparkles,
 } from "lucide-react";
 import app from "@/param.json";
 const Sidebar = ({
@@ -187,11 +188,23 @@ const Sidebar = ({
 // Demo App
 export default function App() {
   const router = useRouter();
+  const pathname = usePathname();
   const [collapsed, setCollapsed] = useState(false);
-  const [currentPage, setCurrentPage] = useState("Accueill");
+  const [isElectron, setIsElectron] = useState(false);
+
+  useEffect(() => {
+    if (typeof window !== "undefined" && window?.electron) {
+      setIsElectron(true);
+    }
+  }, []);
+
+  // Do not render sidebar on /Apropos or on web landing page /
+  if (pathname === "/Apropos" || (pathname === "/" && !isElectron)) {
+    return null;
+  }
 
   const items = [
-    { title: "Tableau de bord", url: "/", icon: Home },
+    { title: "Tableau de bord", url: "Accueill", icon: Home },
     { title: "Consulter", url: "Consulter", icon: Stethoscope },
     { title: "Patients", url: "Patients", icon: Users },
     { title: "Predifined", url: "Predifined", icon: FileText },

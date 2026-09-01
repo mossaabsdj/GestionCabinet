@@ -7,7 +7,14 @@ const { backupDatabase } = require("./backup");
 const { restoreDatabase } = require("./restore");
 const { autoUpdater } = require("electron-updater");
 
-const param = require(path.join(process.execPath, "..", "param.json"));
+let param = {};
+try {
+  param = require("./param.json");
+} catch (e) {
+  try {
+    param = require(path.join(process.execPath, "..", "param.json"));
+  } catch (e2) {}
+}
 let mainWindow;
 let splashWindow;
 let serverProcess;
@@ -30,7 +37,7 @@ function createSplashScreen() {
   const splashHtml = `<!DOCTYPE html><html><head><style>*{margin:0;padding:0;box-sizing:border-box}body{font-family:'Segoe UI','Roboto',sans-serif;background:transparent;display:flex;justify-content:center;align-items:center;height:100vh;overflow:hidden}.splash-container{background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);border-radius:20px;padding:40px;box-shadow:0 20px 60px rgba(102,126,234,0.4);text-align:center;width:500px;height:400px;display:flex;flex-direction:column;justify-content:center;align-items:center;position:relative;overflow:hidden}.splash-container::before{content:'';position:absolute;top:-50%;left:-50%;width:200%;height:200%;background:radial-gradient(circle,rgba(255,255,255,0.1) 0%,transparent 70%);animation:pulse 3s ease-in-out infinite}@keyframes pulse{0%,100%{transform:scale(1);opacity:0.5}50%{transform:scale(1.1);opacity:0.8}}.content{position:relative;z-index:1}.icon{width:100px;height:100px;background:white;border-radius:50%;display:flex;justify-content:center;align-items:center;margin:0 auto 25px;box-shadow:0 10px 30px rgba(0,0,0,0.2);animation:bounce 2s ease-in-out infinite}@keyframes bounce{0%,100%{transform:translateY(0)}50%{transform:translateY(-10px)}}.icon svg{width:60px;height:60px;fill:#764ba2}h1{color:white;font-size:32px;font-weight:700;margin-bottom:8px;text-shadow:0 2px 10px rgba(0,0,0,0.2)}.subtitle{color:rgba(255,255,255,0.95);font-size:18px;font-weight:500;margin-bottom:35px}.loader{width:200px;height:6px;background:rgba(255,255,255,0.2);border-radius:10px;overflow:hidden;margin:0 auto}.loader-bar{height:100%;background:white;border-radius:10px;animation:loading 2s ease-in-out infinite;box-shadow:0 0 15px rgba(255,255,255,0.5)}@keyframes loading{0%{width:0%}50%{width:70%}100%{width:100%}}.version{color:rgba(255,255,255,0.7);font-size:12px;margin-top:20px;font-weight:400}</style></head><body><div class="splash-container"><div class="content"><div class="icon"><svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z"/></svg></div><h1>${param.title}</h1><div class="subtitle">Pédiatre</div><div class="loader"><div class="loader-bar"></div></div><div class="version">Version 1.0.0</div></div></div></body></html>`;
 
   splashWindow.loadURL(
-    "data:text/html;charset=utf-8," + encodeURIComponent(splashHtml)
+    "data:text/html;charset=utf-8," + encodeURIComponent(splashHtml),
   );
   splashWindow.on("closed", () => {
     splashWindow = null;
@@ -55,7 +62,7 @@ function createUpdateWindow() {
   const updateHtml = `<!DOCTYPE html><html><head><style>*{margin:0;padding:0;box-sizing:border-box}body{background:transparent;font-family:'Segoe UI',-apple-system,BlinkMacSystemFont,sans-serif;display:flex;justify-content:center;align-items:center;height:100vh;overflow:hidden}.update-container{width:600px;background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);border-radius:24px;box-shadow:0 25px 80px rgba(0,0,0,0.3);padding:48px;text-align:center;color:white;position:relative;overflow:hidden}.update-container::before{content:'';position:absolute;top:-50%;left:-50%;width:200%;height:200%;background:radial-gradient(circle,rgba(255,255,255,0.08) 0%,transparent 70%);animation:rotate 20s linear infinite}@keyframes rotate{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}.content{position:relative;z-index:1}.icon-container{width:100px;height:100px;background:white;border-radius:50%;display:flex;justify-content:center;align-items:center;margin:0 auto 24px;box-shadow:0 12px 40px rgba(0,0,0,0.2);animation:pulse-icon 2s ease-in-out infinite}@keyframes pulse-icon{0%,100%{transform:scale(1)}50%{transform:scale(1.05)}}.icon-container svg{width:56px;height:56px;fill:#764ba2}h1{font-size:32px;font-weight:700;margin-bottom:12px;text-shadow:0 2px 12px rgba(0,0,0,0.2)}.subtitle{font-size:18px;opacity:0.95;font-weight:500;margin-bottom:8px}#status{font-size:16px;margin:24px 0;min-height:24px;opacity:0.9;font-weight:500}.progress-container{width:100%;height:8px;background:rgba(255,255,255,0.2);border-radius:12px;overflow:hidden;margin:24px 0;display:none}.progress-container.active{display:block}.progress-bar{height:100%;background:white;border-radius:12px;width:0%;transition:width 0.3s ease;box-shadow:0 0 20px rgba(255,255,255,0.5)}.buttons{display:none;gap:16px;margin-top:32px;justify-content:center}.buttons.active{display:flex}.btn{padding:14px 32px;border:none;border-radius:12px;font-size:16px;font-weight:600;cursor:pointer;transition:all 0.3s ease;font-family:inherit;min-width:140px}.btn-primary{background:white;color:#764ba2;box-shadow:0 6px 20px rgba(0,0,0,0.15)}.btn-primary:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(0,0,0,0.2)}.btn-secondary{background:rgba(255,255,255,0.15);color:white;border:2px solid rgba(255,255,255,0.4)}.btn-secondary:hover{background:rgba(255,255,255,0.25);transform:translateY(-2px)}.spinner{width:40px;height:40px;border:4px solid rgba(255,255,255,0.2);border-top-color:white;border-radius:50%;animation:spin 1s linear infinite;margin:24px auto;display:none}.spinner.active{display:block}@keyframes spin{to{transform:rotate(360deg)}}.version-info{margin-top:24px;padding:16px;background:rgba(255,255,255,0.1);border-radius:12px;font-size:14px;display:none}.version-info.active{display:block}.version-info p{margin:8px 0}</style></head><body><div class="update-container"><div class="content"><div class="icon-container"><svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg></div><h1>${param.title}</h1><div class="subtitle">Pédiatre</div><div id="status">Vérification des mises à jour...</div><div class="spinner active" id="spinner"></div><div class="progress-container" id="progressContainer"><div class="progress-bar" id="progressBar"></div></div><div class="version-info" id="versionInfo"></div><div class="buttons" id="buttons"><button class="btn btn-primary" id="btnUpdate">Mettre à jour</button><button class="btn btn-secondary" id="btnSkip">Plus tard</button></div></div></div><script>const {ipcRenderer}=require("electron");const statusEl=document.getElementById("status");const spinnerEl=document.getElementById("spinner");const buttonsEl=document.getElementById("buttons");const progressContainer=document.getElementById("progressContainer");const progressBar=document.getElementById("progressBar");const versionInfo=document.getElementById("versionInfo");const btnUpdate=document.getElementById("btnUpdate");const btnSkip=document.getElementById("btnSkip");ipcRenderer.on("update-status",(event,data)=>{statusEl.textContent=data.message;if(data.type==="checking"){spinnerEl.classList.add("active");buttonsEl.classList.remove("active");progressContainer.classList.remove("active")}if(data.type==="available"){spinnerEl.classList.remove("active");buttonsEl.classList.add("active");versionInfo.classList.add("active");versionInfo.innerHTML=\`<p><strong>Nouvelle version disponible</strong></p><p>Version: \${data.version||'N/A'}</p>\`}if(data.type==="downloading"){spinnerEl.classList.remove("active");buttonsEl.classList.remove("active");progressContainer.classList.add("active");progressBar.style.width=data.percent+"%"}if(data.type==="downloaded"){spinnerEl.classList.remove("active");progressContainer.classList.remove("active");statusEl.textContent="✅ Mise à jour téléchargée ! Redémarrage..."}if(data.type==="not-available"||data.type==="error"){spinnerEl.classList.remove("active");buttonsEl.classList.remove("active");progressContainer.classList.remove("active")}});btnUpdate.addEventListener("click",()=>{ipcRenderer.send("start-update");buttonsEl.classList.remove("active");spinnerEl.classList.add("active");statusEl.textContent="Préparation de la mise à jour..."});btnSkip.addEventListener("click",()=>{ipcRenderer.send("skip-update")});</script></body></html>`;
 
   updaterWindow.loadURL(
-    "data:text/html;charset=utf-8," + encodeURIComponent(updateHtml)
+    "data:text/html;charset=utf-8," + encodeURIComponent(updateHtml),
   );
   updaterWindow.on("closed", () => {
     updaterWindow = null;
@@ -136,7 +143,7 @@ app.whenReady().then(() => {
     sendUpdateStatus(
       "🎉 Une nouvelle mise à jour est disponible !",
       "available",
-      { version: info.version }
+      { version: info.version },
     );
   });
 
@@ -236,8 +243,8 @@ ipcMain.on("printOrdonnance", (event, data) => {
         <div class="med-item">
           <div class="med-header">
             <div class="med-name">${i + 1}. ${m.name || ""} ${
-        m.dosage || ""
-      }</div>
+              m.dosage || ""
+            }</div>
             <div class="med-duration">${
               m.duration ||
               (m.quantity
@@ -246,7 +253,7 @@ ipcMain.on("printOrdonnance", (event, data) => {
             }</div>
           </div>
           <div class="med-frequency">${m.frequency || ""}</div>
-        </div>`
+        </div>`,
     )
     .join("");
 
@@ -454,10 +461,10 @@ ipcMain.on("printOrdonnance", (event, data) => {
     <div class="ord-header">
       <div class="ord-header-top">
         <div class="ord-left">
-          <strong>Dr DIB Amel</strong><br>
-          Médecin Spécialiste en Pédiatrie et Néonatologie<br>
-          <strong>Adresse :</strong> Rue Frères KAFI logts 38, 1er étage<br>
-          El-Harrouch SKIKDA
+          <strong>${param.doctorName || "Professeur"}</strong><br>
+          ${param.specialty || "Médecin Spécialiste en Pédiatrie et Néonatologie"}<br>
+          <strong>Adresse :</strong> ${param.address || "Rue Frères KAFI logts 38, 1er étage"}<br>
+          ${param.city || "El-Harrouch SKIKDA"}
         </div>
         
         <div class="ord-center">
@@ -465,15 +472,15 @@ ipcMain.on("printOrdonnance", (event, data) => {
         </div>
 
         <div class="ord-right">
-          <strong>د. ديب آمال</strong><br>
-          طبيبة مختصة في طب الأطفال و حديثي الولادة<br>
-          <strong>العنوان :</strong> شارع الإخوة كافي عقار 38 الطابق الأول<br>
-          (بزاز لعلاوي) الحروش - سكيكدة
+          <strong>${param.doctorNameAr || "بروفيسور"}</strong><br>
+          ${param.specialtyAr || "طبيبة مختصة في طب الأطفال و حديثي الولادة"}<br>
+          <strong>العنوان :</strong> ${param.addressAr || "شارع الإخوة كافي عقار 38 الطابق الأول"}<br>
+          ${param.cityAr || "(بزاز لعلاوي) الحروش - سكيكدة"}
         </div>
       </div>
       
       <div class="ord-phone">
-        <strong>Tél :</strong> 0652 76 89 72 / 0562 24 40 87
+        <strong>Tél :</strong> ${param.phones || "0652 76 89 72 / 0562 24 40 87"}
       </div>
     </div>
 
@@ -482,7 +489,7 @@ ipcMain.on("printOrdonnance", (event, data) => {
       <span><strong>Prénom :</strong> ${prenom}</span>
       <span><strong>Âge :</strong> ${age}</span>
       <span><strong>Le :</strong> ${new Date().toLocaleDateString(
-        "fr-FR"
+        "fr-FR",
       )}</span>
     </div>
 
@@ -499,7 +506,7 @@ ipcMain.on("printOrdonnance", (event, data) => {
 `;
 
   printWindow.loadURL(
-    "data:text/html;charset=utf-8," + encodeURIComponent(printHtml)
+    "data:text/html;charset=utf-8," + encodeURIComponent(printHtml),
   );
 
   printWindow.webContents.on("did-finish-load", () => {
@@ -516,7 +523,7 @@ ipcMain.on("printOrdonnance", (event, data) => {
           if (success) console.log("🖨️ Ordonnance printed successfully");
           else console.error("❌ Print failed:", failureReason);
           printWindow.close();
-        }
+        },
       );
     }, 500);
   });
@@ -559,7 +566,7 @@ ipcMain.on("printBilan", (event, data) => {
       (b, i) => `
         <div class="bilan-item">
           <div class="bilan-name">${i + 1}. ${b.nom || b.name || ""}</div>
-        </div>`
+        </div>`,
     )
     .join("");
 
@@ -722,10 +729,10 @@ ipcMain.on("printBilan", (event, data) => {
     <div class="ord-header">
       <div class="ord-header-top">
         <div class="ord-left">
-          <strong>Dr DIB Amel</strong><br>
-          Médecin Spécialiste en Pédiatrie et Néonatologie<br>
-          <strong>Adresse :</strong> Rue Frères KAFI logts 38, 1er étage<br>
-          El-Harrouch SKIKDA
+          <strong>${param.doctorName || "Professeur"}</strong><br>
+          ${param.specialty || "Médecin Spécialiste en Pédiatrie et Néonatologie"}<br>
+          <strong>Adresse :</strong> ${param.address || "Rue Frères KAFI logts 38, 1er étage"}<br>
+          ${param.city || "El-Harrouch SKIKDA"}
         </div>
 
         <div class="ord-center">
@@ -733,15 +740,15 @@ ipcMain.on("printBilan", (event, data) => {
         </div>
 
         <div class="ord-right">
-          <strong>د. ديب آمال</strong><br>
-          طبيبة مختصة في طب الأطفال و حديثي الولادة<br>
-          <strong>العنوان :</strong> شارع الإخوة كافي عقار 38 الطابق الأول<br>
-          (بزاز لعلاوي) الحروش - سكيكدة
+          <strong>${param.doctorNameAr || "بروفيسور"}</strong><br>
+          ${param.specialtyAr || "طبيبة مختصة في طب الأطفال و حديثي الولادة"}<br>
+          <strong>العنوان :</strong> ${param.addressAr || "شارع الإخوة كافي عقار 38 الطابق الأول"}<br>
+          ${param.cityAr || "(بزاز لعلاوي) الحروش - سكيكدة"}
         </div>
       </div>
 
       <div class="ord-phone">
-        <strong>Tél :</strong> 0652 76 89 72 / 0562 24 40 87
+        <strong>Tél :</strong> ${param.phones || "0652 76 89 72 / 0562 24 40 87"}
       </div>
     </div>
 
@@ -750,7 +757,7 @@ ipcMain.on("printBilan", (event, data) => {
       <span><strong>Prénom :</strong> ${prenom}</span>
       <span><strong>Âge :</strong> ${age}</span>
       <span><strong>Le :</strong> ${new Date().toLocaleDateString(
-        "fr-FR"
+        "fr-FR",
       )}</span>
     </div>
 
@@ -766,7 +773,7 @@ ipcMain.on("printBilan", (event, data) => {
 
   // ✅ Load content
   printWindow.loadURL(
-    "data:text/html;charset=utf-8," + encodeURIComponent(printHtml)
+    "data:text/html;charset=utf-8," + encodeURIComponent(printHtml),
   );
 
   // 🖨 Print setup
@@ -784,7 +791,7 @@ ipcMain.on("printBilan", (event, data) => {
           if (success) console.log("🖨️ Bilan printed successfully");
           else console.error("❌ Print failed:", failureReason);
           printWindow.close();
-        }
+        },
       );
     }, 500);
   });

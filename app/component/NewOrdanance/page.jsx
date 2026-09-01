@@ -35,6 +35,7 @@ import {
 } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { printOrdonnance, printBilan } from "@/lib/printer";
+import param from "@/param.json";
 
 const JUSTIF_PRESET_TYPES = [
   { id: "arret7", label: "Arrêt de travail 7 jours" },
@@ -517,7 +518,7 @@ export default function PrescriptionModal({
     win.document.write(`
       <html>
         <head>
-          <title>Justification médicale - Dr DIB Amel</title>
+          <title>Justification médicale - ${param.doctorName || "Professeur"}</title>
           <style>
             body { font-family: 'Segoe UI', Arial, sans-serif; background: #f8f8fa; margin: 0; }
             .justif-print-header { text-align: center; padding: 24px 0 8px; border-bottom: 2px solid #7c3aed; }
@@ -1096,7 +1097,9 @@ export default function PrescriptionModal({
               <div className="hidden" ref={printRef}>
                 <div className="ord-print-header">
                   <div className="ord-print-title">Ordonnance Médicale</div>
-                  <div className="ord-print-doc">Dr DIB Amel</div>
+                  <div className="ord-print-doc">
+                    {param.doctorName || "Professeur"}
+                  </div>
                   <div className="ord-print-date">
                     {new Date().toLocaleDateString("fr-FR", {
                       year: "numeric",
@@ -1364,7 +1367,9 @@ export default function PrescriptionModal({
                         <div className="bilan-print-title">
                           Bilans & Analyses
                         </div>
-                        <div className="bilan-print-doc">Dr DIB Amel</div>
+                        <div className="bilan-print-doc">
+                          {param.doctorName || "Professeur"}
+                        </div>
                         <div className="bilan-print-date">
                           {new Date().toLocaleDateString("fr-FR", {
                             year: "numeric",
@@ -1465,7 +1470,9 @@ export default function PrescriptionModal({
                         <div className="justif-print-title">
                           Justification médicale
                         </div>
-                        <div className="justif-print-doc">Dr DIB Amel</div>
+                        <div className="justif-print-doc">
+                          {param.doctorName || "Professeur"}
+                        </div>
                         <div className="justif-print-date">
                           {new Date().toLocaleDateString("fr-FR", {
                             year: "numeric",

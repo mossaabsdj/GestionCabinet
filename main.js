@@ -6,7 +6,14 @@ const { shell } = require("electron");
 const { Menu } = require("electron");
 const { backupDatabase } = require("./backup");
 const { restoreDatabase } = require("./restore");
-const param = require(path.join(process.execPath, "..", "param.json"));
+let param = {};
+try {
+  param = require("./param.json");
+} catch (e) {
+  try {
+    param = require(path.join(process.execPath, "..", "param.json"));
+  } catch (e2) {}
+}
 let mainWindow;
 let splashWindow;
 let serverProcess;
@@ -546,10 +553,10 @@ ipcMain.on("printOrdonnance", (event, data) => {
     <div class="ord-header">
       <div class="ord-header-top">
         <div class="ord-left">
-          <strong>Dr DIB Amel</strong><br>
-          Médecin Spécialiste en Pédiatrie et Néonatologie<br>
-          <strong>Adresse :</strong> Rue Frères KAFI logts 38, 1er étage<br>
-          El-Harrouch SKIKDA
+          <strong>${param.doctorName || "Professeur"}</strong><br>
+          ${param.specialty || "Médecin Spécialiste en Pédiatrie et Néonatologie"}<br>
+          <strong>Adresse :</strong> ${param.address || "Rue Frères KAFI logts 38, 1er étage"}<br>
+          ${param.city || "El-Harrouch SKIKDA"}
         </div>
         
         <div class="ord-center">
@@ -557,15 +564,15 @@ ipcMain.on("printOrdonnance", (event, data) => {
         </div>
 
         <div class="ord-right">
-          <strong>د. ديب آمال</strong><br>
-          طبيبة مختصة في طب الأطفال و حديثي الولادة<br>
-          <strong>العنوان :</strong> شارع الإخوة كافي عقار 38 الطابق الأول<br>
-          (بزاز لعلاوي) الحروش - سكيكدة
+          <strong>${param.doctorNameAr || "بروفيسور"}</strong><br>
+          ${param.specialtyAr || "طبيبة مختصة في طب الأطفال و حديثي الولادة"}<br>
+          <strong>العنوان :</strong> ${param.addressAr || "شارع الإخوة كافي عقار 38 الطابق الأول"}<br>
+          ${param.cityAr || "(بزاز لعلاوي) الحروش - سكيكدة"}
         </div>
       </div>
       
       <div class="ord-phone">
-        <strong>Tél :</strong> 0652 76 89 72 / 0562 24 40 87
+        <strong>Tél :</strong> ${param.phones || "0652 76 89 72 / 0562 24 40 87"}
       </div>
     </div>
 
@@ -814,10 +821,10 @@ ipcMain.on("printBilan", (event, data) => {
     <div class="ord-header">
       <div class="ord-header-top">
         <div class="ord-left">
-          <strong>Dr DIB Amel</strong><br>
-          Médecin Spécialiste en Pédiatrie et Néonatologie<br>
-          <strong>Adresse :</strong> Rue Frères KAFI logts 38, 1er étage<br>
-          El-Harrouch SKIKDA
+          <strong>${param.doctorName || "Professeur"}</strong><br>
+          ${param.specialty || "Médecin Spécialiste en Pédiatrie et Néonatologie"}<br>
+          <strong>Adresse :</strong> ${param.address || "Rue Frères KAFI logts 38, 1er étage"}<br>
+          ${param.city || "El-Harrouch SKIKDA"}
         </div>
 
         <div class="ord-center">
@@ -825,15 +832,15 @@ ipcMain.on("printBilan", (event, data) => {
         </div>
 
         <div class="ord-right">
-          <strong>د. ديب آمال</strong><br>
-          طبيبة مختصة في طب الأطفال و حديثي الولادة<br>
-          <strong>العنوان :</strong> شارع الإخوة كافي عقار 38 الطابق الأول<br>
-          (بزاز لعلاوي) الحروش - سكيكدة
+          <strong>${param.doctorNameAr || "بروفيسور"}</strong><br>
+          ${param.specialtyAr || "طبيبة مختصة في طب الأطفال و حديثي الولادة"}<br>
+          <strong>العنوان :</strong> ${param.addressAr || "شارع الإخوة كافي عقار 38 الطابق الأول"}<br>
+          ${param.cityAr || "(بزاز لعلاوي) الحروش - سكيكدة"}
         </div>
       </div>
 
       <div class="ord-phone">
-        <strong>Tél :</strong> 0652 76 89 72 / 0562 24 40 87
+        <strong>Tél :</strong> ${param.phones || "0652 76 89 72 / 0562 24 40 87"}
       </div>
     </div>
 

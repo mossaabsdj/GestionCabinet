@@ -34,6 +34,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { printOrdonnance, printBilan } from "@/lib/printer";
+import param from "@/param.json";
 
 export default function PatientVisits({ patientId, query, fetchPatientById }) {
   const [visits, setVisits] = useState([]);
@@ -185,7 +186,7 @@ export default function PatientVisits({ patientId, query, fetchPatientById }) {
     win.document.write(`
       <html>
         <head>
-          <title>Justification médicale - Dr DIB Amel</title>
+          <title>Justification médicale - ${param.doctorName || "Professeur"}</title>
           <style>
             body { font-family: 'Segoe UI', Arial, sans-serif; background: #f8f8fa; margin: 0; }
             .justif-print-header { text-align: center; padding: 24px 0 8px; border-bottom: 2px solid #7c3aed; }
