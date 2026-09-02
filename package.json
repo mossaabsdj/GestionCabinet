@@ -6,8 +6,9 @@
   "private": true,
   "main": "main.js",
   "scripts": {
+    "postinstall": "prisma generate",
     "dev": "next dev",
-    "build": "next build",
+    "build": "prisma generate && next build",
     "release": "electron-builder --publish always",
     "start": "next start",
     "electron:dev": "concurrently \"npm run dev\" \"npm run electron\"",
