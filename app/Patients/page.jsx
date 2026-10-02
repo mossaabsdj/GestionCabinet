@@ -1,0 +1,429 @@
+"use client";
+
+import { useState, useEffect, useMemo } from "react";
+import {
+  Search,
+  Stethoscope,
+  Plus,
+  Trash,
+  ArrowUp,
+  ArrowDown,
+  Eye,
+} from "lucide-react";
+import AjouteModal from "@/app/component/NewPatient/page";
+import DialogPage from "@/app/component/DialogPage/page";
+import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import PatientModal from "../component/ViewPatient/page";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { TableSkeletonRows } from "@/components/ui/table-skeleton";
+import LoadingScreen from "../component/LoadingScreen/page";
+import { Label } from "@/components/ui/label";
+
+// ✅ Utility function to format all dates in French (dd/mm/yyyy)
+function formatDateFR(dateString) {
+  if (!dateString) return "-";
+  const date = new Date(dateString);
+  if (isNaN(date)) return "-";
+  console.log(dateString);
+  return date.toLocaleDateString("fr-FR", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+  });
+}
+
+// ✅ Converts dd/mm/yyyy to yyyy-mm-dd (for input[type="date"])
+function toInputDateFormat(dateString) {
+  if (!dateString) return "";
+  const [day, month, year] = dateString.split("/");
+  if (!day || !month || !year) return "";
+  return `${year}-${month}-${day}`;
+}
+
+// ✅ Converts yyyy-mm-dd (from input) to dd/mm/yyyy (for display/filter)
+function fromInputDateFormat(dateString) {
+  if (!dateString) return "";
+  const [year, month, day] = dateString.split("-");
+  return `${day}/${month}/${year}`;
+}
+
+export default function PatientsPage() {
+  const [patients, setPatients] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [viewpatient, setviewpatient] = useState(false);
+  const [query, setQuery] = useState("");
+  const [dateFrom, setDateFrom] = useState("");
+  const [dateTo, setDateTo] = useState("");
+  const [dateDeNaissance, setdateDeNaissance] = useState("");
+  const [filterDays, setFilterDays] = useState("none");
+  const [sortBy, setSortBy] = useState(null);
+  const [sortOrder, setSortOrder] = useState("asc");
+  const [selectedPatient, setselectedPatient] = useState();
+  const [isAddOpen, setIsAddOpen] = useState(false);
+  const [newPatient, setNewPatient] = useState({
+    nom: "",
+    telephone: "",
+    adresse: "",
+    antecedents: "",
+    groupeSanguin: "",
+  });
+
+  // ===== Fetch patients from API =====
+  async function fetchPatients() {
+    try {
+      setLoading(true);
+      const res = await fetch("/api/patients");
+      const data = await res.json();
+      setPatients(data);
+    } catch (err) {
+      console.error(err);
+      alert("Erreur lors du chargement des patients");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  useEffect(() => {
+    fetchPatients();
+  }, []);
+
+  // ===== Filter + Sort logic =====
+  const filteredPatients = useMemo(() => {
+    let data = patients?.filter((p) => {
+      const q = query.trim().toLowerCase();
+      if (
+        q &&
+        !p.nom.toLowerCase().includes(q) &&
+        !p.telephone?.toLowerCase().includes(q)
+      )
+        return false;
+
+      if (dateFrom && new Date(p.createdAt) < new Date(dateFrom)) return false;
+      if (dateTo) {
+        const to = new Date(dateTo);
+        to.setHours(23, 59, 59, 999);
+        if (new Date(p.createdAt) > to) return false;
+      }
+
+      if (
+        dateDeNaissance &&
+        new Date(p.dateDeNaissance).toLocaleDateString("fr-FR") !==
+          new Date(dateDeNaissance).toLocaleDateString("fr-FR")
+      )
+        return false;
+
+      if (
+        filterDays === "new-30" &&
+        new Date(p.createdAt) < Date.now() - 30 * 24 * 60 * 60 * 1000
+      )
+        return false;
+      if (
+        filterDays === "old-30" &&
+        new Date(p.createdAt) >= Date.now() - 30 * 24 * 60 * 60 * 1000
+      )
+        return false;
+      return true;
+    });
+
+    if (sortBy === "age")
+      data.sort((a, b) =>
+        sortOrder === "asc"
+          ? (a.age || 0) - (b.age || 0)
+          : (b.age || 0) - (a.age || 0)
+      );
+    if (sortBy === "date")
+      data.sort((a, b) =>
+        sortOrder === "asc"
+          ? new Date(a.createdAt) - new Date(b.createdAt)
+          : new Date(b.createdAt) - new Date(a.createdAt)
+      );
+
+    return data;
+  }, [
+    patients,
+    query,
+    dateFrom,
+    dateTo,
+    dateDeNaissance,
+    filterDays,
+    sortBy,
+    sortOrder,
+  ]);
+
+  const totalCount = patients?.length;
+
+  function toggleSort(field) {
+    if (sortBy === field) setSortOrder(sortOrder === "asc" ? "desc" : "asc");
+    else {
+      setSortBy(field);
+      setSortOrder("asc");
+    }
+  }
+
+  // ===== Add new patient API =====
+  async function handleAddPatient(data) {
+    console.log(JSON.stringify(data));
+    if (!data.nom) return alert("Le nom est requis");
+
+    try {
+      const res = await fetch("/api/patients", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      });
+      if (!res.ok) throw new Error("Erreur lors de la création");
+      const created = await res.json();
+      setPatients((prev) => [created, ...prev]);
+      setNewPatient({
+        nom: "",
+        telephone: "",
+        adresse: "",
+        antecedents: "",
+        groupeSanguin: "",
+      });
+      setIsAddOpen(false);
+    } catch (err) {
+      console.error(err);
+      alert("Erreur lors de la création du patient");
+    }
+  }
+
+  // ===== Delete patient API =====
+  async function handleDelete(id) {
+    try {
+      const res = await fetch(`/api/patients?id=${id}`, { method: "DELETE" });
+      if (!res.ok) throw new Error("Erreur suppression");
+      setPatients((prev) => prev.filter((p) => p.id !== id));
+    } catch (err) {
+      console.error(err);
+      alert("Erreur lors de la suppression du patient");
+    }
+  }
+
+  if (loading) return <LoadingScreen />;
+
+  const onclose = async () => {
+    setviewpatient(false);
+    await fetchPatients();
+  };
+
+  return (
+    <div className="overflow-y-hidden min-h-screen bg-gradient-to-br from-[var(--color-50)] via-white to-[var(--color-100)] p-6">
+      <AjouteModal
+        onAdd={handleAddPatient}
+        open={isAddOpen}
+        onClose={() => setIsAddOpen(false)}
+      />
+      {viewpatient && (
+        <PatientModal
+          onClose={onclose}
+          open={viewpatient}
+          patient={selectedPatient}
+        />
+      )}
+
+      {/* Header */}
+      <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center gap-4">
+          <div className="p-3 bg-[var(--color-100)] rounded-full shadow-md">
+            <Stethoscope className="w-6 h-6 text-[var(--color-700)]" />
+          </div>
+          <div>
+            <h2 className="text-2xl font-bold text-[var(--color-800)]">Patients</h2>
+            <p className="text-sm text-muted-foreground">
+              Gestion des dossiers patients
+            </p>
+          </div>
+        </div>
+        <Button
+          onClick={() => setIsAddOpen(true)}
+          className="flex items-center gap-2 bg-[var(--color-600)] hover:bg-[var(--color-700)] text-white shadow"
+        >
+          <Plus className="w-4 h-4" /> Ajouter
+        </Button>
+      </div>
+
+      {/* Filters */}
+      <Card className="mb-6 border-[var(--color-200)] shadow-sm">
+        <CardContent>
+          <div className="flex flex-wrap items-end gap-8">
+            <div className="flex flex-col">
+              <Label className="mb-1">Rechercher</Label>
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                <Input
+                  placeholder="Nom ou téléphone..."
+                  value={query}
+                  onChange={(e) => setQuery(e.target.value)}
+                  className="pl-10 focus:ring-[var(--color-500)] w-56"
+                />
+              </div>
+            </div>
+
+            <div className="flex flex-col">
+              <Label className="mb-1">Date depuis</Label>
+              <Input
+                type="date"
+                value={dateFrom}
+                onChange={(e) => setDateFrom(e.target.value)}
+                className="w-40"
+              />
+            </div>
+
+            <div className="flex flex-col">
+              <Label className="mb-1">Date jusqu'à</Label>
+              <Input
+                type="date"
+                value={dateTo}
+                onChange={(e) => setDateTo(e.target.value)}
+                className="w-40"
+              />
+            </div>
+
+            <div className="flex flex-col">
+              <Label className="mb-1">Date de naissance</Label>
+              <Input
+                type="date"
+                value={
+                  dateDeNaissance ? toInputDateFormat(dateDeNaissance) : ""
+                }
+                onChange={(e) =>
+                  setdateDeNaissance(fromInputDateFormat(e.target.value))
+                }
+                className="w-48"
+              />
+            </div>
+
+            <div className="flex flex-col">
+              <Label className="mb-1">Ancien / Nouveau</Label>
+              <div className="flex gap-2">
+                <Button
+                  size="sm"
+                  variant={filterDays === "new-30" ? "default" : "outline"}
+                  onClick={() =>
+                    setFilterDays(filterDays === "new-30" ? "none" : "new-30")
+                  }
+                  className="flex items-center gap-1"
+                >
+                  <ArrowDown className="h-4 w-4" /> Nouveau
+                </Button>
+                <Button
+                  size="sm"
+                  variant={filterDays === "old-30" ? "default" : "outline"}
+                  onClick={() =>
+                    setFilterDays(filterDays === "old-30" ? "none" : "old-30")
+                  }
+                  className="flex items-center gap-1"
+                >
+                  <ArrowUp className="h-4 w-4" /> Ancien
+                </Button>
+              </div>
+            </div>
+
+            <div className="ml-auto px-4 py-2 text-[var(--color-700)] bg-[var(--color-50)] border border-[var(--color-200)] rounded-xl shadow font-semibold">
+              Total : {totalCount}
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Table */}
+      <Card className="border-[var(--color-200)] shadow-md">
+        <CardContent>
+          <div className="rounded-lg border border-[var(--color-100)]">
+            <div className="max-h-99 overflow-y-auto">
+              <Table className="w-full border-collapse">
+                <TableHeader className="sticky top-0 bg-gradient-to-r from-[var(--color-50)] to-[var(--color-100)] z-10">
+                  <TableRow>
+                    <TableHead className="px-4 py-3 font-bold text-[var(--color-800)] text-sm border-b border-[var(--color-200)]">
+                      Nom
+                    </TableHead>
+                    <TableHead className="px-4 py-3 font-bold text-[var(--color-800)] text-sm border-b border-[var(--color-200)]">
+                      Date de Naissance
+                    </TableHead>
+                    <TableHead className="px-4 py-3 font-bold text-[var(--color-800)] text-sm border-b border-[var(--color-200)]">
+                      Téléphone
+                    </TableHead>
+                    <TableHead className="px-4 py-3 font-bold text-[var(--color-800)] text-sm border-b border-[var(--color-200)]">
+                      Groupe
+                    </TableHead>
+                    <TableHead className="px-4 py-3 font-bold text-[var(--color-800)] text-sm border-b border-[var(--color-200)]">
+                      Créé le
+                    </TableHead>
+                    <TableHead className="px-4 py-3 font-bold text-[var(--color-800)] text-sm border-b border-[var(--color-200)] text-center">
+                      Actions
+                    </TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {loading ? (
+                    <TableSkeletonRows
+                      columns={6}
+                      rows={6}
+                      widths={["w-3/4", "w-1/2", "w-2/3", "w-1/3", "w-1/2", "w-16"]}
+                    />
+                  ) : filteredPatients.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={6} className="text-center py-8 text-gray-500">
+                        Aucun patient trouvé
+                      </TableCell>
+                    </TableRow>
+                  ) : (
+                    filteredPatients.map((p) => (
+                      <TableRow key={p.id} className="hover:bg-[var(--color-50)]/50">
+                        <TableCell className="font-medium text-gray-900">{p.nom}</TableCell>
+                        <TableCell>
+                          {formatDateFR(p.dateDeNaissance)}
+                        </TableCell>
+                        <TableCell>{p.telephone ?? "-"}</TableCell>
+                        <TableCell>
+                          {p.groupeSanguin ? (
+                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-[var(--color-100)] text-[var(--color-800)]">
+                              {p.groupeSanguin.replace("_", " ")}
+                            </span>
+                          ) : (
+                            "-"
+                          )}
+                        </TableCell>
+                        <TableCell>{formatDateFR(p.createdAt)}</TableCell>
+                        <TableCell className="flex justify-center items-center gap-2">
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => {
+                              setselectedPatient(p);
+                              setviewpatient(true);
+                            }}
+                            title="Voir la fiche"
+                          >
+                            <Eye className="w-4 h-4 text-blue-600" />
+                          </Button>
+                          <DialogPage
+                            title="Supprimer le patient"
+                            triggerText="Supprimer"
+                            description={`Êtes-vous sûr de vouloir supprimer le patient "${p.nom}" ? Cette action est irréversible et supprimera toutes ses consultations.`}
+                            onConfirm={() => handleDelete(p.id)}
+                          />
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  )}
+                </TableBody>
+              </Table>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
