@@ -38,7 +38,23 @@ import { Button } from "@/components/ui/button";
 import { printOrdonnance, printBilan, printJustification } from "@/lib/printer";
 import param from "@/param.json";
 
-export default function PatientVisits({ patientId, query, fetchPatientById }) {
+function isSameDate(itemDate, targetDateStr) {
+  if (!targetDateStr) return true;
+  if (!itemDate) return false;
+  const d = new Date(itemDate);
+  if (isNaN(d.getTime())) return false;
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}` === targetDateStr;
+}
+
+export default function PatientVisits({
+  patientId,
+  query,
+  dateFilter,
+  fetchPatientById,
+}) {
   const [visits, setVisits] = useState([]);
   const [filtredData, setfiltredData] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -50,11 +66,24 @@ export default function PatientVisits({ patientId, query, fetchPatientById }) {
   const [isSaving, setIsSaving] = useState(false);
   const [editedData, setEditedData] = useState({});
 
-  // 🔄 Filter by query
+  // 🔄 Filter by query and dateFilter
   useEffect(() => {
-    const filtred = visits?.filter((v) => v.id.toString().includes(query));
+    let filtred = visits || [];
+    if (query && query.trim()) {
+      const q = query.trim().toLowerCase();
+      filtred = filtred.filter(
+        (v) =>
+          v.id.toString().includes(q) ||
+          (v.motifDeConsultation &&
+            v.motifDeConsultation.toLowerCase().includes(q)) ||
+          (v.note && v.note.toLowerCase().includes(q)),
+      );
+    }
+    if (dateFilter) {
+      filtred = filtred.filter((v) => isSameDate(v.createdAt, dateFilter));
+    }
     setfiltredData(filtred);
-  }, [query, visits]);
+  }, [query, dateFilter, visits]);
 
   // 🔄 Fetch consultations
   const fetchConsultations = async () => {
@@ -444,35 +473,42 @@ export default function PatientVisits({ patientId, query, fetchPatientById }) {
     }
 
     return (
-      <div className="space-y-4 mt-4">
-        {/* Textarea fields */}
-        {fields
-          .filter((f) => f.type === "textarea")
-          .map((info, idx) => (
-            <div key={idx} className="bg-white rounded-lg shadow-sm p-4">
-              <div className="flex items-center gap-2 mb-2">
-                <info.icon className="text-[var(--color-500)]" size={18} />
-                <span className="text-gray-700 font-medium text-sm">
-                  {info.label}
-                </span>
+      <div className="mt-4 space-y-3">
+        {/* Textarea fields in responsive grid */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+          {fields
+            .filter((f) => f.type === "textarea")
+            .map((info, idx) => (
+              <div
+                key={idx}
+                className="bg-white rounded-lg shadow-sm p-3.5 sm:p-4 border border-gray-100 flex flex-col justify-between"
+              >
+                <div>
+                  <div className="flex items-center gap-2 mb-2">
+                    <info.icon className="text-[var(--color-500)]" size={18} />
+                    <span className="text-gray-700 font-medium text-sm">
+                      {info.label}
+                    </span>
+                  </div>
+                  {isEditing ? (
+                    <textarea
+                      rows={3}
+                      className="w-full border border-gray-300 rounded-lg p-2.5 sm:p-3 text-sm bg-gray-50 focus:ring-2 focus:ring-[var(--color-500)] focus:border-[var(--color-500)]"
+                      value={editedData[info.field] ?? visit[info.field] ?? ""}
+                      onChange={(e) => handleChange(info.field, e.target.value)}
+                    />
+                  ) : (
+                    <p className="text-gray-800 whitespace-pre-wrap text-sm leading-relaxed">
+                      {info.value}
+                    </p>
+                  )}
+                </div>
               </div>
-              {isEditing ? (
-                <textarea
-                  rows={3}
-                  className="w-full border border-gray-300 rounded-lg p-3 text-sm bg-gray-50 focus:ring-2 focus:ring-[var(--color-500)] focus:border-[var(--color-500)]"
-                  value={editedData[info.field] ?? visit[info.field] ?? ""}
-                  onChange={(e) => handleChange(info.field, e.target.value)}
-                />
-              ) : (
-                <p className="text-gray-800 whitespace-pre-wrap">
-                  {info.value}
-                </p>
-              )}
-            </div>
-          ))}
+            ))}
+        </div>
 
-        {/* Number fields in grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+        {/* Number fields in responsive grid */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
           {fields
             .filter((f) => f.type === "number")
             .map((info, idx) => (
@@ -480,14 +516,16 @@ export default function PatientVisits({ patientId, query, fetchPatientById }) {
                 key={idx}
                 className="flex items-center justify-between p-3 hover:shadow-md transition-shadow"
               >
-                <div className="flex flex-row items-center">
+                <div className="flex flex-row items-center min-w-0 pr-2">
                   <info.icon
-                    className="text-[var(--color-500)] mr-2"
+                    className="text-[var(--color-500)] mr-2 flex-shrink-0"
                     size={18}
                   />
-                  <span className="text-gray-600 text-sm">{info.label}</span>
+                  <span className="text-gray-600 text-xs sm:text-sm truncate">
+                    {info.label}
+                  </span>
                 </div>
-                <div className="text-right text-gray-800">
+                <div className="text-right text-gray-800 flex-shrink-0">
                   {isEditing ? (
                     <input
                       type="number"
@@ -497,7 +535,7 @@ export default function PatientVisits({ patientId, query, fetchPatientById }) {
                       onChange={(e) => handleChange(info.field, e.target.value)}
                     />
                   ) : (
-                    <span className="font-semibold">
+                    <span className="font-semibold text-xs sm:text-sm">
                       {info.value} {info.unite}
                     </span>
                   )}
@@ -603,34 +641,34 @@ export default function PatientVisits({ patientId, query, fetchPatientById }) {
           setIsEditing(false);
         }}
       >
-        <DialogContent className="min-w-7xl h-11/12  w-full bg-gradient-to-br from-[var(--color-50)] to-white rounded-2xl p-8 overflow-y-auto shadow-2xl">
+        <DialogContent className="w-[96vw] max-w-[96vw] sm:max-w-[95vw] md:max-w-[92vw] lg:max-w-6xl xl:max-w-7xl max-h-[92vh] bg-gradient-to-br from-[var(--color-50)] to-white rounded-2xl p-4 sm:p-6 lg:p-8 overflow-y-auto shadow-2xl">
           {selectedVisit && (
             <>
               <DialogHeader>
-                <div className="flex flex-col gap-4">
+                <div className="flex flex-col gap-3 sm:gap-4">
                   {/* Title and Navigation Row */}
-                  <div className="flex justify-between items-center">
-                    <DialogTitle className="text-2xl font-bold text-[var(--color-700)]">
+                  <div className="flex flex-wrap items-center justify-between gap-3 pr-8 sm:pr-10">
+                    <DialogTitle className="text-xl sm:text-2xl font-bold text-[var(--color-700)]">
                       Consultation #{selectedVisit.id}
                     </DialogTitle>
 
                     {/* Center: Pagination Navigation */}
                     {filtredData.length > 1 && (
-                      <div className="flex items-center gap-4 bg-white px-4 py-2 rounded-xl shadow-md">
+                      <div className="flex items-center gap-2 sm:gap-3 bg-white px-3 py-1.5 sm:px-4 sm:py-2 rounded-xl shadow-md border border-gray-100">
                         <button
                           onClick={handlePrevVisit}
                           disabled={currentVisitIndex === 0}
-                          className={`p-3 rounded-lg transition-all font-semibold ${
+                          className={`p-2 sm:p-2.5 rounded-lg transition-all font-semibold ${
                             currentVisitIndex === 0
                               ? "bg-gray-100 text-gray-300 cursor-not-allowed"
                               : "bg-[var(--color-500)] text-white hover:bg-[var(--color-600)] shadow-md hover:shadow-lg"
                           }`}
                           title="Précédente"
                         >
-                          <ChevronLeft size={20} />
+                          <ChevronLeft size={18} />
                         </button>
 
-                        <span className="text-sm font-semibold text-gray-700 min-w-[100px] text-center">
+                        <span className="text-xs sm:text-sm font-semibold text-gray-700 min-w-[85px] sm:min-w-[100px] text-center">
                           Visite {currentVisitIndex + 1} / {filtredData.length}
                         </span>
 
@@ -639,20 +677,20 @@ export default function PatientVisits({ patientId, query, fetchPatientById }) {
                           disabled={
                             currentVisitIndex === filtredData.length - 1
                           }
-                          className={`p-3 rounded-lg transition-all font-semibold ${
+                          className={`p-2 sm:p-2.5 rounded-lg transition-all font-semibold ${
                             currentVisitIndex === filtredData.length - 1
                               ? "bg-gray-100 text-gray-300 cursor-not-allowed"
                               : "bg-[var(--color-500)] text-white hover:bg-[var(--color-600)] shadow-md hover:shadow-lg"
                           }`}
                           title="Suivante"
                         >
-                          <ChevronRight size={20} />
+                          <ChevronRight size={18} />
                         </button>
                       </div>
                     )}
 
                     {/* Right: Action Buttons */}
-                    <div className="flex gap-3">
+                    <div className="flex flex-wrap items-center gap-2 sm:gap-3">
                       {isEditing ? (
                         <>
                           <button
@@ -661,14 +699,14 @@ export default function PatientVisits({ patientId, query, fetchPatientById }) {
                               setEditedData(selectedVisit);
                             }}
                             disabled={isSaving}
-                            className="px-5 py-2.5 border-2 border-gray-300 rounded-xl hover:bg-gray-50 transition font-semibold text-gray-700 shadow-sm disabled:opacity-50"
+                            className="px-3.5 sm:px-5 py-2 sm:py-2.5 border-2 border-gray-300 rounded-xl hover:bg-gray-50 transition font-semibold text-gray-700 text-sm sm:text-base shadow-sm disabled:opacity-50"
                           >
                             Annuler
                           </button>
                           <button
                             onClick={handleSave}
                             disabled={isSaving}
-                            className="px-5 py-2.5 bg-green-600 hover:bg-green-700 text-white rounded-xl transition font-semibold shadow-md hover:shadow-lg flex items-center gap-2 disabled:opacity-60"
+                            className="px-3.5 sm:px-5 py-2 sm:py-2.5 bg-green-600 hover:bg-green-700 text-white rounded-xl transition font-semibold shadow-md hover:shadow-lg flex items-center gap-2 text-sm sm:text-base disabled:opacity-60"
                           >
                             {isSaving ? (
                               <>
@@ -685,14 +723,15 @@ export default function PatientVisits({ patientId, query, fetchPatientById }) {
                       ) : (
                         <button
                           onClick={() => setIsEditing(true)}
-                          className="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl transition font-semibold shadow-md hover:shadow-lg flex items-center gap-2"
+                          className="px-3.5 sm:px-5 py-2 sm:py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl transition font-semibold shadow-md hover:shadow-lg flex items-center gap-2 text-sm sm:text-base"
                         >
                           <Edit3 size={18} /> Modifier
                         </button>
                       )}
                       <button
                         onClick={() => setDeleteConfirm(true)}
-                        className="px-5 py-2.5 bg-red-500 hover:bg-red-600 text-white rounded-xl transition font-semibold shadow-md hover:shadow-lg flex items-center gap-2"
+                        className="px-3 sm:px-4 py-2 sm:py-2.5 bg-red-500 hover:bg-red-600 text-white rounded-xl transition font-semibold shadow-md hover:shadow-lg flex items-center gap-2"
+                        title="Supprimer la consultation"
                       >
                         <Trash2 size={18} />
                       </button>
@@ -700,11 +739,11 @@ export default function PatientVisits({ patientId, query, fetchPatientById }) {
                   </div>
 
                   {/* Date/Time Row */}
-                  <div className="flex justify-end">
+                  <div className="flex flex-wrap justify-end items-center gap-2">
                     {isEditing ? (
                       <input
                         type="datetime-local"
-                        className="border-2 border-[var(--color-200)] rounded-xl px-4 py-2.5 text-sm bg-white shadow-sm focus:ring-2 focus:ring-[var(--color-500)] focus:border-[var(--color-500)]"
+                        className="border-2 border-[var(--color-200)] rounded-xl px-3 sm:px-4 py-2 text-sm bg-white shadow-sm focus:ring-2 focus:ring-[var(--color-500)] focus:border-[var(--color-500)] w-full sm:w-auto"
                         value={
                           editedData.createdAt
                             ? typeof editedData.createdAt === "string" &&
@@ -724,12 +763,12 @@ export default function PatientVisits({ patientId, query, fetchPatientById }) {
                         }}
                       />
                     ) : (
-                      <div className="inline-flex items-center gap-3 rounded-xl bg-white px-5 py-2.5 border-2 border-[var(--color-100)] shadow-md">
-                        <Calendar className="w-5 h-5 text-[var(--color-600)]" />
+                      <div className="inline-flex items-center gap-2 sm:gap-3 rounded-xl bg-white px-3.5 sm:px-5 py-2 sm:py-2.5 border-2 border-[var(--color-100)] shadow-md text-xs sm:text-sm">
+                        <Calendar className="w-4 h-4 sm:w-5 sm:h-5 text-[var(--color-600)]" />
                         <span className="text-xs uppercase tracking-wider text-[var(--color-600)] font-semibold">
                           Date & heure
                         </span>
-                        <span className="text-base font-bold text-[var(--color-900)]">
+                        <span className="font-bold text-[var(--color-900)] text-sm sm:text-base">
                           {selectedVisit.createdAt
                             ? new Date(selectedVisit.createdAt).toLocaleString(
                                 "fr-FR",
@@ -821,8 +860,8 @@ export default function PatientVisits({ patientId, query, fetchPatientById }) {
               {/* ====================== */}
               {selectedVisit?.bilanRecip?.items?.length > 0 && (
                 <div className="mt-5">
-                  <div className="flex flex-row justify-between items-center">
-                    <h3 className="text-[var(--color-700)] font-semibold text-md flex items-center gap-2">
+                  <div className="flex flex-wrap justify-between items-center gap-2">
+                    <h3 className="text-[var(--color-700)] font-semibold text-sm sm:text-base flex items-center gap-2">
                       <FlaskConical size={18} /> Bilans / Analyses #
                       {selectedVisit.bilanRecip.id}
                     </h3>
@@ -834,28 +873,30 @@ export default function PatientVisits({ patientId, query, fetchPatientById }) {
                       🖨️ Imprimer
                     </Button>
                   </div>
-                  <div className="mt-2 bg-white rounded-lg shadow-sm p-3">
-                    <table className="w-full text-sm border-collapse">
-                      <thead>
-                        <tr className="border-b bg-[var(--color-50)]">
-                          <th className="text-left p-2">Bilan</th>
-                          <th className="text-left p-2">Résultat</th>
-                          <th className="text-left p-2">Remarque</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {selectedVisit.bilanRecip.items.map((item) => (
-                          <tr
-                            key={item.id}
-                            className="border-b hover:bg-gray-50"
-                          >
-                            <td className="p-2">{item.bilan?.nom || "—"}</td>
-                            <td className="p-2">{item.resultat || "—"}</td>
-                            <td className="p-2">{item.remarque || "—"}</td>
+                  <div className="mt-2 bg-white rounded-lg shadow-sm border border-gray-100 overflow-hidden">
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-sm border-collapse min-w-[500px]">
+                        <thead>
+                          <tr className="border-b bg-[var(--color-50)]">
+                            <th className="text-left p-2.5 font-semibold text-gray-700">Bilan</th>
+                            <th className="text-left p-2.5 font-semibold text-gray-700">Résultat</th>
+                            <th className="text-left p-2.5 font-semibold text-gray-700">Remarque</th>
                           </tr>
-                        ))}
-                      </tbody>
-                    </table>
+                        </thead>
+                        <tbody className="divide-y divide-gray-100">
+                          {selectedVisit.bilanRecip.items.map((item) => (
+                            <tr
+                              key={item.id}
+                              className="hover:bg-gray-50 transition-colors"
+                            >
+                              <td className="p-2.5 text-gray-900 font-medium">{item.bilan?.nom || "—"}</td>
+                              <td className="p-2.5 text-gray-700">{item.resultat || "—"}</td>
+                              <td className="p-2.5 text-gray-600">{item.remarque || "—"}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
                   </div>
                 </div>
               )}
@@ -865,8 +906,8 @@ export default function PatientVisits({ patientId, query, fetchPatientById }) {
               {/* ====================== */}
               {selectedVisit?.ordonnance?.items?.length > 0 && (
                 <div className="mt-5">
-                  <div className="flex flex-row justify-between items-center">
-                    <h3 className="text-[var(--color-700)] font-semibold text-md flex items-center gap-2">
+                  <div className="flex flex-wrap justify-between items-center gap-2">
+                    <h3 className="text-[var(--color-700)] font-semibold text-sm sm:text-base flex items-center gap-2">
                       <Pill size={18} /> Ordonnance #
                       {selectedVisit.ordonnance.id}
                     </h3>
@@ -879,34 +920,36 @@ export default function PatientVisits({ patientId, query, fetchPatientById }) {
                     </Button>
                   </div>
 
-                  <div className="mt-2 bg-white rounded-lg shadow-sm p-3">
-                    <table className="w-full text-sm border-collapse">
-                      <thead>
-                        <tr className="border-b bg-[var(--color-50)]">
-                          <th className="text-left p-2">Médicament</th>
-                          <th className="text-left p-2">Dosage</th>
-                          <th className="text-left p-2">Fréquence</th>
-                          <th className="text-left p-2">Durée</th>
-                          <th className="text-left p-2">Quantité</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {selectedVisit.ordonnance.items.map((item) => (
-                          <tr
-                            key={item.id}
-                            className="border-b hover:bg-gray-50"
-                          >
-                            <td className="p-2">
-                              {item.medicament?.nom || "—"}
-                            </td>
-                            <td className="p-2">{item.dosage || "—"}</td>
-                            <td className="p-2">{item.frequence || "—"}</td>
-                            <td className="p-2">{item.duree || "—"}</td>
-                            <td className="p-2">{item.quantite || "—"}</td>
+                  <div className="mt-2 bg-white rounded-lg shadow-sm border border-gray-100 overflow-hidden">
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-sm border-collapse min-w-[600px]">
+                        <thead>
+                          <tr className="border-b bg-[var(--color-50)]">
+                            <th className="text-left p-2.5 font-semibold text-gray-700">Médicament</th>
+                            <th className="text-left p-2.5 font-semibold text-gray-700">Dosage</th>
+                            <th className="text-left p-2.5 font-semibold text-gray-700">Fréquence</th>
+                            <th className="text-left p-2.5 font-semibold text-gray-700">Durée</th>
+                            <th className="text-left p-2.5 font-semibold text-gray-700">Quantité</th>
                           </tr>
-                        ))}
-                      </tbody>
-                    </table>
+                        </thead>
+                        <tbody className="divide-y divide-gray-100">
+                          {selectedVisit.ordonnance.items.map((item) => (
+                            <tr
+                              key={item.id}
+                              className="hover:bg-gray-50 transition-colors"
+                            >
+                              <td className="p-2.5 text-gray-900 font-semibold">
+                                {item.medicament?.nom || "—"}
+                              </td>
+                              <td className="p-2.5 text-gray-700">{item.dosage || "—"}</td>
+                              <td className="p-2.5 text-gray-700">{item.frequence || "—"}</td>
+                              <td className="p-2.5 text-gray-700">{item.duree || "—"}</td>
+                              <td className="p-2.5 text-gray-700">{item.quantite || "—"}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
                   </div>
                 </div>
               )}
@@ -917,8 +960,8 @@ export default function PatientVisits({ patientId, query, fetchPatientById }) {
               {(selectedVisit?.justificationRecord ||
                 selectedVisit?.justification) && (
                 <div className="mt-5">
-                  <div className="flex flex-row justify-between items-center">
-                    <h3 className="text-[var(--color-700)] font-semibold text-md flex items-center gap-2">
+                  <div className="flex flex-wrap justify-between items-center gap-2">
+                    <h3 className="text-[var(--color-700)] font-semibold text-sm sm:text-base flex items-center gap-2">
                       <FileText size={18} /> Justification médicale
                       {selectedVisit.justificationRecord?.id
                         ? ` #${selectedVisit.justificationRecord.id}`

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Calendar, Plus, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -14,10 +14,22 @@ import {
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 
+function isSameDate(itemDate, targetDateStr) {
+  if (!targetDateStr) return true;
+  if (!itemDate) return false;
+  const d = new Date(itemDate);
+  if (isNaN(d.getTime())) return false;
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}` === targetDateStr;
+}
+
 export default function Analyses({
   patientID,
   ShowAddDialogNewAnalyse,
   setShowAddDialogNewAnalyse,
+  dateFilter,
 }) {
   const [files, setFiles] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -31,6 +43,11 @@ export default function Analyses({
     fichier: "",
   });
   const [basePath, setBasePath] = useState("");
+
+  const filteredFiles = useMemo(() => {
+    if (!dateFilter) return files;
+    return files.filter((file) => isSameDate(file.createdAt, dateFilter));
+  }, [files, dateFilter]);
 
   useEffect(() => {
     // Get Electron path only if available
@@ -70,6 +87,7 @@ export default function Analyses({
           id: r.id,
           name: r.description || "Radio",
           date: new Date(r.createdAt).toLocaleDateString("fr-FR"),
+          createdAt: r.createdAt,
           type: "Radio",
           fichier: r.fichier,
         })),
@@ -77,12 +95,13 @@ export default function Analyses({
           id: b.id,
           name: b.description || "Bilan",
           date: new Date(b.createdAt).toLocaleDateString("fr-FR"),
+          createdAt: b.createdAt,
           type: "Bilan",
           fichier: b.fichier,
         })),
       ];
 
-      combined.sort((a, b) => new Date(b.date) - new Date(a.date));
+      combined.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
       setFiles(combined);
     } catch (err) {
       console.error("Erreur de chargement:", err);
@@ -223,14 +242,16 @@ export default function Analyses({
                     </td>
                   </tr>
                 ))
-              ) : files.length === 0 ? (
+              ) : filteredFiles.length === 0 ? (
                 <tr>
                   <td colSpan={4} className="px-6 py-8 text-center text-gray-500">
-                    Aucun document ou analyse trouvé pour ce patient.
+                    {dateFilter
+                      ? "Aucun document ou analyse trouvé pour cette date."
+                      : "Aucun document ou analyse trouvé pour ce patient."}
                   </td>
                 </tr>
               ) : (
-                files.map((file, index) => (
+                filteredFiles.map((file, index) => (
                   <tr
                     key={file.id}
                     className={`cursor-pointer transition-colors hover:bg-[var(--color-50)] ${

@@ -37,7 +37,23 @@ function calculateAge(dateString) {
   } et ${remainingMonths} mois`;
 }
 
-export default function OrdBilanPage({ patientId, query, selectedPatient }) {
+function isSameDate(itemDate, targetDateStr) {
+  if (!targetDateStr) return true;
+  if (!itemDate) return false;
+  const d = new Date(itemDate);
+  if (isNaN(d.getTime())) return false;
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}` === targetDateStr;
+}
+
+export default function OrdBilanPage({
+  patientId,
+  query,
+  dateFilter,
+  selectedPatient,
+}) {
   const [tab, setTab] = useState("ord");
   const [ordonnances, setOrdonnances] = useState([]);
   const [bilans, setBilans] = useState([]);
@@ -99,26 +115,36 @@ export default function OrdBilanPage({ patientId, query, selectedPatient }) {
   }, [patientId, selectedPatient]);
 
   useEffect(() => {
-    if (tab === "ord") {
-      const filtred = ordonnances?.filter((v) =>
-        v.id.toString().includes(query),
-      );
-      setFiltredOrd(filtred);
-    }
-    if (tab === "bilan") {
-      const filtred = bilans?.filter((v) => v.id.toString().includes(query));
-      setFiltredBilan(filtred);
-    }
-    if (tab === "justif") {
-      const filtred = justifications?.filter(
-        (v) =>
-          v.id.toString().includes(query) ||
-          (v.titre && v.titre.toLowerCase().includes(query.toLowerCase())) ||
-          (v.texte && v.texte.toLowerCase().includes(query.toLowerCase())),
-      );
-      setFiltredJustif(filtred);
-    }
-  }, [query, tab, ordonnances, bilans, justifications]);
+    const q = query ? query.trim().toLowerCase() : "";
+
+    const filtredO =
+      ordonnances?.filter((v) => {
+        const matchesQuery = !q || v.id.toString().includes(q);
+        const matchesDate = isSameDate(v.createdAt, dateFilter);
+        return matchesQuery && matchesDate;
+      }) || [];
+    setFiltredOrd(filtredO);
+
+    const filtredB =
+      bilans?.filter((v) => {
+        const matchesQuery = !q || v.id.toString().includes(q);
+        const matchesDate = isSameDate(v.createdAt, dateFilter);
+        return matchesQuery && matchesDate;
+      }) || [];
+    setFiltredBilan(filtredB);
+
+    const filtredJ =
+      justifications?.filter((v) => {
+        const matchesQuery =
+          !q ||
+          v.id.toString().includes(q) ||
+          (v.titre && v.titre.toLowerCase().includes(q)) ||
+          (v.texte && v.texte.toLowerCase().includes(q));
+        const matchesDate = isSameDate(v.createdAt, dateFilter);
+        return matchesQuery && matchesDate;
+      }) || [];
+    setFiltredJustif(filtredJ);
+  }, [query, dateFilter, tab, ordonnances, bilans, justifications]);
 
   // 🗑 Delete Handling
   const confirmDelete = (type, item) => {

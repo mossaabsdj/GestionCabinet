@@ -17,12 +17,68 @@ export async function GET(request) {
       const patient = await prisma.patient.findUnique({
         where: { id: Number(id) }, // or id if UUID
         include: {
-          consultations: true,
-          ordonnances: true,
-          bilans: true,
-          paiements: true,
+          consultations: {
+            orderBy: { createdAt: "desc" },
+            include: {
+              ordonnance: {
+                include: {
+                  items: {
+                    include: { medicament: true },
+                  },
+                },
+              },
+              bilanRecip: {
+                include: {
+                  items: {
+                    include: { bilan: true },
+                  },
+                },
+              },
+              justificationRecord: true,
+              courbeInfo: true,
+              rendezVous: {
+                select: { id: true, date: true, description: true },
+              },
+              radios: true,
+              bilansFiles: true,
+            },
+          },
+          ordonnances: {
+            orderBy: { createdAt: "desc" },
+            include: {
+              items: {
+                include: { medicament: true },
+              },
+            },
+          },
+          bilans: {
+            orderBy: { createdAt: "desc" },
+            include: {
+              items: {
+                include: { bilan: true },
+              },
+            },
+          },
+          paiements: {
+            orderBy: { date: "desc" },
+          },
           courbeInfos: {
             orderBy: { createdAt: "asc" },
+          },
+          vaccinations: {
+            orderBy: { dateGiven: "desc" },
+            include: {
+              vaccine: true,
+            },
+          },
+          radios: {
+            orderBy: { createdAt: "desc" },
+          },
+          bilanFiles: {
+            orderBy: { createdAt: "desc" },
+          },
+          justifications: {
+            orderBy: { createdAt: "desc" },
           },
         },
       });
@@ -78,17 +134,39 @@ export async function POST(req) {
     if (!nom || nom.trim() === "") {
       return NextResponse.json({ error: "Nom est requis" }, { status: 400 });
     }
+
+    // Check unique nom
+    const existing = await prisma.patient.findUnique({
+      where: { nom: nom.trim() },
+    });
+    if (existing) {
+      return NextResponse.json(
+        { error: "Un patient avec ce nom existe déjà." },
+        { status: 400 },
+      );
+    }
+
+    const validBirthDate =
+      dateDeNaissance && !isNaN(new Date(dateDeNaissance).getTime())
+        ? new Date(dateDeNaissance)
+        : new Date();
+
     const patient = await prisma.patient.create({
       data: {
-        nom,
-        age: age || null,
-        sexe: sexe || null,
-        telephone: telephone || null,
-        adresse: adresse || null,
-        antecedents: antecedents || null,
+        nom: nom.trim(),
+        age: age !== undefined && age !== null && age !== "" ? parseInt(age) : null,
+        sexe: sexe && sexe.trim() ? sexe.trim() : "Non spécifié",
+        telephone: telephone ? telephone.trim() : null,
+        adresse: adresse ? adresse.trim() : null,
+        antecedents: antecedents ? antecedents.trim() : null,
         groupeSanguin: groupeSanguin || null,
-        dateDeNaissance: dateDeNaissance || null,
-        poidsDeNaissance: poidsDeNaissance || null, // <- assign enum value directly
+        dateDeNaissance: validBirthDate,
+        poidsDeNaissance:
+          poidsDeNaissance !== undefined &&
+          poidsDeNaissance !== null &&
+          poidsDeNaissance !== ""
+            ? parseFloat(poidsDeNaissance)
+            : null,
       },
     });
 
@@ -96,7 +174,7 @@ export async function POST(req) {
   } catch (error) {
     console.error("❌ Error creating patient:", error);
     return NextResponse.json(
-      { error: "Erreur lors de la création du patient" },
+      { error: "Erreur lors de la création du patient: " + error.message },
       { status: 500 },
     );
   }
@@ -121,37 +199,74 @@ export async function PUT(req) {
       groupeSanguin,
     } = body;
 
-    if (!id || !nom || nom.trim() === "") {
+    if (!id) {
       return NextResponse.json(
-        { error: "ID et nom sont requis" },
+        { error: "L'identifiant du patient (ID) est requis" },
         { status: 400 },
       );
     }
 
+    const dataToUpdate = {};
+
+    if (nom !== undefined) {
+      if (!nom || nom.trim() === "") {
+        return NextResponse.json(
+          { error: "Le nom ne peut pas être vide" },
+          { status: 400 },
+        );
+      }
+      dataToUpdate.nom = nom.trim();
+    }
+
+    if (sexe !== undefined && sexe !== null && sexe !== "") {
+      dataToUpdate.sexe = sexe.trim();
+    }
+
+    if (age !== undefined) {
+      dataToUpdate.age =
+        age !== null && age !== "" ? parseInt(age) : null;
+    }
+
+    if (telephone !== undefined) {
+      dataToUpdate.telephone = telephone ? telephone.trim() : null;
+    }
+
+    if (adresse !== undefined) {
+      dataToUpdate.adresse = adresse ? adresse.trim() : null;
+    }
+
+    if (antecedents !== undefined) {
+      dataToUpdate.antecedents = antecedents ? antecedents.trim() : null;
+    }
+
+    if (groupeSanguin !== undefined) {
+      dataToUpdate.groupeSanguin = groupeSanguin || null;
+    }
+
+    if (poidsDeNaissance !== undefined) {
+      dataToUpdate.poidsDeNaissance =
+        poidsDeNaissance !== null && poidsDeNaissance !== ""
+          ? parseFloat(poidsDeNaissance)
+          : null;
+    }
+
+    if (dateDeNaissance !== undefined && dateDeNaissance !== null && dateDeNaissance !== "") {
+      const parsedDate = new Date(dateDeNaissance);
+      if (!isNaN(parsedDate.getTime())) {
+        dataToUpdate.dateDeNaissance = parsedDate;
+      }
+    }
+
     const updated = await prisma.patient.update({
       where: { id: Number(id) },
-      data: {
-        nom,
-        age: age || null,
-        sexe: sexe || null,
-        telephone: telephone || null,
-        adresse: adresse || null,
-        antecedents: antecedents || null,
-        dateDeNaissance: body.dateDeNaissance
-          ? new Date(body.dateDeNaissance).toISOString()
-          : null,
-        poidsDeNaissance: poidsDeNaissance
-          ? parseFloat(poidsDeNaissance)
-          : null,
-        groupeSanguin: groupeSanguin || null,
-      },
+      data: dataToUpdate,
     });
 
     return NextResponse.json(updated);
   } catch (error) {
     console.error("❌ Error updating patient:", error);
     return NextResponse.json(
-      { error: "Erreur lors de la mise à jour du patient" },
+      { error: "Erreur lors de la mise à jour du patient: " + error.message },
       { status: 500 },
     );
   }

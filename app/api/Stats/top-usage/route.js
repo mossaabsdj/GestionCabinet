@@ -21,7 +21,7 @@ export async function GET() {
           select: { nom: true },
         });
         return {
-          name: med.nom || "Inconnu",
+          name: med?.nom || "Inconnu",
           value: item._count.medicamentId,
         };
       })
@@ -43,7 +43,7 @@ export async function GET() {
           select: { nom: true },
         });
         return {
-          name: bilan.nom || "Inconnu",
+          name: bilan?.nom || "Inconnu",
           value: item._count.bilanId,
         };
       })

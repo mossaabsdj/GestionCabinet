@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Syringe, CalendarClock, AlertCircle, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -13,11 +13,39 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 
-export default function Vaccination({ patientId, refrech, setrefrech }) {
+function isSameDate(itemDate, targetDateStr) {
+  if (!targetDateStr) return true;
+  if (!itemDate) return false;
+  const d = new Date(itemDate);
+  if (isNaN(d.getTime())) return false;
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}` === targetDateStr;
+}
+
+export default function Vaccination({
+  patientId,
+  refrech,
+  setrefrech,
+  query,
+  dateFilter,
+}) {
   const [vaccinations, setVaccinations] = useState([]);
   const [loading, setLoading] = useState(true);
   const [openDialog, setOpenDialog] = useState(false);
   const [selectedVaccine, setSelectedVaccine] = useState(null);
+
+  const filteredVaccinations = useMemo(() => {
+    return vaccinations.filter((v) => {
+      const name = v.vaccine?.name || v.name || "";
+      const matchesName =
+        !query || name.toLowerCase().includes(query.trim().toLowerCase());
+      const itemDate = v.dateGiven || v.createdAt;
+      const matchesDate = isSameDate(itemDate, dateFilter);
+      return matchesName && matchesDate;
+    });
+  }, [vaccinations, query, dateFilter]);
 
   // ✅ Fetch vaccinations
   useEffect(() => {
@@ -122,14 +150,16 @@ export default function Vaccination({ patientId, refrech, setrefrech }) {
                     </td>
                   </tr>
                 ))
-              ) : vaccinations.length === 0 ? (
+              ) : filteredVaccinations.length === 0 ? (
                 <tr>
                   <td colSpan={5} className="px-6 py-8 text-center text-gray-500">
-                    Aucune vaccination trouvée pour ce patient.
+                    {query || dateFilter
+                      ? "Aucune vaccination trouvée pour les critères sélectionnés."
+                      : "Aucune vaccination trouvée pour ce patient."}
                   </td>
                 </tr>
               ) : (
-                vaccinations.map((vaccine, index) => (
+                filteredVaccinations.map((vaccine, index) => (
                   <tr
                     key={vaccine.id}
                     className={`transition-colors hover:bg-[var(--color-50)] ${
@@ -142,7 +172,7 @@ export default function Vaccination({ patientId, refrech, setrefrech }) {
                           <Syringe className="w-4 h-4 text-[var(--color-700)]" />
                         </div>
                         <span className="font-semibold text-gray-900">
-                          {vaccine.vaccine.name}
+                          {vaccine.vaccine?.name || vaccine.name || "Vaccin"}
                         </span>
                       </div>
                     </td>

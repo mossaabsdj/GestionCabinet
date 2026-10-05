@@ -8,6 +8,7 @@ import {
   User,
   Phone,
   Home,
+  Clock,
   ClipboardList,
   FileText,
   Stethoscope,
@@ -52,6 +53,7 @@ import Ordonnances from "../component/Ordanance/page";
 import LoadingScreen from "../component/LoadingScreen/page";
 import { motion, AnimatePresence } from "framer-motion";
 import ModernSearchBar from "../component/SearchBar/SearchBar";
+import DatePickerFilter from "../component/DatePickerFilter/DatePickerFilter";
 import VisitsInfoModal from "@/app/component/Infomedical";
 import { tabs } from "@heroui/theme";
 export default function PatientDashboard() {
@@ -72,7 +74,13 @@ export default function PatientDashboard() {
   const [openNewordanance, setnewordanance] = useState(false);
   const [showShortcuts, setShowShortcuts] = useState(false);
   const [load, setload] = useState(false);
-  const [query, setquery] = useState({ visites: "", ord: "" });
+  const [query, setquery] = useState({ visites: "", ord: "", vaccination: "" });
+  const [dateFilter, setDateFilter] = useState({
+    visites: "",
+    analyses: "",
+    ord: "",
+    vaccination: "",
+  });
   const [successopen, setsuccessopen] = useState(false);
   const [DateTimeModal, setDataTimeModel] = useState(false);
   const [viderForm, setViderForm] = useState(false);
@@ -128,9 +136,18 @@ export default function PatientDashboard() {
     p.nom.toLowerCase().includes(search.toLowerCase()),
   );
   const handleChange = (value) => {
-    const att = selectedtab === "Visites" ? "visites" : "ord";
-    console.log("ord", att);
+    let att = "ord";
+    if (selectedtab === "Visites") att = "visites";
+    else if (selectedtab === "Vaccinations") att = "vaccination";
     setquery((prev) => ({ ...prev, [att]: value }));
+  };
+
+  const handleDateChange = (value) => {
+    let key = "ord";
+    if (selectedtab === "Visites") key = "visites";
+    else if (selectedtab === "Analyses et Résultats") key = "analyses";
+    else if (selectedtab === "Vaccinations") key = "vaccination";
+    setDateFilter((prev) => ({ ...prev, [key]: value }));
   };
 
   const handlesaveOrdanance = (data) => {
@@ -401,33 +418,56 @@ export default function PatientDashboard() {
     window.addEventListener("keydown", handleKeyPress);
     return () => window.removeEventListener("keydown", handleKeyPress);
   }, [selectedPatient, showShortcuts]);
-
-  const generalInfo = (selectedPatient) => [
-    {
-      icon: Calendar,
-      label: "Date de naissance",
-      value: selectedPatient?.dateDeNaissance
-        ? new Date(selectedPatient.dateDeNaissance).toLocaleDateString("fr-FR")
-        : "—",
-    },
-    {
-      icon: Weight,
-      label: "Poids de naissance",
-      value: selectedPatient?.poidsDeNaissance
-        ? `${selectedPatient.poidsDeNaissance} kg`
-        : "—",
-    },
-    {
-      icon: ClipboardList,
-      label: "Antécédents",
-      value: selectedPatient?.antecedents || "—",
-    },
-    {
-      icon: Droplets,
-      label: "Groupe sanguin",
-      value: selectedPatient?.groupeSanguin || "—",
-    },
-  ];
+  const generalInfo = (selectedPatient) => {
+    const fields = [
+      {
+        icon: Calendar,
+        label: "Date de naissance",
+        value: selectedPatient?.dateDeNaissance
+          ? new Date(selectedPatient.dateDeNaissance).toLocaleDateString(
+              "fr-FR",
+            )
+          : "—",
+      },
+      {
+        icon: Weight,
+        label: "Poids de naissance",
+        value: selectedPatient?.poidsDeNaissance
+          ? `${selectedPatient.poidsDeNaissance} kg`
+          : "—",
+      },
+      {
+        icon: ClipboardList,
+        label: "Antécédents",
+        value: selectedPatient?.antecedents || "—",
+        type: "textarea",
+      },
+      {
+        icon: Droplets,
+        label: "Groupe sanguin",
+        value: selectedPatient?.groupeSanguin || "—",
+      },
+    ];
+    return fields
+      .filter(
+        (f) => f && f.value !== null && f.value !== undefined && f.value !== "",
+      )
+      .map((f) => {
+        if (f?.type === "textarea") {
+          return {
+            ...f,
+            value: (
+              <textarea
+                readOnly
+                className="w-full min-h-[100px] resize-none overflow-hidden border rounded-md p-3 text-sm text-gray-800 break-after-all"
+                value={f.value}
+              />
+            ),
+          };
+        }
+        return f;
+      });
+  };
 
   const contactInfo = (selectedPatient) => [
     {
@@ -563,8 +603,7 @@ export default function PatientDashboard() {
             value: (
               <textarea
                 readOnly
-                rows={3}
-                className="w-full border rounded-md p-2 text-sm text-gray-800"
+                className="w-full min-h-[100px] resize-none overflow-hidden border rounded-md p-3 text-sm text-gray-800 break-after-all"
                 value={f.value}
               />
             ),
@@ -848,24 +887,47 @@ export default function PatientDashboard() {
             </p>
           </div>
 
-          {selectedtab === "Prescriptions et Bilans" && (
-            <div>
+          <div className="flex flex-row items-center gap-6">
+            {selectedtab === "Prescriptions et Bilans" && (
               <ModernSearchBar
                 onChange={handleChange}
                 value={query.ord}
                 placeholder="Rechercher par ID ou mot-clé..."
               />
-            </div>
-          )}
-          {selectedtab === "Visites" && (
-            <div>
+            )}
+            {selectedtab === "Visites" && (
               <ModernSearchBar
                 onChange={handleChange}
                 value={query.visites}
                 placeholder="Rechercher une visite..."
               />
-            </div>
-          )}
+            )}
+            {selectedtab === "Vaccinations" && (
+              <ModernSearchBar
+                onChange={handleChange}
+                value={query.vaccination}
+                placeholder="Rechercher un vaccin..."
+              />
+            )}
+
+            {(selectedtab === "Visites" ||
+              selectedtab === "Analyses et Résultats" ||
+              selectedtab === "Prescriptions et Bilans" ||
+              selectedtab === "Vaccinations") && (
+              <DatePickerFilter
+                value={
+                  selectedtab === "Visites"
+                    ? dateFilter.visites
+                    : selectedtab === "Analyses et Résultats"
+                      ? dateFilter.analyses
+                      : selectedtab === "Prescriptions et Bilans"
+                        ? dateFilter.ord
+                        : dateFilter.vaccination
+                }
+                onChange={handleDateChange}
+              />
+            )}
+          </div>
 
           <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
             {selectedtab === "Vaccinations" ? (
@@ -885,7 +947,8 @@ export default function PatientDashboard() {
                 onClick={() => setnewordanance(true)}
                 className="flex items-center gap-2 bg-[var(--color-600)] hover:bg-[var(--color-700)] text-white font-medium px-5 py-2 rounded-xl shadow-md transition"
               >
-                <Plus className="mr-2 h-4 w-4" /> Nouvelle Prescription / Bilan / Justification
+                <Plus className="mr-2 h-4 w-4" /> Nouvelle Prescription / Bilan
+                / Justification
               </Button>
             ) : selectedtab === "Courbe" ? (
               <Button
@@ -1050,34 +1113,99 @@ export default function PatientDashboard() {
               : "bg-white hover:shadow-md"
           }`}
                               >
-                                <div className="flex justify-between w-full">
-                                  <div className="flex flex-row items-center">
-                                    <info.icon
-                                      className={`text-[var(--color-500)] ${
-                                        isEmpty ? "text-gray-400" : ""
-                                      }`}
-                                      size={20}
-                                    />
-                                    <span
-                                      className={`ml-2 ${
-                                        isEmpty
-                                          ? "text-gray-400"
-                                          : "text-gray-500"
-                                      }`}
+                                {[
+                                  "Motif de consultation",
+                                  "Notes",
+                                  "Développement Psychomoteur",
+                                  "Antécédents",
+                                ].includes(info.label) ? (
+                                  // Long text fields
+                                  <div className="flex flex-col w-full gap-2 min-w-0">
+                                    <div className="flex items-center gap-2 min-w-0">
+                                      <info.icon
+                                        className={`shrink-0 ${
+                                          isEmpty
+                                            ? "text-gray-400"
+                                            : "text-[var(--color-500)]"
+                                        }`}
+                                        size={20}
+                                      />
+
+                                      <span
+                                        className={`font-medium ${
+                                          isEmpty
+                                            ? "text-gray-400"
+                                            : "text-gray-500"
+                                        }`}
+                                      >
+                                        {info.label}
+                                      </span>
+                                    </div>
+
+                                    <div
+                                      className={`
+      w-full
+      min-w-0
+      h-auto
+      min-h-[80px]
+      rounded-md
+      px-0
+      py-0
+      ${isEmpty ? "bg-gray-50 text-gray-400" : "bg-gray-50 text-gray-800"}
+    `}
                                     >
-                                      {info.label}
-                                    </span>
+                                      <span
+                                        className="
+        block
+        w-full
+        h-auto
+        min-h-[60px]
+        font-medium
+        leading-6
+        whitespace-pre-wrap
+        break-words
+        
+      "
+                                      >
+                                        {info.value || "—"} {info.unite}
+                                      </span>
+                                    </div>
                                   </div>
-                                  <span
-                                    className={`font-medium ${
-                                      isEmpty
-                                        ? "text-gray-400"
-                                        : "text-gray-800"
-                                    }`}
-                                  >
-                                    {info.value || "—"} {info.unite}
-                                  </span>
-                                </div>
+                                ) : (
+                                  // Normal fields
+                                  <div className="flex flex-row justify-between items-start w-full gap-3">
+                                    <div className="flex flex-row items-center shrink-0">
+                                      <info.icon
+                                        className={`shrink-0 text-[var(--color-500)] ${
+                                          isEmpty ? "text-gray-400" : ""
+                                        }`}
+                                        size={20}
+                                      />
+
+                                      <span
+                                        className={`ml-2 ${
+                                          isEmpty
+                                            ? "text-gray-400"
+                                            : "text-gray-500"
+                                        }`}
+                                      >
+                                        {info.label}
+                                      </span>
+                                    </div>
+
+                                    <div className="flex-1 min-w-0 text-right">
+                                      <span
+                                        className={`font-medium min-w-0 text-right break-words ${
+                                          isEmpty
+                                            ? "text-gray-400"
+                                            : "text-gray-800"
+                                        }`}
+                                      >
+                                        {info.value || "—"} {info.unite}
+                                      </span>
+                                    </div>
+                                  </div>
+                                )}
                               </Card>
                             </motion.div>
                           );
@@ -1107,6 +1235,7 @@ export default function PatientDashboard() {
                   patientID={selectedPatient?.id}
                   ShowAddDialogNewAnalyse={ShowAddDialogNewAnalyse}
                   setShowAddDialogNewAnalyse={setShowAddDialogNewAnalyse}
+                  dateFilter={dateFilter.analyses}
                 />
               )}
               {selectedtab === "Vaccinations" && (
@@ -1114,12 +1243,15 @@ export default function PatientDashboard() {
                   refrech={refrech}
                   setrefrech={setrefrech}
                   patientId={selectedPatient?.id}
+                  query={query.vaccination}
+                  dateFilter={dateFilter.vaccination}
                 />
               )}
               {selectedtab === "Visites" && (
                 <PatientVisits
                   patientId={selectedPatient?.id}
                   query={query.visites}
+                  dateFilter={dateFilter.visites}
                   fetchPatientById={fetchPatientById}
                 />
               )}
@@ -1127,6 +1259,7 @@ export default function PatientDashboard() {
                 <Ordonnances
                   patientId={selectedPatient?.id}
                   query={query.ord}
+                  dateFilter={dateFilter.ord}
                   selectedPatient={selectedPatient}
                 />
               )}

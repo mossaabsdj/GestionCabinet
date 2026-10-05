@@ -9,6 +9,7 @@ import {
   ArrowUp,
   ArrowDown,
   Eye,
+  RotateCcw,
 } from "lucide-react";
 import AjouteModal from "@/app/component/NewPatient/page";
 import DialogPage from "@/app/component/DialogPage/page";
@@ -32,28 +33,12 @@ import { Label } from "@/components/ui/label";
 function formatDateFR(dateString) {
   if (!dateString) return "-";
   const date = new Date(dateString);
-  if (isNaN(date)) return "-";
-  console.log(dateString);
+  if (isNaN(date.getTime())) return "-";
   return date.toLocaleDateString("fr-FR", {
     day: "2-digit",
     month: "2-digit",
     year: "numeric",
   });
-}
-
-// ✅ Converts dd/mm/yyyy to yyyy-mm-dd (for input[type="date"])
-function toInputDateFormat(dateString) {
-  if (!dateString) return "";
-  const [day, month, year] = dateString.split("/");
-  if (!day || !month || !year) return "";
-  return `${year}-${month}-${day}`;
-}
-
-// ✅ Converts yyyy-mm-dd (from input) to dd/mm/yyyy (for display/filter)
-function fromInputDateFormat(dateString) {
-  if (!dateString) return "";
-  const [year, month, day] = dateString.split("-");
-  return `${day}/${month}/${year}`;
 }
 
 export default function PatientsPage() {
@@ -83,7 +68,7 @@ export default function PatientsPage() {
       setLoading(true);
       const res = await fetch("/api/patients");
       const data = await res.json();
-      setPatients(data);
+      setPatients(Array.isArray(data) ? data : []);
     } catch (err) {
       console.error(err);
       alert("Erreur lors du chargement des patients");
@@ -96,58 +81,120 @@ export default function PatientsPage() {
     fetchPatients();
   }, []);
 
+  // Check if any filter is currently applied
+  const hasActiveFilters = Boolean(
+    query.trim() ||
+    dateFrom ||
+    dateTo ||
+    dateDeNaissance ||
+    filterDays !== "none"
+  );
+
+  const handleResetFilters = () => {
+    setQuery("");
+    setDateFrom("");
+    setDateTo("");
+    setdateDeNaissance("");
+    setFilterDays("none");
+  };
+
   // ===== Filter + Sort logic =====
   const filteredPatients = useMemo(() => {
-    let data = patients?.filter((p) => {
-      const q = query.trim().toLowerCase();
-      if (
-        q &&
-        !p.nom.toLowerCase().includes(q) &&
-        !p.telephone?.toLowerCase().includes(q)
-      )
-        return false;
+    const list = Array.isArray(patients) ? patients : [];
 
-      if (dateFrom && new Date(p.createdAt) < new Date(dateFrom)) return false;
-      if (dateTo) {
-        const to = new Date(dateTo);
-        to.setHours(23, 59, 59, 999);
-        if (new Date(p.createdAt) > to) return false;
+    const filtered = list.filter((p) => {
+      // 1. Text search on Name or Phone
+      const q = query.trim().toLowerCase();
+      if (q) {
+        const nom = (p.nom || "").toLowerCase();
+        const tel = (p.telephone || "").toLowerCase();
+        if (!nom.includes(q) && !tel.includes(q)) {
+          return false;
+        }
       }
 
-      if (
-        dateDeNaissance &&
-        new Date(p.dateDeNaissance).toLocaleDateString("fr-FR") !==
-          new Date(dateDeNaissance).toLocaleDateString("fr-FR")
-      )
-        return false;
+      // 2. Date Created From
+      if (dateFrom) {
+        const [y, m, d] = dateFrom.split("-").map(Number);
+        const fromStart = new Date(y, m - 1, d, 0, 0, 0, 0).getTime();
+        const createdTime = p.createdAt ? new Date(p.createdAt).getTime() : NaN;
+        if (isNaN(createdTime) || createdTime < fromStart) {
+          return false;
+        }
+      }
 
-      if (
-        filterDays === "new-30" &&
-        new Date(p.createdAt) < Date.now() - 30 * 24 * 60 * 60 * 1000
-      )
-        return false;
-      if (
-        filterDays === "old-30" &&
-        new Date(p.createdAt) >= Date.now() - 30 * 24 * 60 * 60 * 1000
-      )
-        return false;
+      // 3. Date Created To
+      if (dateTo) {
+        const [y, m, d] = dateTo.split("-").map(Number);
+        const toEnd = new Date(y, m - 1, d, 23, 59, 59, 999).getTime();
+        const createdTime = p.createdAt ? new Date(p.createdAt).getTime() : NaN;
+        if (isNaN(createdTime) || createdTime > toEnd) {
+          return false;
+        }
+      }
+
+      // 4. Date de Naissance
+      if (dateDeNaissance) {
+        if (!p.dateDeNaissance) return false;
+        const pDate = new Date(p.dateDeNaissance);
+        if (isNaN(pDate.getTime())) return false;
+
+        const py = pDate.getFullYear();
+        const pm = String(pDate.getMonth() + 1).padStart(2, "0");
+        const pd = String(pDate.getDate()).padStart(2, "0");
+        const localBirthStr = `${py}-${pm}-${pd}`;
+        const utcBirthStr = pDate.toISOString().split("T")[0];
+
+        if (localBirthStr !== dateDeNaissance && utcBirthStr !== dateDeNaissance) {
+          return false;
+        }
+      }
+
+      // 5. Filter Days (New / Old 30 days)
+      if (filterDays === "new-30") {
+        const createdTime = p.createdAt ? new Date(p.createdAt).getTime() : NaN;
+        const thirtyDaysAgo = Date.now() - 30 * 24 * 60 * 60 * 1000;
+        if (isNaN(createdTime) || createdTime < thirtyDaysAgo) {
+          return false;
+        }
+      }
+
+      if (filterDays === "old-30") {
+        const createdTime = p.createdAt ? new Date(p.createdAt).getTime() : NaN;
+        const thirtyDaysAgo = Date.now() - 30 * 24 * 60 * 60 * 1000;
+        if (isNaN(createdTime) || createdTime >= thirtyDaysAgo) {
+          return false;
+        }
+      }
+
       return true;
     });
 
-    if (sortBy === "age")
-      data.sort((a, b) =>
-        sortOrder === "asc"
-          ? (a.age || 0) - (b.age || 0)
-          : (b.age || 0) - (a.age || 0)
-      );
-    if (sortBy === "date")
-      data.sort((a, b) =>
-        sortOrder === "asc"
-          ? new Date(a.createdAt) - new Date(b.createdAt)
-          : new Date(b.createdAt) - new Date(a.createdAt)
-      );
+    // 6. Sorting
+    const sorted = [...filtered];
+    if (sortBy === "nom") {
+      sorted.sort((a, b) => {
+        const nameA = (a.nom || "").toLowerCase();
+        const nameB = (b.nom || "").toLowerCase();
+        return sortOrder === "asc"
+          ? nameA.localeCompare(nameB, "fr")
+          : nameB.localeCompare(nameA, "fr");
+      });
+    } else if (sortBy === "age" || sortBy === "dateDeNaissance") {
+      sorted.sort((a, b) => {
+        const timeA = a.dateDeNaissance ? new Date(a.dateDeNaissance).getTime() : 0;
+        const timeB = b.dateDeNaissance ? new Date(b.dateDeNaissance).getTime() : 0;
+        return sortOrder === "asc" ? timeA - timeB : timeB - timeA;
+      });
+    } else if (sortBy === "date" || sortBy === "createdAt") {
+      sorted.sort((a, b) => {
+        const timeA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+        const timeB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+        return sortOrder === "asc" ? timeA - timeB : timeB - timeA;
+      });
+    }
 
-    return data;
+    return sorted;
   }, [
     patients,
     query,
@@ -159,11 +206,10 @@ export default function PatientsPage() {
     sortOrder,
   ]);
 
-  const totalCount = patients?.length;
-
   function toggleSort(field) {
-    if (sortBy === field) setSortOrder(sortOrder === "asc" ? "desc" : "asc");
-    else {
+    if (sortBy === field) {
+      setSortOrder(sortOrder === "asc" ? "desc" : "asc");
+    } else {
       setSortBy(field);
       setSortOrder("asc");
     }
@@ -255,7 +301,7 @@ export default function PatientsPage() {
       {/* Filters */}
       <Card className="mb-6 border-[var(--color-200)] shadow-sm">
         <CardContent>
-          <div className="flex flex-wrap items-end gap-8">
+          <div className="flex flex-wrap items-end gap-6">
             <div className="flex flex-col">
               <Label className="mb-1">Rechercher</Label>
               <div className="relative">
@@ -293,12 +339,8 @@ export default function PatientsPage() {
               <Label className="mb-1">Date de naissance</Label>
               <Input
                 type="date"
-                value={
-                  dateDeNaissance ? toInputDateFormat(dateDeNaissance) : ""
-                }
-                onChange={(e) =>
-                  setdateDeNaissance(fromInputDateFormat(e.target.value))
-                }
+                value={dateDeNaissance}
+                onChange={(e) => setdateDeNaissance(e.target.value)}
                 className="w-48"
               />
             </div>
@@ -329,8 +371,25 @@ export default function PatientsPage() {
               </div>
             </div>
 
-            <div className="ml-auto px-4 py-2 text-[var(--color-700)] bg-[var(--color-50)] border border-[var(--color-200)] rounded-xl shadow font-semibold">
-              Total : {totalCount}
+            {hasActiveFilters && (
+              <Button
+                size="sm"
+                variant="ghost"
+                onClick={handleResetFilters}
+                className="text-gray-500 hover:text-red-600 flex items-center gap-1.5 h-9"
+                title="Effacer tous les filtres"
+              >
+                <RotateCcw className="h-4 w-4" /> Réinitialiser
+              </Button>
+            )}
+
+            <div className="ml-auto px-4 py-2 text-[var(--color-700)] bg-[var(--color-50)] border border-[var(--color-200)] rounded-xl shadow font-semibold flex items-center gap-1.5">
+              <span>Total : {filteredPatients.length}</span>
+              {hasActiveFilters && (
+                <span className="text-xs text-gray-500 font-normal">
+                  (sur {patients.length})
+                </span>
+              )}
             </div>
           </div>
         </CardContent>
@@ -344,11 +403,33 @@ export default function PatientsPage() {
               <Table className="w-full border-collapse">
                 <TableHeader className="sticky top-0 bg-gradient-to-r from-[var(--color-50)] to-[var(--color-100)] z-10">
                   <TableRow>
-                    <TableHead className="px-4 py-3 font-bold text-[var(--color-800)] text-sm border-b border-[var(--color-200)]">
-                      Nom
+                    <TableHead
+                      onClick={() => toggleSort("nom")}
+                      className="px-4 py-3 font-bold text-[var(--color-800)] text-sm border-b border-[var(--color-200)] cursor-pointer select-none hover:bg-[var(--color-100)] transition"
+                    >
+                      <div className="flex items-center gap-1.5">
+                        Nom
+                        {sortBy === "nom" &&
+                          (sortOrder === "asc" ? (
+                            <ArrowUp className="w-3.5 h-3.5" />
+                          ) : (
+                            <ArrowDown className="w-3.5 h-3.5" />
+                          ))}
+                      </div>
                     </TableHead>
-                    <TableHead className="px-4 py-3 font-bold text-[var(--color-800)] text-sm border-b border-[var(--color-200)]">
-                      Date de Naissance
+                    <TableHead
+                      onClick={() => toggleSort("age")}
+                      className="px-4 py-3 font-bold text-[var(--color-800)] text-sm border-b border-[var(--color-200)] cursor-pointer select-none hover:bg-[var(--color-100)] transition"
+                    >
+                      <div className="flex items-center gap-1.5">
+                        Date de Naissance
+                        {sortBy === "age" &&
+                          (sortOrder === "asc" ? (
+                            <ArrowUp className="w-3.5 h-3.5" />
+                          ) : (
+                            <ArrowDown className="w-3.5 h-3.5" />
+                          ))}
+                      </div>
                     </TableHead>
                     <TableHead className="px-4 py-3 font-bold text-[var(--color-800)] text-sm border-b border-[var(--color-200)]">
                       Téléphone
@@ -356,8 +437,19 @@ export default function PatientsPage() {
                     <TableHead className="px-4 py-3 font-bold text-[var(--color-800)] text-sm border-b border-[var(--color-200)]">
                       Groupe
                     </TableHead>
-                    <TableHead className="px-4 py-3 font-bold text-[var(--color-800)] text-sm border-b border-[var(--color-200)]">
-                      Créé le
+                    <TableHead
+                      onClick={() => toggleSort("date")}
+                      className="px-4 py-3 font-bold text-[var(--color-800)] text-sm border-b border-[var(--color-200)] cursor-pointer select-none hover:bg-[var(--color-100)] transition"
+                    >
+                      <div className="flex items-center gap-1.5">
+                        Créé le
+                        {sortBy === "date" &&
+                          (sortOrder === "asc" ? (
+                            <ArrowUp className="w-3.5 h-3.5" />
+                          ) : (
+                            <ArrowDown className="w-3.5 h-3.5" />
+                          ))}
+                      </div>
                     </TableHead>
                     <TableHead className="px-4 py-3 font-bold text-[var(--color-800)] text-sm border-b border-[var(--color-200)] text-center">
                       Actions

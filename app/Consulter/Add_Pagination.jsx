@@ -52,6 +52,7 @@ import Ordonnances from "../component/Ordanance/page";
 import LoadingScreen from "../component/LoadingScreen/page";
 import { motion, AnimatePresence } from "framer-motion";
 import ModernSearchBar from "../component/SearchBar/SearchBar";
+import DatePickerFilter from "../component/DatePickerFilter/DatePickerFilter";
 import { tabs } from "@heroui/theme";
 
 export default function PatientDashboard() {
@@ -71,7 +72,13 @@ export default function PatientDashboard() {
   const [openNewordanance, setnewordanance] = useState(false);
   const [showShortcuts, setShowShortcuts] = useState(false);
   const [load, setload] = useState(false);
-  const [query, setquery] = useState({ visites: "", ord: "" });
+  const [query, setquery] = useState({ visites: "", ord: "", vaccination: "" });
+  const [dateFilter, setDateFilter] = useState({
+    visites: "",
+    analyses: "",
+    ord: "",
+    vaccination: "",
+  });
   const [successopen, setsuccessopen] = useState(false);
   const [DateTimeModal, setDataTimeModel] = useState(false);
   const [viderForm, setViderForm] = useState(false);
@@ -96,9 +103,18 @@ export default function PatientDashboard() {
     p.nom.toLowerCase().includes(search.toLowerCase())
   );
   const handleChange = (value) => {
-    const att = selectedtab === "Visites" ? "visites" : "ord";
-    console.log("ord", att);
+    let att = "ord";
+    if (selectedtab === "Visites") att = "visites";
+    else if (selectedtab === "Vaccinations") att = "vaccination";
     setquery((prev) => ({ ...prev, [att]: value }));
+  };
+
+  const handleDateChange = (value) => {
+    let key = "ord";
+    if (selectedtab === "Visites") key = "visites";
+    else if (selectedtab === "Analyses et Résultats") key = "analyses";
+    else if (selectedtab === "Vaccinations") key = "vaccination";
+    setDateFilter((prev) => ({ ...prev, [key]: value }));
   };
 
   const handlesaveOrdanance = (data) => {
@@ -792,24 +808,47 @@ export default function PatientDashboard() {
               {!NewConsultation ? "Dernier diagnostic" : "Nouveau diagnostic"}
             </p>
           </div>
-          {selectedtab === "Prescriptions et Bilans" && (
-            <div>
+          <div className="flex flex-wrap items-center gap-3">
+            {selectedtab === "Prescriptions et Bilans" && (
               <ModernSearchBar
                 onChange={handleChange}
-                value={selectedtab === "Visites" ? query.visites : query.ord}
-                placeholder="id..."
+                value={query.ord}
+                placeholder="Rechercher par ID ou mot-clé..."
               />
-            </div>
-          )}
-          {selectedtab === "Visites" && (
-            <div>
+            )}
+            {selectedtab === "Visites" && (
               <ModernSearchBar
                 onChange={handleChange}
-                value={selectedtab === "Visites" ? query.visites : query.ord}
-                placeholder="id..."
+                value={query.visites}
+                placeholder="Rechercher une visite..."
               />
-            </div>
-          )}
+            )}
+            {selectedtab === "Vaccinations" && (
+              <ModernSearchBar
+                onChange={handleChange}
+                value={query.vaccination}
+                placeholder="Rechercher un vaccin..."
+              />
+            )}
+
+            {(selectedtab === "Visites" ||
+              selectedtab === "Analyses et Résultats" ||
+              selectedtab === "Prescriptions et Bilans" ||
+              selectedtab === "Vaccinations") && (
+              <DatePickerFilter
+                value={
+                  selectedtab === "Visites"
+                    ? dateFilter.visites
+                    : selectedtab === "Analyses et Résultats"
+                    ? dateFilter.analyses
+                    : selectedtab === "Prescriptions et Bilans"
+                    ? dateFilter.ord
+                    : dateFilter.vaccination
+                }
+                onChange={handleDateChange}
+              />
+            )}
+          </div>
 
           <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
             {selectedtab === "Vaccinations" ? (
@@ -1069,6 +1108,7 @@ export default function PatientDashboard() {
                   patientID={selectedPatient?.id}
                   ShowAddDialogNewAnalyse={ShowAddDialogNewAnalyse}
                   setShowAddDialogNewAnalyse={setShowAddDialogNewAnalyse}
+                  dateFilter={dateFilter.analyses}
                 />
               )}
               {selectedtab === "Vaccinations" && (
@@ -1076,18 +1116,22 @@ export default function PatientDashboard() {
                   refrech={refrech}
                   setrefrech={setrefrech}
                   patientId={selectedPatient?.id}
+                  query={query.vaccination}
+                  dateFilter={dateFilter.vaccination}
                 />
               )}
               {selectedtab === "Visites" && (
                 <PatientVisits
                   patientId={selectedPatient?.id}
                   query={query.visites}
+                  dateFilter={dateFilter.visites}
                 />
               )}
               {selectedtab === "Prescriptions et Bilans" && (
                 <Ordonnances
                   patientId={selectedPatient?.id}
                   query={query.ord}
+                  dateFilter={dateFilter.ord}
                   selectedPatient={selectedPatient}
                 />
               )}
