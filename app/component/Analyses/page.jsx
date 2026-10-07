@@ -136,7 +136,7 @@ export default function Analyses({
           ? "/api/radio"
           : "/api/bilanfile";
 
-      await fetch(endpoint, {
+      const res = await fetch(endpoint, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -145,6 +145,11 @@ export default function Analyses({
         }),
       });
 
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.error || "Erreur lors de l'ajout");
+      }
+
       setShowAddDialogNewAnalyse(false);
       setFormData({
         consultationId: null,
@@ -152,7 +157,7 @@ export default function Analyses({
         description: "",
         fichier: "",
       });
-      fetchFiles();
+      await fetchFiles();
     } catch (err) {
       console.error("Erreur lors de l’ajout:", err);
     }
@@ -193,12 +198,17 @@ export default function Analyses({
     try {
       const endpoint =
         fileToDelete.type === "Radio" ? "/api/radio?id=" : "/api/bilanfile?id=";
-      await fetch(endpoint + fileToDelete.id, { method: "DELETE" });
-      setShowDeleteDialog(false);
-      setFileToDelete(null);
-      fetchFiles();
+      const res = await fetch(endpoint + fileToDelete.id, { method: "DELETE" });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.error || "Erreur de suppression");
+      }
+      await fetchFiles();
     } catch (err) {
       console.error("Erreur de suppression:", err);
+    } finally {
+      setShowDeleteDialog(false);
+      setFileToDelete(null);
     }
   };
 

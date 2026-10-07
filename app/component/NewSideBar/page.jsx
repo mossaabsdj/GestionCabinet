@@ -3,6 +3,7 @@ import React, { useState, useEffect } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import param from "@/param.json";
 import Image from "next/image";
+import LoadingScreen from "@/app/component/LoadingScreen/page";
 
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -195,6 +196,7 @@ export default function App() {
   const pathname = usePathname();
   const [collapsed, setCollapsed] = useState(false);
   const [isElectron, setIsElectron] = useState(false);
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     if (typeof window !== "undefined" && window?.electron) {
@@ -218,17 +220,26 @@ export default function App() {
   ];
 
   const handleNavigate = (item) => {
+    setLoading(true);
     router.push(`/${item.url}`);
+    setLoading(false);
     // Auto-close sidebar after navigation
     setCollapsed(true);
   };
   const handleParam = () => {
+    setLoading(true);
     router.push(`/Params`);
+    setLoading(false);
     // Auto-close sidebar after navigation
     setCollapsed(true);
   };
   return (
     <div className="flex h-screen bg-gradient-to-br from-[var(--color-50)] to-white overflow-hidden">
+      {loading && (
+        <div className="absolute inset-0 flex items-center justify-center bg-[var(--color-900)]/80 z-50">
+          <LoadingScreen />
+        </div>
+      )}
       <Sidebar
         items={items}
         collapsed={collapsed}

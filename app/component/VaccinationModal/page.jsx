@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Syringe, Loader2 } from "lucide-react";
 import {
   Dialog,
@@ -21,9 +21,17 @@ export default function AddVaccinationModal({
   setValue,
   loading: parentLoading,
 }) {
-  const [form, setForm] = useState(value || { vaccineName: "" });
+  const [form, setForm] = useState(
+    typeof value === "string" ? { vaccineName: value } : value || { vaccineName: "" }
+  );
   const [internalLoading, setInternalLoading] = useState(false);
   const loading = parentLoading || internalLoading;
+
+  useEffect(() => {
+    if (open) {
+      setForm(typeof value === "string" ? { vaccineName: value } : value || { vaccineName: "" });
+    }
+  }, [open, value]);
 
   async function handleSubmit(e) {
     e.preventDefault();

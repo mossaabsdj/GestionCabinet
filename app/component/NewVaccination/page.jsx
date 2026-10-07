@@ -89,7 +89,10 @@ export default function AddVaccinationButton({
         body: JSON.stringify({ name: newVaccineName.trim() }),
       });
 
-      if (!res.ok) throw new Error("Erreur lors de l'ajout du vaccin");
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.error || "Erreur lors de l'ajout du vaccin");
+      }
 
       const newVaccine = await res.json();
 
@@ -101,7 +104,7 @@ export default function AddVaccinationButton({
       showAlert("Succès", "Le vaccin a été ajouté avec succès", "default");
     } catch (error) {
       console.error("❌ Erreur:", error);
-      showAlert("Erreur", "Impossible d'ajouter le vaccin", "destructive");
+      showAlert("Erreur", error?.message || "Impossible d'ajouter le vaccin", "destructive");
     } finally {
       setAddingVaccine(false);
     }
@@ -131,7 +134,10 @@ export default function AddVaccinationButton({
           notes,
         }),
       });
-      if (!res.ok) throw new Error("Erreur lors de l'ajout de la vaccination");
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.error || "Erreur lors de l'ajout de la vaccination");
+      }
       const data = await res.json();
       setrefrech(true);
 
@@ -148,7 +154,7 @@ export default function AddVaccinationButton({
       );
     } catch (error) {
       console.error("❌ Erreur:", error);
-      showAlert("Erreur", "Impossible d'ajouter la vaccination", "destructive");
+      showAlert("Erreur", error?.message || "Impossible d'ajouter la vaccination", "destructive");
     } finally {
       setLoading(false);
     }

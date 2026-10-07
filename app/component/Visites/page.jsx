@@ -33,6 +33,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { printOrdonnance, printBilan, printJustification } from "@/lib/printer";
 import param from "@/param.json";
+import Swal from "sweetalert2";
 
 function isSameDate(itemDate, targetDateStr) {
   if (!targetDateStr) return true;
@@ -224,7 +225,7 @@ export default function PatientVisits({
     setIsDeleting(true);
     try {
       const res = await fetch(`/api/Consulter?id=${id}`, { method: "DELETE" });
-      const data = await res.json();
+      const data = await res.json().catch(() => ({}));
       if (!res.ok)
         throw new Error(data.error || "Erreur lors de la suppression");
 
@@ -234,7 +235,13 @@ export default function PatientVisits({
       setDeleteConfirm(false);
       setSelectedVisit(null);
     } catch (err) {
-      console.error(err);
+      console.error("❌ handleDelete error:", err);
+      Swal.fire({
+        icon: "error",
+        title: "Erreur",
+        text: err?.message || "Erreur lors de la suppression de la consultation.",
+        confirmButtonColor: "#d33",
+      });
     } finally {
       setIsDeleting(false);
     }
@@ -264,7 +271,7 @@ export default function PatientVisits({
         }),
       });
 
-      const data = await res.json();
+      const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data.error || "Erreur de mise à jour");
 
       await fetchConsultations();
@@ -277,6 +284,12 @@ export default function PatientVisits({
       setSelectedVisit(updatedVisit);
     } catch (err) {
       console.error("❌ Erreur lors de la mise à jour:", err);
+      Swal.fire({
+        icon: "error",
+        title: "Erreur",
+        text: err?.message || "Erreur lors de la mise à jour de la consultation.",
+        confirmButtonColor: "#d33",
+      });
     } finally {
       setIsSaving(false);
     }

@@ -21,6 +21,7 @@ import LoadingScreen from "../component/LoadingScreen/page";
 import { Trash2, Plus, Search, Pill, TestTube, Loader2 } from "lucide-react";
 import DialogPage from "@/app/component/DialogPage/page";
 import SearchBarPage from "@/app/component/SearchBar/SearchBar";
+import Swal from "sweetalert2";
 // Mock data
 
 const MEDICAMENTS = [
@@ -583,23 +584,39 @@ export default function TypesPage() {
       setModal({ open: false, section: "", mode: "add", type: null });
     } catch (err) {
       console.error("❌ handleSave error:", err);
+      Swal.fire({
+        icon: "error",
+        title: "Erreur",
+        text: err?.message || "Erreur lors de l'enregistrement.",
+        confirmButtonColor: "#d33",
+      });
     } finally {
       setSaving(false);
     }
   };
 
   const handleDelete = async (section, id) => {
-    if (section === "ord") {
-      await deleteRecetteType(id);
-      await loadRecettes();
-    }
-    if (section === "bilan") {
-      await deleteBilanType(id);
-      await fetchBilanTypes();
-    }
-    if (section === "justif") {
-      await deleteJustifType(id);
-      await fetchJustifTypes();
+    try {
+      if (section === "ord") {
+        await deleteRecetteType(id);
+        await loadRecettes();
+      }
+      if (section === "bilan") {
+        await deleteBilanType(id);
+        await fetchBilanTypes();
+      }
+      if (section === "justif") {
+        await deleteJustifType(id);
+        await fetchJustifTypes();
+      }
+    } catch (err) {
+      console.error("❌ handleDelete error:", err);
+      Swal.fire({
+        icon: "error",
+        title: "Erreur de suppression",
+        text: err?.message || "Impossible de supprimer cet élément.",
+        confirmButtonColor: "#d33",
+      });
     }
   };
   const addMedication = () => {

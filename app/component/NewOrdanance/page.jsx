@@ -175,14 +175,12 @@ export default function PrescriptionModal({
   };
 
   useEffect(() => {
-    setLoading(true);
-    loadRecettes();
-
+    let isMounted = true;
     async function fetchMedicaments() {
       try {
         const res = await fetch("/api/medicaments");
         const data = await res.json();
-        if (Array.isArray(data)) setMedicaments(data);
+        if (isMounted && Array.isArray(data)) setMedicaments(data);
       } catch (err) {
         console.error("Erreur de chargement des médicaments", err);
       }
@@ -191,16 +189,31 @@ export default function PrescriptionModal({
       try {
         const res = await fetch("/api/bilans");
         const data = await res.json();
-        if (Array.isArray(data)) setBilans(data);
+        if (isMounted && Array.isArray(data)) setBilans(data);
       } catch (err) {
         console.error("Erreur de chargement des bilans", err);
       }
     }
-    fetchBilans();
-    fetchMedicaments();
-    fetchBilanTypes();
-    fetchJustifTypes();
-    setLoading(false);
+
+    async function loadAll() {
+      setLoading(true);
+      try {
+        await Promise.allSettled([
+          loadRecettes(),
+          fetchMedicaments(),
+          fetchBilans(),
+          fetchBilanTypes(),
+          fetchJustifTypes(),
+        ]);
+      } finally {
+        if (isMounted) setLoading(false);
+      }
+    }
+    loadAll();
+
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
   // Auto-focus on medication search when dialog opens or ordonnance tab is selected
@@ -681,24 +694,27 @@ export default function PrescriptionModal({
   };
 
   async function handleAddBilan(form) {
-    if (!form.nom.trim())
+    if (!form?.nom?.trim())
       return showAlert("Champ requis", "Le nom du bilan est obligatoire.");
     setLoading(true);
     try {
       const res = await fetch("/api/bilans", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ nom: form.nom }),
+        body: JSON.stringify({ nom: form.nom.trim() }),
       });
 
-      if (!res.ok) throw new Error("Erreur API");
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.error || "Erreur lors de l'ajout du bilan.");
+      }
 
       const created = await res.json();
       setBilans((prev) => [created, ...prev]);
-      //setNewBilan({ nom: "" });
+      setNewBilan(false);
     } catch (err) {
-      console.error("Erreur lors de l'ajout", err);
-      showAlert("Erreur", "Impossible d'ajouter le bilan.");
+      console.error("Erreur lors de l'ajout du bilan:", err);
+      showAlert("Erreur", err.message || "Impossible d'ajouter le bilan.");
     } finally {
       setLoading(false);
     }
@@ -733,10 +749,8 @@ export default function PrescriptionModal({
   const showAlert = (title, message) =>
     setAlertData({ open: true, title, message });
   async function handleAddMedicament(nom) {
-    console.log(nom);
-    if (!nom) {
+    if (!nom || !nom.trim()) {
       showAlert("Erreur", "Le nom du médicament est requis");
-
       return;
     }
 
@@ -745,17 +759,19 @@ export default function PrescriptionModal({
       const res = await fetch("/api/medicaments", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(nom),
+        body: JSON.stringify(nom.trim()),
       });
 
-      if (!res.ok) throw new showAlert("Erreur", "erreur api");
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.error || "Erreur lors de l'ajout du médicament.");
+      }
       const created = await res.json();
       setMedicaments((prev) => [created, ...prev]);
-      //  setNewMedicament({ nom: "" });
       setNewMedicament(false);
     } catch (err) {
-      console.error("Erreur lors de l'ajout", err);
-      showAlert("Erreur", "Impossible d'ajouter le médicament.");
+      console.error("Erreur lors de l'ajout du médicament:", err);
+      showAlert("Erreur", err.message || "Impossible d'ajouter le médicament.");
     } finally {
       setLoading(false);
     }

@@ -23,6 +23,12 @@ export default function AddBilanModal({
   const [form, setForm] = useState({ nom: value || "" });
   const [loading, setLoading] = useState(false);
 
+  useEffect(() => {
+    if (open) {
+      setForm({ nom: value || "" });
+    }
+  }, [open, value]);
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!form.nom.trim()) {

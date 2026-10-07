@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Plus, Loader2 } from "lucide-react";
 import {
   Dialog,
@@ -17,6 +17,12 @@ export default function AddMedicamentModal({ open, onClose, onAdd, value, loadin
   const [form, setForm] = useState({ nom: value || "" });
   const [internalLoading, setInternalLoading] = useState(false);
   const loading = parentLoading || internalLoading;
+
+  useEffect(() => {
+    if (open) {
+      setForm({ nom: value || "" });
+    }
+  }, [open, value]);
 
   async function handleSubmit(e) {
     e.preventDefault();

@@ -26,6 +26,7 @@ export default function ButtonScan() {
       link.href = URL.createObjectURL(file);
       link.download = "bilan.pdf";
       link.click();
+      setOpen(false);
       return;
     }
 
@@ -40,6 +41,7 @@ export default function ButtonScan() {
         const imgHeight = (img.height * imgWidth) / img.width;
         pdf.addImage(img, "JPEG", 0, 0, imgWidth, imgHeight);
         pdf.save("scanner.pdf");
+        setOpen(false);
       };
     };
     reader.readAsDataURL(file);

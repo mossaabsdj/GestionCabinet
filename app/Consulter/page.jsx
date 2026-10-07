@@ -260,7 +260,7 @@ export default function PatientDashboard() {
 
       if (!response.ok) {
         setsuccessopen(false);
-        const err = await response.json();
+        const err = await response.json().catch(() => ({}));
         throw new Error(
           err.error || "Erreur lors de la création de la consultation",
         );
@@ -274,17 +274,20 @@ export default function PatientDashboard() {
         await fetchPatientById(selectedPatient.id);
       }
       setnewordanance(false);
-      setload(false);
       return consultation;
     } catch (error) {
       console.error("❌ addConsultation error:", error);
+      setsuccessopen(false);
       Swal.fire({
         icon: "error",
         title: "Erreur",
-        text: error || "Erreur lors de la création de la consultation.",
+        text:
+          error?.message || "Erreur lors de la création de la consultation.",
         confirmButtonColor: "#d33",
       });
       throw error;
+    } finally {
+      setload(false);
     }
   }
   const handleSaveConsultation = () => {};
@@ -322,7 +325,9 @@ export default function PatientDashboard() {
 
   async function fetchPatientById(id) {
     try {
+      setLoading(true);
       const res = await fetch(`/api/patients?id=${id}`); // use the updated GET API
+      setLoading(false);
       if (!res.ok) throw new Error("Failed to fetch patient");
       const data = await res.json();
       setSelectedPatient(data);
@@ -532,13 +537,14 @@ export default function PatientDashboard() {
         body: JSON.stringify(data),
       });
 
-      const resData = await res.json();
+      const resData = await res.json().catch(() => ({}));
 
       if (!res.ok) {
-        throw new Error(resData.error || "Erreur lors de la création du patient.");
+        throw new Error(
+          resData.error || "Erreur lors de la création du patient.",
+        );
       }
 
-      setload(false);
       setIsAddOpen(false);
       setSearch("");
 
@@ -555,7 +561,6 @@ export default function PatientDashboard() {
       return { success: true, data: resData };
     } catch (err) {
       console.error(err);
-      setload(false);
 
       setConfig({
         type: "error",
@@ -566,10 +571,10 @@ export default function PatientDashboard() {
       setsuccessopen(true);
 
       return { success: false, error: err.message };
+    } finally {
+      setload(false);
     }
   }
-
-  if (loading) return <LoadingScreen />;
 
   return (
     <div className="flex min-h-screen bg-gradient-to-br from-[var(--color-50)] via-white to-[var(--color-100)]">
@@ -581,6 +586,7 @@ export default function PatientDashboard() {
           fetchPatientById={fetchPatientById}
         />
       )}
+      {loading && <LoadingScreen />}
 
       <SuccessModal
         config={config}

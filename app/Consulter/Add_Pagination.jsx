@@ -20,6 +20,7 @@ import {
   Keyboard,
   ChevronLeft,
   ChevronRight,
+  Clock,
 } from "lucide-react";
 import {
   DialogDescription,
@@ -46,11 +47,10 @@ import LoadingScreen from "../component/LoadingScreen/page";
 import { motion, AnimatePresence } from "framer-motion";
 import ModernSearchBar from "../component/SearchBar/SearchBar";
 import DatePickerFilter from "../component/DatePickerFilter/DatePickerFilter";
-import { tabs } from "@heroui/theme";
 
 export default function PatientDashboard() {
   const searchRef = useRef();
-  const [selectedPatient, setSelectedPatient] = useState();
+  const [selectedPatient, setSelectedPatient] = useState(null);
   const [search, setSearch] = useState("");
   const [files, setFiles] = useState([]);
   const [refrech, setrefrech] = useState(false);
@@ -77,6 +77,7 @@ export default function PatientDashboard() {
   const [viderForm, setViderForm] = useState(false);
   const [openAddElementModal, setOpenAddElementModal] = useState(false);
   const [currentConsultationIndex, setCurrentConsultationIndex] = useState(0);
+  const [Age, setAge] = useState("");
 
   const [date, setDate] = useState(
     new Date().toISOString().split("T")[0] // "YYYY-MM-DD"
@@ -85,17 +86,46 @@ export default function PatientDashboard() {
     new Date().toTimeString().slice(0, 5) // "HH:MM"
   );
   const [config, setConfig] = useState({
-    title: "Payment Successful!",
-    description:
-      "Your payment has been processed successfully. You'll receive a confirmation email shortly.",
+    title: "",
+    description: "",
     autoClose: true,
     loadingText: "Traitement en cours...",
-
     autoCloseDelay: 100,
   });
+
+  function calculateAge(dateString) {
+    if (!dateString) return "";
+
+    const birthDate = new Date(dateString);
+    const today = new Date();
+
+    const diffMs = today - birthDate;
+    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+    const diffMonths = Math.floor(diffDays / 30.44);
+    const diffYears = Math.floor(diffMonths / 12);
+
+    if (diffDays < 30) {
+      return `${diffDays} jour${diffDays > 1 ? "s" : ""}`;
+    } else if (diffMonths < 24) {
+      return `${diffMonths} mois`;
+    } else {
+      return `${diffYears} an${diffYears > 1 ? "s" : ""}`;
+    }
+  }
+
+  useEffect(() => {
+    if (!selectedPatient) {
+      setAge("");
+      return;
+    }
+    const age = calculateAge(selectedPatient.dateDeNaissance);
+    setAge(age);
+  }, [selectedPatient]);
+
   const filteredPatients = patientsData.filter((p) =>
-    p.nom.toLowerCase().includes(search.toLowerCase())
+    p.nom?.toLowerCase().includes(search.toLowerCase())
   );
+
   const handleChange = (value) => {
     let att = "ord";
     if (selectedtab === "Visites") att = "visites";
@@ -116,6 +146,7 @@ export default function PatientDashboard() {
       note: "",
       ordonnance: data.ordonnance,
       bilanRecip: data.bilanRecip,
+      justification: data.justification,
     });
   };
 
@@ -137,22 +168,20 @@ export default function PatientDashboard() {
   }
 
   async function addConsultation(formData) {
+    if (!formData) return;
     setlastid(selectedPatient?.id);
-    console.log(formData);
     const dateTime = new Date(`${date}T${time}:00`);
 
-    // ✅ Check if at least one field has data
     const hasData =
       formData.note?.trim() ||
-      formData.motifDeConsultation?.trim() || // ✅ new
-      formData.rendezVousDate || // ✅ new
+      formData.motifDeConsultation?.trim() ||
+      formData.rendezVousDate ||
       formData?.ordonnance?.items?.length > 0 ||
       formData?.bilanRecip?.items?.length > 0 ||
       formData?.justification ||
       formData?.radios?.length > 0;
 
     if (!hasData) {
-      // ❌ Replace alert with SweetAlert
       Swal.fire({
         icon: "error",
         title: "Champs requis",
@@ -165,6 +194,7 @@ export default function PatientDashboard() {
     setConfig({
       title: "Nouvelle consultation ajoutée !",
       description: "La consultation du patient a été ajoutée avec succès.",
+      autoClose: true,
     });
     setsuccessopen(true);
     setload(true);
@@ -175,15 +205,10 @@ export default function PatientDashboard() {
         headers: {
           "Content-Type": "application/json",
         },
-
-        // ✅ include new fields in POST body
         body: JSON.stringify({
           createdAt: dateTime.toISOString(),
-
           patientId: selectedPatient?.id,
           note: formData.note?.trim() || "",
-
-          // ✅ New fields
           motifDeConsultation: formData.motifDeConsultation?.trim() || null,
           justification:
             typeof formData.justification === "string"
@@ -195,11 +220,7 @@ export default function PatientDashboard() {
               : null,
           rendezVousDate: formData.rendezVousDate || null,
           rendezVousDescription: formData.rendezVousDescription?.trim() || null,
-
-          // ✅ Radios
           radios: formData.radios || [],
-
-          // ✅ Ordonnance
           ordonnance:
             formData?.ordonnance?.items?.length > 0
               ? {
@@ -212,15 +233,13 @@ export default function PatientDashboard() {
                   })),
                 }
               : undefined,
-
-          // ✅ Bilan
           bilanRecip:
             formData?.bilanRecip?.items?.length > 0
               ? {
                   items: formData.bilanRecip.items.map((item) => ({
-                    bilanId: item.id,
+                    bilanId: item.id || item.bilanId,
                     resultat: null,
-                    remarque: null,
+                    remarque: item.remarque || null,
                   })),
                 }
               : undefined,
@@ -229,7 +248,7 @@ export default function PatientDashboard() {
 
       if (!response.ok) {
         setsuccessopen(false);
-        const err = await response.json();
+        const err = await response.json().catch(() => ({}));
         throw new Error(
           err.error || "Erreur lors de la création de la consultation"
         );
@@ -238,33 +257,37 @@ export default function PatientDashboard() {
       const consultation = await response.json();
       console.log("✅ Consultation créée:", consultation);
       setViderForm(true);
-      await fetchPatients();
+      if (selectedPatient?.id) {
+        await fetchPatientById(selectedPatient.id);
+      } else {
+        await fetchPatients();
+      }
       setnewordanance(false);
-      setload(false);
+      setNewConsultationData(null);
       return consultation;
     } catch (error) {
       console.error("❌ addConsultation error:", error);
+      setsuccessopen(false);
       Swal.fire({
         icon: "error",
         title: "Erreur",
-        text: error || "Erreur lors de la création de la consultation.",
+        text: error?.message || "Erreur lors de la création de la consultation.",
         confirmButtonColor: "#d33",
       });
       throw error;
+    } finally {
+      setload(false);
     }
   }
-  const handleSaveConsultation = () => {};
+
   async function addconsultationfunction(data) {
     setDate(new Date().toISOString().split("T")[0]);
     setTime(new Date().toTimeString().slice(0, 5));
     setDataTimeModel(true);
-
-    //await addConsultation(data);
   }
 
   useEffect(() => {
     if (!NewConsultationData) return;
-    console.log("New consultation data:" + JSON.stringify(NewConsultationData));
     addconsultationfunction(NewConsultationData);
   }, [NewConsultationData]);
 
@@ -277,10 +300,11 @@ export default function PatientDashboard() {
 
       const targetId = selectPatientId || lastid;
       if (targetId) {
-        const updatedPatient = data.find((p) => p.id === targetId) || data[0];
-        setSelectedPatient(updatedPatient);
+        await fetchPatientById(targetId);
       } else if (data.length > 0) {
-        setSelectedPatient(data[0]);
+        await fetchPatientById(data[0].id);
+      } else {
+        setSelectedPatient(null);
       }
     } catch (error) {
       console.error("❌ Error fetching patients:", error);
@@ -289,34 +313,55 @@ export default function PatientDashboard() {
     }
   }
 
+  async function fetchPatientById(id) {
+    try {
+      setLoading(true);
+      const res = await fetch(`/api/patients?id=${id}`);
+      if (!res.ok) throw new Error("Failed to fetch patient");
+      const data = await res.json();
+      setSelectedPatient(data);
+      setCurrentConsultationIndex(0);
+    } catch (error) {
+      console.error("❌ Error fetching patient:", error);
+    } finally {
+      setLoading(false);
+    }
+  }
+
   useEffect(() => {
     fetchPatients();
-    setCurrentConsultationIndex(0);
   }, []);
 
   // Reset consultation index when patient changes
   useEffect(() => {
-    if (selectedPatient?.consultations?.length > 0) {
-      setCurrentConsultationIndex(selectedPatient.consultations.length - 1);
-    }
+    setCurrentConsultationIndex(0);
   }, [selectedPatient?.id]);
+
+  useEffect(() => {
+    if (
+      selectedPatient?.consultations &&
+      currentConsultationIndex >= selectedPatient.consultations.length
+    ) {
+      setCurrentConsultationIndex(0);
+    }
+  }, [selectedPatient?.consultations, currentConsultationIndex]);
 
   // Keyboard shortcuts
   useEffect(() => {
     const handleKeyPress = (e) => {
-      // Ctrl+A: Focus search bar
+      // Ctrl+S: Focus search bar
       if ((e.ctrlKey || e.metaKey) && e.key === "s") {
         e.preventDefault();
         searchRef.current?.focus();
       }
 
-      // Ctrl+N: New patient
+      // Ctrl+A: New patient
       if ((e.ctrlKey || e.metaKey) && e.key === "a") {
         e.preventDefault();
         setIsAddOpen(true);
       }
 
-      // Ctrl+K: New consultation
+      // Ctrl+C: New consultation
       if ((e.ctrlKey || e.metaKey) && e.key === "c") {
         e.preventDefault();
         setNewConsultation(true);
@@ -369,6 +414,7 @@ export default function PatientDashboard() {
       icon: ClipboardList,
       label: "Antécédents",
       value: selectedPatient?.antecedents || "Non spécifié",
+      type: "textarea",
     },
     {
       icon: Droplets,
@@ -394,50 +440,100 @@ export default function PatientDashboard() {
     if (!selectedPatient?.consultations?.length) return [];
 
     const consultations = selectedPatient.consultations;
-    const index = consultationIndex ?? consultations.length - 1;
-
-    const getInfo = (attr, currentIndex) => {
-      for (let i = currentIndex; i >= 0; i--) {
-        const val = consultations[i]?.[attr];
-        if (val !== null && val !== undefined && val !== "") {
-          return val;
-        }
-      }
-      return null;
-    };
+    const index = Math.min(
+      Math.max(0, consultationIndex ?? 0),
+      consultations.length - 1
+    );
 
     const c = consultations[index];
+    if (!c) return [];
 
-    const allFields = [
-      {
+    const allFields = [];
+
+    if (c.motifDeConsultation?.trim()) {
+      allFields.push({
         icon: Stethoscope,
         label: "Motif de consultation",
-        value: getInfo("motifDeConsultation", index),
+        value: c.motifDeConsultation,
         type: "textarea",
         unite: "",
-      },
-      {
+      });
+    }
+
+    if (c.note?.trim()) {
+      allFields.push({
         icon: ClipboardList,
         label: "Notes",
-        value: getInfo("note", index),
+        value: c.note,
         type: "textarea",
         unite: "",
-      },
-      c?.rendezVous
-        ? {
-            icon: Calendar,
-            label: "Rendez-vous lié",
-            value: `${new Date(c.rendezVous.date).toLocaleDateString(
-              "fr-FR"
-            )} - ${c.rendezVous.description || "Non spécifié"}`,
-            type: "text",
-            unite: "",
-          }
-        : null,
-    ];
+      });
+    }
 
-    // Filter out null values and null fields
-    return allFields.filter((field) => field !== null && field.value !== null);
+    if (c.rendezVous) {
+      allFields.push({
+        icon: Calendar,
+        label: "Rendez-vous lié",
+        value: `${new Date(c.rendezVous.date).toLocaleDateString(
+          "fr-FR"
+        )} - ${c.rendezVous.description || "Non spécifié"}`,
+        type: "text",
+        unite: "",
+      });
+    }
+
+    if (
+      c.justificationRecord?.motif ||
+      (typeof c.justification === "string" && c.justification.trim())
+    ) {
+      allFields.push({
+        icon: FileText,
+        label: "Justification",
+        value:
+          c.justificationRecord?.motif ||
+          c.justification,
+        type: "textarea",
+        unite: "",
+      });
+    }
+
+    if (c.ordonnance?.items?.length > 0) {
+      allFields.push({
+        icon: Droplets,
+        label: "Prescription",
+        value: `${c.ordonnance.items.length} médicament(s) prescrit(s)`,
+        type: "text",
+        unite: "",
+      });
+    }
+
+    if (c.bilanRecip?.items?.length > 0) {
+      allFields.push({
+        icon: ClipboardList,
+        label: "Bilan",
+        value: `${c.bilanRecip.items.length} analyse(s) demandée(s)`,
+        type: "text",
+        unite: "",
+      });
+    }
+
+    if (c.radios?.length > 0) {
+      allFields.push({
+        icon: Sparkles,
+        label: "Radiographies",
+        value: `${c.radios.length} radio(s) attachée(s)`,
+        type: "text",
+        unite: "",
+      });
+    }
+
+    return allFields.filter(
+      (field) =>
+        field &&
+        field.value !== null &&
+        field.value !== undefined &&
+        field.value !== ""
+    );
   };
 
   async function handleAddPatient(data) {
@@ -461,13 +557,14 @@ export default function PatientDashboard() {
         body: JSON.stringify(data),
       });
 
-      const resData = await res.json();
+      const resData = await res.json().catch(() => ({}));
 
       if (!res.ok) {
-        throw new Error(resData.error || "Erreur lors de la création du patient.");
+        throw new Error(
+          resData.error || "Erreur lors de la création du patient."
+        );
       }
 
-      setload(false);
       setIsAddOpen(false);
       setSearch("");
       setlastid(resData.id);
@@ -485,7 +582,6 @@ export default function PatientDashboard() {
       return { success: true, data: resData };
     } catch (err) {
       console.error(err);
-      setload(false);
 
       setConfig({
         type: "error",
@@ -496,6 +592,8 @@ export default function PatientDashboard() {
       setsuccessopen(true);
 
       return { success: false, error: err.message };
+    } finally {
+      setload(false);
     }
   }
 
@@ -587,7 +685,7 @@ export default function PatientDashboard() {
         initial={{ x: -100, opacity: 0 }}
         animate={{ x: 0, opacity: 1 }}
         transition={{ duration: 0.5, ease: "easeOut" }}
-        className="w-60 h-screen bg-[var(--color-100)] rounded-tr-4xl p-6 pl-2 pr-2  pr-0flex flex-col border-r border-[var(--color-200)] fixed "
+        className="w-60 h-screen bg-[var(--color-100)] rounded-tr-4xl p-6 pl-2 pr-2 flex flex-col border-r border-[var(--color-200)] fixed"
       >
         <div className="flex justify-between items-center mb-6">
           <motion.h2
@@ -648,7 +746,7 @@ export default function PatientDashboard() {
                 transition={{ delay: index * 0.05 }}
                 whileHover={{ scale: 1.02, x: 5 }}
                 whileTap={{ scale: 0.98 }}
-                onClick={() => setSelectedPatient(patient)}
+                onClick={() => fetchPatientById(patient.id)}
                 className={`p-3 mb-2 rounded-lg cursor-pointer flex flex-col transition-all duration-200 ${
                   selectedPatient?.id === patient.id
                     ? "bg-[var(--color-600)] text-white shadow-lg"
@@ -666,8 +764,9 @@ export default function PatientDashboard() {
           </AnimatePresence>
         </motion.ul>
       </motion.div>
+
       {/* Main Content */}
-      <div className="flex-1 ml-50 p-6 px-0 pr-2 overflow-auto">
+      <div className="flex-1 ml-65 p-6 px-0 pr-2 overflow-auto">
         {/* Keyboard shortcut hint button */}
         <motion.button
           initial={{ opacity: 0, scale: 0.8 }}
@@ -688,20 +787,32 @@ export default function PatientDashboard() {
           transition={{ duration: 0.5 }}
           className="flex justify-between items-center mb-6"
         >
-          <div>
-            <motion.h1
-              initial={{ scale: 0.9 }}
-              animate={{ scale: 1 }}
-              transition={{ type: "spring", stiffness: 200 }}
-              className="text-3xl font-bold text-[var(--color-800)]"
-            >
-              {selectedPatient?.nom}
-            </motion.h1>
-            <p className="text-gray-500 text-sm flex items-center gap-1 mt-1">
-              <ClipboardList size={16} />
-              {!NewConsultation ? "Dernier diagnostic" : "Nouveau diagnostic"}
+          <div className="space-y-1">
+            <div className="flex items-center gap-3">
+              <motion.h1
+                initial={{ opacity: 0, y: -5 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ type: "spring", stiffness: 250, damping: 15 }}
+                className="text-3xl font-bold text-[var(--color-800)]"
+              >
+                {selectedPatient?.nom}
+              </motion.h1>
+
+              {Age && (
+                <span className="px-3 py-1 text-sm rounded-full bg-[var(--color-100)] text-[var(--color-800)] font-semibold">
+                  {Age}
+                </span>
+              )}
+            </div>
+
+            <p className="text-gray-500 text-sm flex items-center gap-2">
+              <ClipboardList size={16} className="text-[var(--color-600)]" />
+              {selectedtab !== "+ Nouvelle Consultation"
+                ? "Dernier diagnostic"
+                : "Nouveau diagnostic"}
             </p>
           </div>
+
           <div className="flex flex-wrap items-center gap-3">
             {selectedtab === "Prescriptions et Bilans" && (
               <ModernSearchBar
@@ -742,49 +853,50 @@ export default function PatientDashboard() {
                 onChange={handleDateChange}
               />
             )}
-          </div>
 
-          <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-            {selectedtab === "Vaccinations" ? (
-              <AddVaccinationButton
-                patientId={selectedPatient?.id}
-                setrefrech={setrefrech}
-              />
-            ) : selectedtab === "Analyses et Résultats" ? (
-              <Button
-                onClick={() => setShowAddDialogNewAnalyse(true)}
-                className="flex items-center gap-2 bg-[var(--color-600)] hover:bg-[var(--color-700)] text-white font-medium px-5 py-2 rounded-xl shadow-md transition"
-              >
-                <Plus className="mr-2 h-4 w-4" /> Nouvelle analyse
-              </Button>
-            ) : selectedtab === "Prescriptions et Bilans" ? (
-              <Button
-                onClick={() => setnewordanance(true)}
-                className="flex items-center gap-2 bg-[var(--color-600)] hover:bg-[var(--color-700)] text-white font-medium px-5 py-2 rounded-xl shadow-md transition"
-              >
-                <Plus className="mr-2 h-4 w-4" /> Nouvelle Prescription/Bilan
-              </Button>
-            ) : selectedtab === "Visites" ||
-              selectedtab === "Informations Patient" ? (
-              <Button
-                onClick={() => {
-                  setNewConsultation(true);
-                  setselectedtab("+ Nouvelle Consultation");
-                }}
-                className="bg-[var(--color-600)] hover:bg-[var(--color-700)] text-white px-4 py-2 rounded-lg font-semibold flex items-center gap-2"
-              >
-                <Plus size={18} />
-                Nouvelle Consultation
-            ) : selectedtab === "+ Nouvelle Consultation" ? (
-              <Button
-                onClick={() => setOpenAddElementModal(true)}
-                className="bg-[var(--color-600)] hover:bg-[var(--color-700)] text-white px-5 py-2.5 rounded-xl font-medium shadow-md hover:shadow-lg transition-all flex items-center gap-2"
-              >
-                <Plus size={18} />
-                Ajouter
-              </Button>
-            ) : null}
-          </motion.div>
+            <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+              {selectedtab === "Vaccinations" ? (
+                <AddVaccinationButton
+                  patientId={selectedPatient?.id}
+                  setrefrech={setrefrech}
+                />
+              ) : selectedtab === "Analyses et Résultats" ? (
+                <Button
+                  onClick={() => setShowAddDialogNewAnalyse(true)}
+                  className="flex items-center gap-2 bg-[var(--color-600)] hover:bg-[var(--color-700)] text-white font-medium px-5 py-2 rounded-xl shadow-md transition"
+                >
+                  <Plus className="mr-2 h-4 w-4" /> Nouvelle analyse
+                </Button>
+              ) : selectedtab === "Prescriptions et Bilans" ? (
+                <Button
+                  onClick={() => setnewordanance(true)}
+                  className="flex items-center gap-2 bg-[var(--color-600)] hover:bg-[var(--color-700)] text-white font-medium px-5 py-2 rounded-xl shadow-md transition"
+                >
+                  <Plus className="mr-2 h-4 w-4" /> Nouvelle Prescription / Bilan / Justification
+                </Button>
+              ) : selectedtab === "Visites" ||
+                selectedtab === "Informations Patient" ? (
+                <Button
+                  onClick={() => {
+                    setNewConsultation(true);
+                    setselectedtab("+ Nouvelle Consultation");
+                  }}
+                  className="bg-[var(--color-600)] hover:bg-[var(--color-700)] text-white px-4 py-2 rounded-lg font-semibold flex items-center gap-2"
+                >
+                  <Plus size={18} />
+                  Nouvelle Consultation
+                </Button>
+              ) : selectedtab === "+ Nouvelle Consultation" ? (
+                <Button
+                  onClick={() => setOpenAddElementModal(true)}
+                  className="bg-[var(--color-600)] hover:bg-[var(--color-700)] text-white px-5 py-2.5 rounded-xl font-medium shadow-md hover:shadow-lg transition-all flex items-center gap-2"
+                >
+                  <Plus size={18} />
+                  Ajouter
+                </Button>
+              ) : null}
+            </motion.div>
+          </div>
         </motion.div>
 
         {/* Tabs */}
@@ -811,6 +923,9 @@ export default function PatientDashboard() {
               whileTap={{ scale: 0.95 }}
               onClick={() => {
                 setselectedtab(tab);
+                if (tab !== "+ Nouvelle Consultation") {
+                  setNewConsultation(false);
+                }
               }}
               className={`px-2 sm:px-2 py-2 text-sm sm:text-base font-medium border-b-2 transition-all duration-200 whitespace-nowrap ${
                 tab === selectedtab
@@ -832,7 +947,7 @@ export default function PatientDashboard() {
               exit={{ opacity: 0 }}
               className="text-gray-500 text-center mt-10"
             >
-              Aucune Patient.
+              Aucun Patient sélectionné.
             </motion.p>
           ) : (
             <motion.div
@@ -888,11 +1003,15 @@ export default function PatientDashboard() {
                                 {selectedPatient.consultations.length}
                               </span>
                               <span className="text-xs text-gray-500">
-                                {new Date(
-                                  selectedPatient.consultations[
-                                    currentConsultationIndex
-                                  ]?.createdAt
-                                ).toLocaleDateString("fr-FR")}
+                                {selectedPatient.consultations[
+                                  currentConsultationIndex
+                                ]?.createdAt
+                                  ? new Date(
+                                      selectedPatient.consultations[
+                                        currentConsultationIndex
+                                      ].createdAt
+                                    ).toLocaleDateString("fr-FR")
+                                  : ""}
                               </span>
                               <div className="flex gap-2">
                                 <motion.button
@@ -909,6 +1028,7 @@ export default function PatientDashboard() {
                                       ? "bg-gray-200 text-gray-400 cursor-not-allowed"
                                       : "bg-[var(--color-100)] text-[var(--color-700)] hover:bg-[var(--color-200)]"
                                   }`}
+                                  title="Consultation plus récente"
                                 >
                                   <ChevronLeft size={20} />
                                 </motion.button>
@@ -934,6 +1054,7 @@ export default function PatientDashboard() {
                                       ? "bg-gray-200 text-gray-400 cursor-not-allowed"
                                       : "bg-[var(--color-100)] text-[var(--color-700)] hover:bg-[var(--color-200)]"
                                   }`}
+                                  title="Consultation plus ancienne"
                                 >
                                   <ChevronRight size={20} />
                                 </motion.button>
@@ -946,7 +1067,7 @@ export default function PatientDashboard() {
                         <div className="grid grid-cols-2 gap-4">
                           {section.data.map((info, infoIndex) => (
                             <motion.div
-                              key={info.label}
+                              key={`${section.isPaginated ? currentConsultationIndex : "static"}-${info.label}`}
                               initial={{ opacity: 0, scale: 0.9 }}
                               animate={{ opacity: 1, scale: 1 }}
                               transition={{
@@ -984,8 +1105,9 @@ export default function PatientDashboard() {
                         </div>
                       ) : section.isPaginated ? (
                         <div className="text-center py-8 text-gray-500">
-                          Aucune donnée médicale disponible pour cette
-                          consultation
+                          {selectedPatient?.consultations?.length > 0
+                            ? "Aucune donnée médicale disponible pour cette consultation"
+                            : "Aucune consultation enregistrée pour ce patient"}
                         </div>
                       ) : null}
                     </motion.div>
@@ -1024,6 +1146,7 @@ export default function PatientDashboard() {
                   patientId={selectedPatient?.id}
                   query={query.visites}
                   dateFilter={dateFilter.visites}
+                  fetchPatientById={fetchPatientById}
                 />
               )}
               {selectedtab === "Prescriptions et Bilans" && (
@@ -1038,6 +1161,7 @@ export default function PatientDashboard() {
           )}
         </AnimatePresence>
       </div>
+
       <Dialog open={DateTimeModal} onOpenChange={setDataTimeModel}>
         <DialogContent className="sm:max-w-xl w-full rounded-2xl">
           <DialogHeader>
@@ -1084,7 +1208,10 @@ export default function PatientDashboard() {
           <DialogFooter className="mt-6 flex items-center justify-end gap-3">
             <button
               type="button"
-              onClick={() => setDataTimeModel(false)}
+              onClick={() => {
+                setDataTimeModel(false);
+                setNewConsultationData(null);
+              }}
               className="px-5 py-2.5 text-base rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-50 transition-colors"
             >
               Annuler
@@ -1107,4 +1234,3 @@ export default function PatientDashboard() {
     </div>
   );
 }
-

@@ -160,10 +160,10 @@ export default function NewConsultationPage({
     setSaving(true);
     try {
       await Promise.resolve(onSave?.({ ...form }));
-      setSaving(false);
     } catch (e) {
-      setSaving(false);
       setError(e?.message ?? "Erreur lors de l'enregistrement");
+    } finally {
+      setSaving(false);
     }
   }
 

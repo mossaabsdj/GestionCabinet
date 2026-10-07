@@ -97,16 +97,21 @@ export default function PatientVisits({
   async function handleDelete(id) {
     try {
       const res = await fetch(`/api/Consulter?id=${id}`, { method: "DELETE" });
-      const data = await res.json();
+      const data = await res.json().catch(() => ({}));
       if (!res.ok)
         throw new Error(data.error || "Erreur lors de la suppression");
       await fetchConsultations();
       await fetchPatientById(patientId);
-      //  setVisits((prev) => prev.filter((v) => v.id !== id));
-      setDeleteConfirm(false);
-      // setSelectedVisit(null);
     } catch (err) {
-      console.error(err);
+      console.error("❌ handleDelete error:", err);
+      Swal.fire({
+        icon: "error",
+        title: "Erreur",
+        text: err?.message || "Erreur lors de la suppression de la consultation.",
+        confirmButtonColor: "#d33",
+      });
+    } finally {
+      setDeleteConfirm(false);
     }
   }
 
@@ -132,7 +137,7 @@ export default function PatientVisits({
         }),
       });
 
-      const data = await res.json();
+      const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data.error || "Erreur de mise à jour");
 
       const updatedVisits = await fetchConsultations();
@@ -140,10 +145,14 @@ export default function PatientVisits({
 
       setSelectedVisit(updatedVisits[currentVisitIndex] || null);
       setIsEditing(false);
-
-      // Update the selected visit after save
     } catch (err) {
       console.error("❌ Erreur lors de la mise à jour:", err);
+      Swal.fire({
+        icon: "error",
+        title: "Erreur",
+        text: err?.message || "Erreur lors de la mise à jour de la consultation.",
+        confirmButtonColor: "#d33",
+      });
     }
   }
 

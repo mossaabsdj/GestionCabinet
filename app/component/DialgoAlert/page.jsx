@@ -13,7 +13,12 @@ import { AlertTriangle } from "lucide-react";
 
 export default function DialogAlert({ open, onClose, title, message }) {
   return (
-    <Dialog open={open} onOpenChange={onClose}>
+    <Dialog
+      open={open}
+      onOpenChange={(isOpen) => {
+        if (!isOpen) onClose?.();
+      }}
+    >
       <DialogContent className="sm:max-w-md bg-white/90 backdrop-blur-md border border-[var(--color-200)] shadow-lg">
         <DialogHeader className="flex items-center gap-2">
           <AlertTriangle className="w-5 h-5 text-[var(--color-600)]" />

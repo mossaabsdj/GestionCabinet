@@ -32,6 +32,17 @@ export function SuccessDialog({
     }
   }, [autoClose, isOpen, autoCloseDelay, onClose, loading, type]);
 
+  useEffect(() => {
+    if (!isOpen || loading) return;
+    const handleKeyDown = (e) => {
+      if (e.key === "Escape") {
+        onClose?.();
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [isOpen, loading, onClose]);
+
   if (!isOpen) return null;
 
   // Choose icon and color scheme based on type
