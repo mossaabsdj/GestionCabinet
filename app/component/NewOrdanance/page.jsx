@@ -43,7 +43,10 @@ export default function PrescriptionModal({
   onOpenChange,
   onsave,
   selectedPatient,
+  initialData = null,
+  initialTab = "ordonnance",
 }) {
+  const [activeTab, setActiveTab] = useState(initialTab || "ordonnance");
   const [query, setQuery] = useState("");
   const [suggestions, setSuggestions] = useState([]);
   const [selectedMed, setSelectedMed] = useState(null);
@@ -63,8 +66,8 @@ export default function PrescriptionModal({
   const [bilanTypes, setBilanTypes] = useState([]);
   const [justifTypes, setJustifTypes] = useState([]);
   const [tmpfreq, setTmpfreq] = useState("");
-  const [tmpDose, setTmpDose] = useState("1 fois/jour");
-  const [tmpDuration, setTmpDuration] = useState("5 jours");
+  const [tmpDose, setTmpDose] = useState("");
+  const [tmpDuration, setTmpDuration] = useState("");
   const [tmpQuantite, setTmpQuantite] = useState(1);
   const [loading, setLoading] = useState(false);
   const [printingOrd, setPrintingOrd] = useState(false);
@@ -91,6 +94,7 @@ export default function PrescriptionModal({
   // Refs for auto-focus
   const medSearchRef = useRef(null);
   const labSearchRef = useRef(null);
+  const quantiteInputRef = useRef(null);
 
   async function fetchBilanTypes() {
     try {
@@ -199,14 +203,28 @@ export default function PrescriptionModal({
     setLoading(false);
   }, []);
 
-  // Auto-focus on medication search when dialog opens
+  // Auto-focus on medication search when dialog opens or ordonnance tab is selected
   useEffect(() => {
-    if (open && medSearchRef.current) {
-      setTimeout(() => {
+    if (open && activeTab === "ordonnance") {
+      const timer = setTimeout(() => {
         medSearchRef.current?.focus();
       }, 100);
+      return () => clearTimeout(timer);
     }
-  }, [open]);
+  }, [open, activeTab]);
+
+  // Auto-focus and select text in quantity field when medication modal opens
+  useEffect(() => {
+    if (openMedDialog) {
+      const timer = setTimeout(() => {
+        if (quantiteInputRef.current) {
+          quantiteInputRef.current.focus();
+          quantiteInputRef.current.select();
+        }
+      }, 100);
+      return () => clearTimeout(timer);
+    }
+  }, [openMedDialog]);
 
   useEffect(() => {
     if (!query.trim()) {
@@ -243,12 +261,14 @@ export default function PrescriptionModal({
       );
     } else if (e.key === "ArrowUp") {
       e.preventDefault();
-      setHighlightedMedIdx((idx) => (idx - 1 >= 0 ? idx - 1 : idx));
+      setHighlightedMedIdx((idx) => (idx - 1 >= 0 ? idx - 1 : 0));
     } else if (e.key === "Enter" && highlightedMedIdx >= 0) {
       e.preventDefault();
       const s = suggestions[highlightedMedIdx];
-      setSelectedMed(s);
-      setOpenMedDialog(true);
+      if (s) {
+        setSelectedMed(s);
+        setOpenMedDialog(true);
+      }
     }
   }
 
@@ -278,14 +298,25 @@ export default function PrescriptionModal({
       setExistDialog(true);
       return;
     }
+    const finalDosage = (
+      tmpDose === "autre" ? customDose : tmpDose || ""
+    ).trim();
+    const finalFrequence = (
+      tmpfreq === "autre" ? customFreq : tmpfreq || ""
+    ).trim();
+    const finalDuree = (
+      tmpDuration === "autre" ? customDuration : tmpDuration || ""
+    ).trim();
+    const finalQuantite = Number(tmpQuantite) > 0 ? Number(tmpQuantite) : 1;
+
     const item = {
       medicamentId: selectedMed.id,
       nom: selectedMed.nom,
       form: selectedMed.form,
-      dosage: tmpDose === "autre" ? customDose : tmpDose,
-      frequence: tmpfreq === "autre" ? customFreq : tmpfreq,
-      duree: tmpDuration === "autre" ? customDuration : tmpDuration,
-      quantite: tmpQuantite,
+      dosage: finalDosage,
+      frequence: finalFrequence,
+      duree: finalDuree,
+      quantite: finalQuantite,
     };
     setPrescriptionItems([...prescriptionItems, item]);
 
@@ -294,9 +325,12 @@ export default function PrescriptionModal({
     setQuery("");
     setOpenMedDialog(false);
     setTmpQuantite(1);
-    setTmpDose("1 fois/jour");
+    setTmpDose("");
     setTmpfreq("");
-    setTmpDuration("5 jours");
+    setTmpDuration("");
+    setCustomDose("");
+    setCustomFreq("");
+    setCustomDuration("");
 
     // Return focus to search field
     setTimeout(() => {
@@ -332,7 +366,7 @@ export default function PrescriptionModal({
       items: labItems,
     };
     const selectedJustifObj = justifTypes.find(
-      (t) => t.id === justifType || t.id === Number(justifType)
+      (t) => t.id === justifType || t.id === Number(justifType),
     );
     const payload = {
       ordonnance: ordonnance,
@@ -351,16 +385,17 @@ export default function PrescriptionModal({
   const totalMeds = prescriptionItems.length;
 
   useEffect(() => {
-    if (type && type !== "autre") {
+    if (!type) return;
+    if (type !== "autre") {
       const selectedtyoe = ordTypes.filter((o) => o.id === type);
       const meds =
         selectedtyoe[0]?.items.map((med) => ({
           medicamentId: med.id,
           nom: med.nom,
-          dosage: med.dosage || "—",
-          frequence: med.frequence,
-          duree: med.duree,
-          quantite: med.quantite,
+          dosage: med.dosage || "",
+          frequence: med.frequence || "",
+          duree: med.duree || "",
+          quantite: med.quantite || 1,
         })) || [];
 
       setPrescriptionItems(meds);
@@ -377,7 +412,8 @@ export default function PrescriptionModal({
     }
   }, [labItems]);
   useEffect(() => {
-    if (SelectedbilanType && SelectedbilanType !== "autre") {
+    if (!SelectedbilanType) return;
+    if (SelectedbilanType !== "autre") {
       const selectedtyoe = bilanTypes.filter((o) => o.id === SelectedbilanType);
       const labs =
         selectedtyoe[0]?.items.map((lab) => ({
@@ -391,10 +427,34 @@ export default function PrescriptionModal({
     }
   }, [SelectedbilanType, bilanTypes]);
 
+  // Synchronize initial data and tab when dialog opens
+  useEffect(() => {
+    if (open) {
+      if (initialTab) {
+        setActiveTab(initialTab);
+      }
+      if (initialData) {
+        if (Array.isArray(initialData.ordonnance?.items)) {
+          setPrescriptionItems(initialData.ordonnance.items);
+        }
+        if (Array.isArray(initialData.bilanRecip?.items)) {
+          setLabItems(initialData.bilanRecip.items);
+        }
+        if (initialData.justification) {
+          const txt =
+            typeof initialData.justification === "string"
+              ? initialData.justification
+              : initialData.justification.texte || "";
+          setJustifText(txt);
+        }
+      }
+    }
+  }, [open, initialData, initialTab]);
+
   useEffect(() => {
     if (justifType && justifType !== "autre") {
       const selected = justifTypes.find(
-        (t) => t.id === justifType || t.id === Number(justifType)
+        (t) => t.id === justifType || t.id === Number(justifType),
       );
       if (selected) {
         setJustifText(selected.texte || "");
@@ -575,7 +635,7 @@ export default function PrescriptionModal({
       const nextConsultationId = (data.lastConsultationId || 0) + 1;
       const nextJustificationId = (data.lastJustificationId || 0) + 1;
       const selectedObj = justifTypes.find(
-        (t) => t.id === justifType || t.id === Number(justifType)
+        (t) => t.id === justifType || t.id === Number(justifType),
       );
 
       // 🖨️ Send to printer
@@ -702,14 +762,24 @@ export default function PrescriptionModal({
   }
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl min-w-4xl p-0 max-h-[97vh] overflow-hidden">
+      <DialogContent
+        className="max-w-4xl min-w-4xl p-0 max-h-[97vh] overflow-hidden"
+        onOpenAutoFocus={(e) => {
+          if (activeTab === "ordonnance") {
+            e.preventDefault();
+            setTimeout(() => {
+              medSearchRef.current?.focus();
+            }, 50);
+          }
+        }}
+      >
         <motion.div
-          className="p-6"
+          className="p-4 "
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 0.3 }}
         >
-          <Tabs defaultValue="ordonnance">
+          <Tabs value={activeTab} onValueChange={setActiveTab}>
             <TabsList className="grid grid-cols-3 bg-gradient-to-r from-[var(--color-100)] to-[var(--color-50)] text-[var(--color-700)] rounded-xl p-1 shadow-sm">
               <TabsTrigger
                 value="ordonnance"
@@ -892,7 +962,16 @@ export default function PrescriptionModal({
 
               {/* Modal Médicament */}
               <Dialog open={openMedDialog} onOpenChange={setOpenMedDialog}>
-                <DialogContent className="sm:max-w-2xl">
+                <DialogContent
+                  className="sm:max-w-2xl"
+                  onOpenAutoFocus={(e) => {
+                    e.preventDefault();
+                    setTimeout(() => {
+                      quantiteInputRef.current?.focus();
+                      quantiteInputRef.current?.select();
+                    }, 50);
+                  }}
+                >
                   <DialogHeader>
                     <DialogTitle className="text-[var(--color-700)] text-xl">
                       {selectedMed?.nom}{" "}
@@ -906,6 +985,41 @@ export default function PrescriptionModal({
 
                   {selectedMed && (
                     <div className="grid gap-4">
+                      {/* === QUANTITE === */}
+                      <div>
+                        <Label
+                          htmlFor="quantite-input"
+                          className="text-[var(--color-700)] font-medium"
+                        >
+                          Quantité (boîtes)
+                        </Label>
+                        <Input
+                          id="quantite-input"
+                          ref={quantiteInputRef}
+                          type="number"
+                          min={1}
+                          step={1}
+                          placeholder="1"
+                          value={tmpQuantite}
+                          onChange={(e) => {
+                            const val = e.target.value;
+                            if (val === "") {
+                              setTmpQuantite("");
+                            } else {
+                              const parsed = parseInt(val, 10);
+                              setTmpQuantite(isNaN(parsed) ? "" : parsed);
+                            }
+                          }}
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter") {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              addMedication();
+                            }
+                          }}
+                          className="mt-1 w-full rounded-lg border border-[var(--color-200)] px-3 py-2 focus:ring-2 focus:ring-[var(--color-400)] transition-all"
+                        />
+                      </div>
                       {/* === DOSAGE === */}
                       <div>
                         <Label className="text-[var(--color-700)] font-medium">
@@ -1013,39 +1127,6 @@ export default function PrescriptionModal({
                           />
                         )}
                       </div>
-
-                      <div>
-                        <Label className="text-[var(--color-700)] font-medium">
-                          Quantité (boîtes)
-                        </Label>
-                        <select
-                          className="w-full rounded-lg border border-[var(--color-200)] px-3 py-2 focus:ring-2 focus:ring-[var(--color-400)] transition-all"
-                          value={tmpQuantite}
-                          onChange={(e) => setTmpQuantite(e.target.value)}
-                        >
-                          <option value="">--Sélectionner--</option>
-                          <option value="1">1</option>
-                          <option value="2">2</option>
-                          <option value="3">3</option>
-                          <option value="4">4</option>
-                          <option value="5">5</option>
-                          <option value="5">6</option>
-                          <option value="5">7</option>
-                          <option value="5">8</option>
-                          <option value="5">9</option>
-                        </select>
-
-                        {tmpQuantite === "autre" && (
-                          <input
-                            type="number"
-                            min={1}
-                            placeholder="Entrer une quantité personnalisée"
-                            className="mt-2 w-full rounded-lg border border-[var(--color-200)] p-2 focus:ring-2 focus:ring-[var(--color-400)] transition-all"
-                            value={customQuantite}
-                            onChange={(e) => setCustomQuantite(e.target.value)}
-                          />
-                        )}
-                      </div>
                     </div>
                   )}
 
@@ -1115,22 +1196,28 @@ export default function PrescriptionModal({
                                   <span className="text-sm font-semibold text-[var(--color-700)]">
                                     {it.nom}
                                   </span>
-                                  <span className="text-xs text-gray-500 font-medium ml-1">
-                                    {it.dosage}
-                                  </span>
+                                  {it.dosage ? (
+                                    <span className="text-xs text-gray-500 font-medium ml-1">
+                                      {it.dosage}
+                                    </span>
+                                  ) : null}
                                 </div>
                               </div>
 
-                              <div className="text-xs text-gray-600 mt-1 ml-8 space-x-1">
-                                <span className="bg-[var(--color-50)] px-1.5 py-0.5 rounded">
-                                  {it.frequence || "—"}
-                                </span>
-                                <span className="bg-blue-50 px-1.5 py-0.5 rounded">
-                                  {it.duree ? `pendant ${it.duree}` : "—"}
-                                </span>
+                              <div className="text-xs text-gray-600 mt-1 ml-8 space-x-1 flex flex-wrap gap-1 items-center">
+                                {it.frequence ? (
+                                  <span className="bg-[var(--color-50)] px-1.5 py-0.5 rounded">
+                                    {it.frequence}
+                                  </span>
+                                ) : null}
+                                {it.duree ? (
+                                  <span className="bg-blue-50 px-1.5 py-0.5 rounded">
+                                    {`pendant ${it.duree}`}
+                                  </span>
+                                ) : null}
                                 <span className="bg-green-50 px-1.5 py-0.5 rounded text-green-700 font-semibold">
                                   {it.quantite || 1} boîte
-                                  {it.quantite > 1 ? "s" : ""}
+                                  {(it.quantite || 1) > 1 ? "s" : ""}
                                 </span>
                               </div>
                             </div>
@@ -1184,16 +1271,17 @@ export default function PrescriptionModal({
                           className="flex flex-col p-3 border rounded-md hover:bg-[var(--color-50)] transition-colors ord-print-item"
                         >
                           <div className="font-medium text-[var(--color-700)] ord-print-item-title">
-                            {it.nom}{" "}
-                            <span className="text-gray-600 font-normal">
-                              {it.dosage}
-                            </span>
+                            {it.nom}
+                            {it.dosage ? ` ${it.dosage}` : ""}
                           </div>
                           <div className="text-sm text-gray-700 mt-1 ord-print-item-details">
-                            {it.frequence} • {it.duree} •{" "}
-                            <span className="text-[var(--color-700)] font-bold">
-                              {it.quantite} boîte{it.quantite > 1 ? "s" : ""}
-                            </span>
+                            {[
+                              it.frequence,
+                              it.duree ? `pendant ${it.duree}` : null,
+                              `${it.quantite || 1} boîte${(it.quantite || 1) > 1 ? "s" : ""}`,
+                            ]
+                              .filter(Boolean)
+                              .join(" • ")}
                           </div>
                         </li>
                       ))}
@@ -1523,7 +1611,9 @@ export default function PrescriptionModal({
                                 {t.nom}
                               </SelectItem>
                             ))}
-                            <SelectItem value="autre">Autre / Personnalisé</SelectItem>
+                            <SelectItem value="autre">
+                              Autre / Personnalisé
+                            </SelectItem>
                           </SelectContent>
                         </Select>
                       </div>

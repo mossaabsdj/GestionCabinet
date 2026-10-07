@@ -40,7 +40,6 @@ model Patient {
   telephone        String?
   adresse          String?
   antecedents      String?
-  poidsDeNaissance Float?
   groupeSanguin    GroupeSanguin?
   consultations    Consultation[]
   ordonnances      Ordonnance[]
@@ -50,7 +49,6 @@ model Patient {
   bilanFiles       BilanFile[]
   vaccinations     Vaccination[]
   justifications   Justification[]
-  courbeInfos      CourbeInfo[]
   createdAt        DateTime       @default(now())
 }
 
@@ -59,26 +57,14 @@ model Consultation {
   patientId                 Int
   patient                   Patient       @relation(fields: [patientId], references: [id], onDelete: Cascade)
   note                      String?
-  taille                    Float?
-  poids                     Float?
-  tensionSystolique         Int?
-  tensionDiastolique        Int?
-  temperature               Float?
-  frequenceCardiaque        Int?
-  frequenceRespiratoire     Int?
-  saturationOxygene         Int?
-  glycemie                  Float?
   radios                    Radio[]
   bilansFiles               BilanFile[]
   ordonnance                Ordonnance?
   bilanRecip                BilanRecip?
   justificationRecord       Justification?
-  courbeInfo                CourbeInfo?
   createdAt                 DateTime      @default(now())
-  developpementPsychomoteur String?
   motifDeConsultation       String?
   justification             String?
-  perimetreCranien          Float?
   rendezVousId              Int?
   rendezVous                RendezVous?   @relation(fields: [rendezVousId], references: [id], onDelete: SetNull)
 }
@@ -290,13 +276,13 @@ model JustificationType {
 
 model Cabinet {
   id            Int      @id @default(autoincrement())
-  title         String?  @default("Professeur")
-  doctorName    String   @default("Professeur")
-  doctorNameAr  String?  @default("بروفيسور")
-  specialty     String?  @default("Médecin Spécialiste en Pédiatrie et Néonatologie")
-  specialtyAr   String?  @default("طبيبة مختصة في طب الأطفال و حديثي الولادة")
-  cabinetName   String?  @default("Cabinet Pédiatrique")
-  cabinetNameAr String?  @default("عيادة طب الأطفال")
+  title         String?  @default("Docteur")
+  doctorName    String   @default("Docteur")
+  doctorNameAr  String?  @default("دكتور")
+  specialty     String?  @default("Chirurgien Dentiste")
+  specialtyAr   String?  @default("جراحة و طب الأسنان")
+  cabinetName   String?  @default("Cabinet Dentaire")
+  cabinetNameAr String?  @default("عيادة طب الأسنان")
   address       String?  @default("Rue Frères KAFI logts 38, 1er étage")
   addressAr     String?  @default("شارع الإخوة كافي عقار 38 الطابق الأول")
   city          String?  @default("El-Harrouch SKIKDA")
@@ -305,22 +291,4 @@ model Cabinet {
   logo          String?  @default("/uploads/image.PNG")
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
-}
-
-// ====================
-// Courbes de Croissance
-// ====================
-
-model CourbeInfo {
-  id               Int           @id @default(autoincrement())
-  patientId        Int
-  patient          Patient       @relation(fields: [patientId], references: [id], onDelete: Cascade)
-  consultationId   Int?          @unique
-  consultation     Consultation? @relation(fields: [consultationId], references: [id], onDelete: Cascade)
-  age              String?
-  poids            Float?
-  taille           Float?
-  perimetreCranien Float?
-  createdAt        DateTime      @default(now())
-  updatedAt        DateTime      @updatedAt
 }

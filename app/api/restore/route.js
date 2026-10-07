@@ -239,9 +239,6 @@ export async function POST(req) {
                 telephone: p.telephone ?? null,
                 adresse: p.adresse ?? null,
                 antecedents: p.antecedents ?? null,
-                poidsDeNaissance: p.poidsDeNaissance
-                  ? parseFloat(p.poidsDeNaissance)
-                  : null,
                 groupeSanguin: p.groupeSanguin ?? null,
                 createdAt: new Date(p.createdAt || Date.now()),
               };
@@ -261,31 +258,8 @@ export async function POST(req) {
               const cData = {
                 patientId: c.patientId,
                 note: c.note ?? null,
-                taille: c.taille ? parseFloat(c.taille) : null,
-                poids: c.poids ? parseFloat(c.poids) : null,
-                tensionSystolique: c.tensionSystolique
-                  ? parseInt(c.tensionSystolique)
-                  : null,
-                tensionDiastolique: c.tensionDiastolique
-                  ? parseInt(c.tensionDiastolique)
-                  : null,
-                temperature: c.temperature ? parseFloat(c.temperature) : null,
-                frequenceCardiaque: c.frequenceCardiaque
-                  ? parseInt(c.frequenceCardiaque)
-                  : null,
-                frequenceRespiratoire: c.frequenceRespiratoire
-                  ? parseInt(c.frequenceRespiratoire)
-                  : null,
-                saturationOxygene: c.saturationOxygene
-                  ? parseInt(c.saturationOxygene)
-                  : null,
-                glycemie: c.glycemie ? parseFloat(c.glycemie) : null,
                 motifDeConsultation: c.motifDeConsultation ?? null,
                 justification: c.justification ?? null,
-                perimetreCranien: c.perimetreCranien
-                  ? parseFloat(c.perimetreCranien)
-                  : null,
-                developpementPsychomoteur: c.developpementPsychomoteur ?? null,
                 rendezVousId: c.rendezVousId ?? null,
                 createdAt: new Date(c.createdAt || Date.now()),
               };

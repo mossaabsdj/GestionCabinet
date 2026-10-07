@@ -35,7 +35,6 @@ export async function GET(request) {
                 },
               },
               justificationRecord: true,
-              courbeInfo: true,
               rendezVous: {
                 select: { id: true, date: true, description: true },
               },
@@ -61,9 +60,6 @@ export async function GET(request) {
           },
           paiements: {
             orderBy: { date: "desc" },
-          },
-          courbeInfos: {
-            orderBy: { createdAt: "asc" },
           },
           vaccinations: {
             orderBy: { dateGiven: "desc" },
@@ -126,7 +122,6 @@ export async function POST(req) {
       adresse,
       antecedents,
       groupeSanguin,
-      poidsDeNaissance,
       dateDeNaissance,
       sexe,
     } = body;
@@ -136,12 +131,17 @@ export async function POST(req) {
     }
 
     // Check unique nom
-    const existing = await prisma.patient.findUnique({
-      where: { nom: nom.trim() },
+    const existing = await prisma.patient.findFirst({
+      where: {
+        nom: {
+          equals: nom.trim(),
+          mode: "insensitive",
+        },
+      },
     });
     if (existing) {
       return NextResponse.json(
-        { error: "Un patient avec ce nom existe déjà." },
+        { error: "Ce patient existe déjà dans la liste." },
         { status: 400 },
       );
     }
@@ -161,18 +161,18 @@ export async function POST(req) {
         antecedents: antecedents ? antecedents.trim() : null,
         groupeSanguin: groupeSanguin || null,
         dateDeNaissance: validBirthDate,
-        poidsDeNaissance:
-          poidsDeNaissance !== undefined &&
-          poidsDeNaissance !== null &&
-          poidsDeNaissance !== ""
-            ? parseFloat(poidsDeNaissance)
-            : null,
       },
     });
 
     return NextResponse.json(patient);
   } catch (error) {
     console.error("❌ Error creating patient:", error);
+    if (error.code === "P2002") {
+      return NextResponse.json(
+        { error: "Ce patient existe déjà dans la liste." },
+        { status: 400 },
+      );
+    }
     return NextResponse.json(
       { error: "Erreur lors de la création du patient: " + error.message },
       { status: 500 },
@@ -191,7 +191,6 @@ export async function PUT(req) {
       nom,
       age,
       telephone,
-      poidsDeNaissance,
       dateDeNaissance,
       sexe,
       adresse,
@@ -243,13 +242,6 @@ export async function PUT(req) {
       dataToUpdate.groupeSanguin = groupeSanguin || null;
     }
 
-    if (poidsDeNaissance !== undefined) {
-      dataToUpdate.poidsDeNaissance =
-        poidsDeNaissance !== null && poidsDeNaissance !== ""
-          ? parseFloat(poidsDeNaissance)
-          : null;
-    }
-
     if (dateDeNaissance !== undefined && dateDeNaissance !== null && dateDeNaissance !== "") {
       const parsedDate = new Date(dateDeNaissance);
       if (!isNaN(parsedDate.getTime())) {
@@ -265,6 +257,12 @@ export async function PUT(req) {
     return NextResponse.json(updated);
   } catch (error) {
     console.error("❌ Error updating patient:", error);
+    if (error.code === "P2002") {
+      return NextResponse.json(
+        { error: "Ce patient existe déjà dans la liste." },
+        { status: 400 },
+      );
+    }
     return NextResponse.json(
       { error: "Erreur lors de la mise à jour du patient: " + error.message },
       { status: 500 },

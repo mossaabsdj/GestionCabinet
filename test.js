@@ -134,7 +134,6 @@ const PATIENTS_DATA = [
     telephone: "0550123456",
     adresse: "Cité 500 Logements, Bloc B, Skikda",
     antecedents: "Bronchiolite à 6 mois, Pas d'allergie connue",
-    poidsDeNaissance: 3.35,
     groupeSanguin: "O_POS",
   },
   {
@@ -146,7 +145,6 @@ const PATIENTS_DATA = [
     adresse: "Rue Frères Kafi, El-Harrouch, Skikda",
     antecedents:
       "Accouchement à terme, APLV suspectée (Allergie Lait de Vache)",
-    poidsDeNaissance: 3.1,
     groupeSanguin: "A_POS",
   },
   {
@@ -157,7 +155,6 @@ const PATIENTS_DATA = [
     telephone: "0770345678",
     adresse: "Boulevard Didouche Mourad, Skikda",
     antecedents: "Asthme de la petite enfance sous Flixotide au besoin",
-    poidsDeNaissance: 3.6,
     groupeSanguin: "B_POS",
   },
   {
@@ -168,7 +165,6 @@ const PATIENTS_DATA = [
     telephone: "0661987654",
     adresse: "Cité des Jardins, Azzaba, Skikda",
     antecedents: "Otites séromuqueuses récidivantes, amygdalectomie en 2024",
-    poidsDeNaissance: 3.2,
     groupeSanguin: "O_POS",
   },
   {
@@ -178,8 +174,7 @@ const PATIENTS_DATA = [
     sexe: "M",
     telephone: "0558765432",
     adresse: "Cité 20 Août 1955, Skikda",
-    antecedents: "Aucun, bon développement staturo-pondéral",
-    poidsDeNaissance: 3.45,
+    antecedents: "Aucun, bon état général",
     groupeSanguin: "AB_POS",
   },
   {
@@ -189,8 +184,7 @@ const PATIENTS_DATA = [
     sexe: "F",
     telephone: "0560112233",
     adresse: "Cité Bachir Boukadoum, Ramdane Djamel, Skikda",
-    antecedents: "Eczéma atopique du nourrisson",
-    poidsDeNaissance: 2.95,
+    antecedents: "Eczéma atopique",
     groupeSanguin: "A_NEG",
   },
 ];
@@ -558,18 +552,6 @@ async function main() {
             motifDeConsultation:
               "Fièvre à 39°C depuis 48h, odynophagie et refus d'alimentation",
             note: "Examen ORL : pharynx très érythémateux, amygdales hypertrophiées avec exsudat pultacé bilatéral. Adénopathies sous-angulomaxillaires sensibles. Auscultation pulmonaire normale.",
-            taille: 96.5,
-            poids: 14.8,
-            perimetreCranien: 49.5,
-            temperature: 39.1,
-            frequenceCardiaque: 118,
-            frequenceRespiratoire: 24,
-            saturationOxygene: 98,
-            tensionSystolique: 95,
-            tensionDiastolique: 60,
-            glycemie: 0.94,
-            developpementPsychomoteur:
-              "Très bon : marche et motricité fine parfaites, langage bien développé.",
             justification:
               "Arrêt maladie garde d'enfant pour le père (3 jours).",
             rendezVousId: rdv1 ? rdv1.id : null,
@@ -690,18 +672,6 @@ async function main() {
             motifDeConsultation:
               "Épisodes de diarrhée aiguë liquide (5 selles/j) et vomissements depuis 24h",
             note: "Signes de déshydratation légers (< 5%) : muqueuses un peu sèches, pli cutané s'efface vite, yeux normaux, fontanelle antérieure normo-tendue. Abdomen souple et dépressible.",
-            taille: 75.0,
-            poids: 9.6,
-            perimetreCranien: 45.2,
-            temperature: 37.8,
-            frequenceCardiaque: 122,
-            frequenceRespiratoire: 28,
-            saturationOxygene: 99,
-            tensionSystolique: 90,
-            tensionDiastolique: 55,
-            glycemie: 0.88,
-            developpementPsychomoteur:
-              "Acquisitions normales pour 12 mois : station debout acquise, babillage diversifié.",
             justification:
               "Arrêt travail pour la mère afin d'assurer la réhydratation de l'enfant (2 jours).",
             rendezVousId: rdv2 ? rdv2.id : null,
@@ -860,18 +830,6 @@ async function main() {
             motifDeConsultation:
               "Toux nocturne quinteuse et sifflements respiratoires depuis 3 jours",
             note: "Auscultation : râles sibilants diffus aux deux champs pulmonaires, allongement du temps expiratoire. Pas de tirage sus-sternal ni intercostal majeur. SpO2 à 96% à l'air libre.",
-            taille: 110.0,
-            poids: 18.5,
-            perimetreCranien: 51.0,
-            temperature: 37.0,
-            frequenceCardiaque: 105,
-            frequenceRespiratoire: 26,
-            saturationOxygene: 96,
-            tensionSystolique: 100,
-            tensionDiastolique: 65,
-            glycemie: 0.91,
-            developpementPsychomoteur:
-              "Excellente scolarisation en grande section de maternelle, langage riche.",
             justification:
               "Éviction scolaire et dispense d'activités physiques intenses pendant 5 jours.",
           },

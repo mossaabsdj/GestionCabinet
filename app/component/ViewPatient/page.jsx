@@ -16,11 +16,7 @@ import {
   Loader2,
   Calendar,
   Clock,
-  Weight,
-  Ruler,
   Activity,
-  Thermometer,
-  HeartPulse,
   Droplets,
   Stethoscope,
   Pill,
@@ -31,23 +27,10 @@ import {
   CheckCircle,
   Search,
   ExternalLink,
-  TrendingUp,
   Save,
   Edit3,
   Image as ImageIcon,
 } from "lucide-react";
-import {
-  ResponsiveContainer,
-  LineChart,
-  Line,
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  Tooltip,
-  CartesianGrid,
-  Legend,
-} from "recharts";
 import { calculateAge } from "@/lib/age";
 import { printOrdonnance, printBilan, printJustification } from "@/lib/printer";
 
@@ -134,7 +117,6 @@ export default function PatientModal({ open, onClose, patient = {} }) {
     dateDeNaissance: patient?.dateDeNaissance
       ? formatDateForInput(patient.dateDeNaissance)
       : "",
-    poidsDeNaissance: patient?.poidsDeNaissance ?? "",
     antecedents: patient?.antecedents || "",
   });
 
@@ -163,7 +145,6 @@ export default function PatientModal({ open, onClose, patient = {} }) {
         dateDeNaissance: patient.dateDeNaissance
           ? formatDateForInput(patient.dateDeNaissance)
           : "",
-        poidsDeNaissance: patient.poidsDeNaissance ?? "",
         antecedents: patient.antecedents || "",
       });
       fetchFullPatientDetails(patient.id);
@@ -189,7 +170,6 @@ export default function PatientModal({ open, onClose, patient = {} }) {
         dateDeNaissance: data.dateDeNaissance
           ? formatDateForInput(data.dateDeNaissance)
           : "",
-        poidsDeNaissance: data.poidsDeNaissance ?? "",
         antecedents: data.antecedents || "",
       });
     } catch (err) {
@@ -216,7 +196,6 @@ export default function PatientModal({ open, onClose, patient = {} }) {
       dateDeNaissance: fullPatient.dateDeNaissance
         ? formatDateForInput(fullPatient.dateDeNaissance)
         : "",
-      poidsDeNaissance: fullPatient.poidsDeNaissance ?? "",
       antecedents: fullPatient.antecedents || "",
     });
   };
@@ -237,9 +216,6 @@ export default function PatientModal({ open, onClose, patient = {} }) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           ...formData,
-          poidsDeNaissance: formData.poidsDeNaissance
-            ? parseFloat(formData.poidsDeNaissance)
-            : null,
           dateDeNaissance: formData.dateDeNaissance || null,
         }),
       });
@@ -291,10 +267,6 @@ export default function PatientModal({ open, onClose, patient = {} }) {
     return fullPatient.ordonnances || [];
   }, [fullPatient.ordonnances]);
 
-  const courbeInfos = useMemo(() => {
-    return fullPatient.courbeInfos || [];
-  }, [fullPatient.courbeInfos]);
-
   const radios = useMemo(() => {
     return fullPatient.radios || [];
   }, [fullPatient.radios]);
@@ -307,92 +279,10 @@ export default function PatientModal({ open, onClose, patient = {} }) {
     return fullPatient.bilans || [];
   }, [fullPatient.bilans]);
 
-  // Pediatric Age formatted string
-  const pediatricAge = useMemo(() => {
+  // Patient Age formatted string
+  const patientAge = useMemo(() => {
     return calculateAge(fullPatient.dateDeNaissance) || "";
   }, [fullPatient.dateDeNaissance]);
-
-  // Growth progression chart data (combining birth + courbeInfo + consultations)
-  const growthChartData = useMemo(() => {
-    const list = [];
-
-    // Add birth record if available
-    if (fullPatient.poidsDeNaissance && fullPatient.dateDeNaissance) {
-      list.push({
-        date: formatDateDisplay(fullPatient.dateDeNaissance),
-        timestamp: new Date(fullPatient.dateDeNaissance).getTime(),
-        age: "Naissance (0j)",
-        Poids: parseFloat(fullPatient.poidsDeNaissance),
-        Taille: null,
-        PC: null,
-      });
-    }
-
-    // Add records from courbeInfos
-    courbeInfos.forEach((ci) => {
-      list.push({
-        date: formatDateDisplay(ci.createdAt),
-        timestamp: new Date(ci.createdAt).getTime(),
-        age: ci.age || formatDateDisplay(ci.createdAt),
-        Poids: ci.poids || null,
-        Taille: ci.taille || null,
-        PC: ci.perimetreCranien || null,
-      });
-    });
-
-    // Add measurements from consultations that may not be in courbeInfos
-    consultations.forEach((c) => {
-      if (c.poids || c.taille || c.perimetreCranien) {
-        const time = new Date(c.createdAt).getTime();
-        const existing = list.find(
-          (item) => Math.abs(item.timestamp - time) < 24 * 60 * 60 * 1000,
-        );
-        if (!existing) {
-          list.push({
-            date: formatDateDisplay(c.createdAt),
-            timestamp: time,
-            age: calculateAge(fullPatient.dateDeNaissance, c.createdAt),
-            Poids: c.poids || null,
-            Taille: c.taille || null,
-            PC: c.perimetreCranien || null,
-          });
-        }
-      }
-    });
-
-    list.sort((a, b) => a.timestamp - b.timestamp);
-    return list;
-  }, [
-    fullPatient.poidsDeNaissance,
-    fullPatient.dateDeNaissance,
-    courbeInfos,
-    consultations,
-  ]);
-
-  // Monthly visits histogram data
-  const monthlyVisitsData = useMemo(() => {
-    const counts = {};
-    consultations.forEach((c) => {
-      const d = new Date(c.createdAt);
-      if (isNaN(d.getTime())) return;
-      const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
-      counts[key] = (counts[key] || 0) + 1;
-    });
-
-    return Object.entries(counts)
-      .sort(([a], [b]) => a.localeCompare(b))
-      .map(([k, v]) => {
-        const [year, month] = k.split("-");
-        const monthName = new Date(year, parseInt(month) - 1).toLocaleString(
-          "fr-FR",
-          { month: "short" },
-        );
-        return {
-          name: `${monthName} ${year}`,
-          Visites: v,
-        };
-      });
-  }, [consultations]);
 
   // Combined documents list
   const combinedDocuments = useMemo(() => {
@@ -490,7 +380,6 @@ export default function PatientModal({ open, onClose, patient = {} }) {
       count: consultations.length,
     },
     { id: "vaccinations", label: "Vaccinations", count: vaccinations.length },
-    { id: "growth", label: "Croissance & Mesures" },
     { id: "prescriptions", label: "Ordonnances", count: ordonnances.length },
     {
       id: "documents",
@@ -513,9 +402,9 @@ export default function PatientModal({ open, onClose, patient = {} }) {
             <DialogTitle className="text-xl sm:text-2xl font-bold text-[var(--color-800)] tracking-tight">
               {fullPatient.nom || "Dossier Patient"}
             </DialogTitle>
-            {pediatricAge && (
+            {patientAge && (
               <span className="px-3 py-1 text-xs sm:text-sm rounded-full bg-[var(--color-100)] text-[var(--color-800)] font-semibold border border-[var(--color-200)] shadow-2xs">
-                {pediatricAge}
+                {patientAge}
               </span>
             )}
             <span className="text-xs text-gray-500 font-mono">
@@ -699,24 +588,6 @@ export default function PatientModal({ open, onClose, patient = {} }) {
                       />
                     </div>
 
-                    {/* Poids de naissance */}
-                    <div className="space-y-1.5">
-                      <Label className="text-xs font-semibold text-gray-700">
-                        Poids de naissance (kg)
-                      </Label>
-                      <Input
-                        type="number"
-                        step="0.01"
-                        disabled={!isEditingInfo}
-                        placeholder="Ex: 3.25"
-                        value={formData.poidsDeNaissance}
-                        onChange={(e) =>
-                          handleChange("poidsDeNaissance", e.target.value)
-                        }
-                        className="focus:ring-[var(--color-500)] disabled:bg-gray-50 disabled:text-gray-700 disabled:border-gray-200 disabled:cursor-not-allowed"
-                      />
-                    </div>
-
                     {/* Groupe Sanguin */}
                     <div className="space-y-1.5">
                       <Label className="text-xs font-semibold text-gray-700">
@@ -831,13 +702,6 @@ export default function PatientModal({ open, onClose, patient = {} }) {
               ) : (
                 <div className="space-y-4">
                   {filteredConsultations.map((consult) => {
-                    const hasVitals =
-                      consult.poids ||
-                      consult.taille ||
-                      consult.temperature ||
-                      consult.perimetreCranien ||
-                      consult.tensionSystolique;
-
                     return (
                       <Card
                         key={consult.id}
@@ -870,64 +734,6 @@ export default function PatientModal({ open, onClose, patient = {} }) {
                             </div>
                           </div>
 
-                          {/* Vitals summary */}
-                          {hasVitals && (
-                            <div className="flex flex-wrap gap-2 text-xs">
-                              {consult.poids && (
-                                <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md bg-[var(--color-50)] border border-[var(--color-200)] text-gray-800 font-medium">
-                                  <Weight className="w-3 h-3 text-[var(--color-600)]" />
-                                  Poids : <strong>{consult.poids} kg</strong>
-                                </span>
-                              )}
-                              {consult.taille && (
-                                <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md bg-[var(--color-50)] border border-[var(--color-200)] text-gray-800 font-medium">
-                                  <Ruler className="w-3 h-3 text-[var(--color-600)]" />
-                                  Taille : <strong>{consult.taille} cm</strong>
-                                </span>
-                              )}
-                              {consult.perimetreCranien && (
-                                <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md bg-[var(--color-50)] border border-[var(--color-200)] text-gray-800 font-medium">
-                                  <Ruler className="w-3 h-3 text-[var(--color-600)]" />
-                                  PC :{" "}
-                                  <strong>{consult.perimetreCranien} cm</strong>
-                                </span>
-                              )}
-                              {consult.temperature && (
-                                <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md bg-[var(--color-50)] border border-[var(--color-200)] text-gray-800 font-medium">
-                                  <Thermometer className="w-3 h-3 text-[var(--color-600)]" />
-                                  T° : <strong>{consult.temperature} °C</strong>
-                                </span>
-                              )}
-                              {consult.tensionSystolique &&
-                                consult.tensionDiastolique && (
-                                  <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md bg-[var(--color-50)] border border-[var(--color-200)] text-gray-800 font-medium">
-                                    <Activity className="w-3 h-3 text-[var(--color-600)]" />
-                                    TA :{" "}
-                                    <strong>
-                                      {consult.tensionSystolique}/
-                                      {consult.tensionDiastolique} mmHg
-                                    </strong>
-                                  </span>
-                                )}
-                              {consult.frequenceCardiaque && (
-                                <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md bg-[var(--color-50)] border border-[var(--color-200)] text-gray-800 font-medium">
-                                  <HeartPulse className="w-3 h-3 text-[var(--color-600)]" />
-                                  FC :{" "}
-                                  <strong>
-                                    {consult.frequenceCardiaque} bpm
-                                  </strong>
-                                </span>
-                              )}
-                              {consult.saturationOxygene && (
-                                <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md bg-[var(--color-50)] border border-[var(--color-200)] text-gray-800 font-medium">
-                                  <Droplets className="w-3 h-3 text-[var(--color-600)]" />
-                                  SpO2 :{" "}
-                                  <strong>{consult.saturationOxygene} %</strong>
-                                </span>
-                              )}
-                            </div>
-                          )}
-
                           {/* Notes and Clinical observations */}
                           {consult.note && (
                             <div className="bg-gray-50 p-3 rounded-lg border border-gray-100 text-xs text-gray-800">
@@ -940,16 +746,6 @@ export default function PatientModal({ open, onClose, patient = {} }) {
                             </div>
                           )}
 
-                          {/* Développement Psychomoteur */}
-                          {consult.developpementPsychomoteur && (
-                            <div className="bg-gray-50 p-2.5 rounded-lg border border-gray-100 text-xs text-gray-800">
-                              <span className="font-semibold block mb-0.5 text-gray-700">
-                                Développement psychomoteur :
-                              </span>
-                              <p>{consult.developpementPsychomoteur}</p>
-                            </div>
-                          )}
-
                           {/* Attached Prescriptions, Bilans, Files */}
                           <div className="pt-2 flex flex-wrap items-center gap-2 border-t border-gray-100">
                             {/* Ordonnance liée */}
@@ -959,7 +755,7 @@ export default function PatientModal({ open, onClose, patient = {} }) {
                                 onClick={() =>
                                   printOrdonnance({
                                     nom: fullPatient.nom,
-                                    age: pediatricAge,
+                                    age: patientAge,
                                     consultationId: consult.id,
                                     items: consult.ordonnance.items || [],
                                   })
@@ -977,7 +773,7 @@ export default function PatientModal({ open, onClose, patient = {} }) {
                                 onClick={() =>
                                   printBilan({
                                     nom: fullPatient.nom,
-                                    age: pediatricAge,
+                                    age: patientAge,
                                     consultationId: consult.id,
                                     items: (consult.bilanRecip.items || []).map(
                                       (it) => ({
@@ -999,7 +795,7 @@ export default function PatientModal({ open, onClose, patient = {} }) {
                                 onClick={() =>
                                   printJustification({
                                     nom: fullPatient.nom,
-                                    age: pediatricAge,
+                                    age: patientAge,
                                     consultationId: consult.id,
                                     texte: consult.justificationRecord.texte,
                                     titre: consult.justificationRecord.titre,
@@ -1126,211 +922,6 @@ export default function PatientModal({ open, onClose, patient = {} }) {
           )}
 
           {/* ------------------------------------------------------ */}
-          {/* TAB 4: CROISSANCE & MESURES                            */}
-          {/* ------------------------------------------------------ */}
-          {activeTab === "growth" && (
-            <div className="space-y-6">
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                {/* Evolution Poids & Taille Chart */}
-                <Card className="border-gray-200 bg-white shadow-2xs">
-                  <CardContent className="p-4 sm:p-5 space-y-3">
-                    <div className="flex items-center justify-between pb-2 border-b border-gray-100">
-                      <h4 className="text-sm font-bold text-[var(--color-800)] flex items-center gap-2">
-                        <TrendingUp className="w-4 h-4 text-[var(--color-600)]" />
-                        Évolution du Poids & Taille
-                      </h4>
-                      <span className="text-xs text-gray-500 font-medium">
-                        Poids (kg) & Taille (cm)
-                      </span>
-                    </div>
-
-                    {growthChartData.length > 0 ? (
-                      <div className="w-full h-64 sm:h-72">
-                        <ResponsiveContainer width="100%" height="100%">
-                          <LineChart
-                            data={growthChartData}
-                            margin={{
-                              top: 10,
-                              right: 20,
-                              left: -10,
-                              bottom: 0,
-                            }}
-                          >
-                            <CartesianGrid
-                              strokeDasharray="3 3"
-                              stroke="#f1f5f9"
-                            />
-                            <XAxis
-                              dataKey="date"
-                              tick={{ fontSize: 11 }}
-                              stroke="#94a3b8"
-                            />
-                            <YAxis tick={{ fontSize: 11 }} stroke="#94a3b8" />
-                            <Tooltip
-                              contentStyle={{
-                                borderRadius: "8px",
-                                border: "1px solid #e2e8f0",
-                                fontSize: "12px",
-                              }}
-                            />
-                            <Legend wrapperStyle={{ fontSize: "12px" }} />
-                            <Line
-                              type="monotone"
-                              dataKey="Poids"
-                              stroke="#0d9488"
-                              strokeWidth={2.5}
-                              activeDot={{ r: 6 }}
-                              connectNulls
-                              name="Poids (kg)"
-                            />
-                            <Line
-                              type="monotone"
-                              dataKey="Taille"
-                              stroke="#0284c7"
-                              strokeWidth={2.5}
-                              activeDot={{ r: 6 }}
-                              connectNulls
-                              name="Taille (cm)"
-                            />
-                          </LineChart>
-                        </ResponsiveContainer>
-                      </div>
-                    ) : (
-                      <div className="h-64 flex flex-col items-center justify-center text-gray-400 text-sm">
-                        <Weight className="w-8 h-8 mb-2 stroke-1" />
-                        Aucune donnée de poids ou taille enregistrée
-                      </div>
-                    )}
-                  </CardContent>
-                </Card>
-
-                {/* Monthly Visits Histogram */}
-                <Card className="border-gray-200 bg-white shadow-2xs">
-                  <CardContent className="p-4 sm:p-5 space-y-3">
-                    <div className="flex items-center justify-between pb-2 border-b border-gray-100">
-                      <h4 className="text-sm font-bold text-[var(--color-800)] flex items-center gap-2">
-                        <Calendar className="w-4 h-4 text-[var(--color-600)]" />
-                        Visites par Mois
-                      </h4>
-                      <span className="text-xs text-gray-500 font-medium">
-                        Fréquence des consultations
-                      </span>
-                    </div>
-
-                    {monthlyVisitsData.length > 0 ? (
-                      <div className="w-full h-64 sm:h-72">
-                        <ResponsiveContainer width="100%" height="100%">
-                          <BarChart
-                            data={monthlyVisitsData}
-                            margin={{
-                              top: 10,
-                              right: 20,
-                              left: -10,
-                              bottom: 0,
-                            }}
-                          >
-                            <CartesianGrid
-                              strokeDasharray="3 3"
-                              stroke="#f1f5f9"
-                            />
-                            <XAxis
-                              dataKey="name"
-                              tick={{ fontSize: 11 }}
-                              stroke="#94a3b8"
-                            />
-                            <YAxis
-                              allowDecimals={false}
-                              tick={{ fontSize: 11 }}
-                              stroke="#94a3b8"
-                            />
-                            <Tooltip
-                              contentStyle={{
-                                borderRadius: "8px",
-                                border: "1px solid #e2e8f0",
-                                fontSize: "12px",
-                              }}
-                            />
-                            <Bar
-                              dataKey="Visites"
-                              fill="#0d9488"
-                              radius={[6, 6, 0, 0]}
-                              name="Visites"
-                            />
-                          </BarChart>
-                        </ResponsiveContainer>
-                      </div>
-                    ) : (
-                      <div className="h-64 flex flex-col items-center justify-center text-gray-400 text-sm">
-                        <Calendar className="w-8 h-8 mb-2 stroke-1" />
-                        Aucune visite enregistrée pour ce patient
-                      </div>
-                    )}
-                  </CardContent>
-                </Card>
-              </div>
-
-              {/* Chronological Measurements Table */}
-              <div className="rounded-lg border border-[var(--color-100)] overflow-hidden bg-white">
-                <div className="px-4 py-3 bg-[var(--color-50)] border-b border-[var(--color-100)] flex items-center justify-between">
-                  <h4 className="text-xs font-bold text-[var(--color-800)] uppercase tracking-wider">
-                    Historique chronologique des mesures
-                  </h4>
-                  <span className="text-xs text-gray-500">
-                    {growthChartData.length} mesure
-                    {growthChartData.length > 1 ? "s" : ""}
-                  </span>
-                </div>
-
-                {growthChartData.length === 0 ? (
-                  <div className="p-6 text-center text-gray-500 text-xs">
-                    Aucune mesure enregistrée.
-                  </div>
-                ) : (
-                  <div className="overflow-x-auto">
-                    <table className="w-full text-left text-xs border-collapse">
-                      <thead>
-                        <tr className="bg-gray-50 border-b border-gray-200 text-gray-700 font-bold">
-                          <th className="p-3">Date</th>
-                          <th className="p-3">Âge pédiatrique</th>
-                          <th className="p-3">Poids (kg)</th>
-                          <th className="p-3">Taille (cm)</th>
-                          <th className="p-3">Périmètre Crânien (cm)</th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-gray-100">
-                        {growthChartData.map((m, idx) => (
-                          <tr
-                            key={idx}
-                            className={`transition-colors hover:bg-[var(--color-50)] ${
-                              idx % 2 === 0 ? "bg-white" : "bg-gray-50"
-                            }`}
-                          >
-                            <td className="p-3 font-semibold text-gray-800">
-                              {m.date}
-                            </td>
-                            <td className="p-3 text-gray-600">
-                              {m.age || "—"}
-                            </td>
-                            <td className="p-3 font-bold text-gray-900">
-                              {m.Poids ? `${m.Poids} kg` : "—"}
-                            </td>
-                            <td className="p-3 font-bold text-gray-900">
-                              {m.Taille ? `${m.Taille} cm` : "—"}
-                            </td>
-                            <td className="p-3 font-bold text-gray-900">
-                              {m.PC ? `${m.PC} cm` : "—"}
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                )}
-              </div>
-            </div>
-          )}
-
-          {/* ------------------------------------------------------ */}
           {/* TAB 5: ORDONNANCES (Exact Project Print Button)        */}
           {/* ------------------------------------------------------ */}
           {activeTab === "prescriptions" && (
@@ -1392,7 +983,7 @@ export default function PatientModal({ open, onClose, patient = {} }) {
                             onClick={() =>
                               printOrdonnance({
                                 nom: fullPatient.nom,
-                                age: pediatricAge,
+                                age: patientAge,
                                 ordonnanceId: ord.id,
                                 items: ord.items || [],
                               })
@@ -1586,7 +1177,7 @@ export default function PatientModal({ open, onClose, patient = {} }) {
                                 onClick={() =>
                                   printBilan({
                                     nom: fullPatient.nom,
-                                    age: pediatricAge,
+                                    age: patientAge,
                                     items: (doc.items || []).map((it) => ({
                                       nom: it.bilan?.nom,
                                     })),

@@ -244,10 +244,91 @@ function createWindow() {
 }
 
 function createMenu() {
+  const getTargetWindow = (browserWindow) => {
+    return browserWindow || BrowserWindow.getFocusedWindow() || mainWindow;
+  };
+
+  const changeZoom = (delta, browserWindow) => {
+    const win = getTargetWindow(browserWindow);
+    if (win && win.webContents) {
+      const current = win.webContents.getZoomFactor();
+      const newFactor = Math.min(Math.max(current + delta, 0.5), 2.5);
+      win.webContents.setZoomFactor(parseFloat(newFactor.toFixed(2)));
+    }
+  };
+
+  const setZoom = (factor, browserWindow) => {
+    const win = getTargetWindow(browserWindow);
+    if (win && win.webContents) {
+      win.webContents.setZoomFactor(factor);
+    }
+  };
+
   const template = [
     {
-      label: "View",
-      submenu: [{ role: "reload" }, { role: "toggledevtools" }],
+      label: "Affichage",
+      submenu: [
+        { role: "reload", label: "Actualiser" },
+        { role: "forceReload", label: "Forcer l'actualisation" },
+        { role: "toggledevtools", label: "Outils de développement" },
+        { type: "separator" },
+        {
+          label: "Zoom avant (+)",
+          role: "zoomIn",
+        },
+        {
+          label: "Zoom arrière (-)",
+          role: "zoomOut",
+        },
+        {
+          label: "Taille normale (100%)",
+          role: "resetZoom",
+        },
+        { type: "separator" },
+        { role: "togglefullscreen", label: "Plein écran" },
+      ],
+    },
+    {
+      label: "🔍 Zoom",
+      submenu: [
+        {
+          label: "Zoom avant (+10%)",
+          accelerator: "CmdOrCtrl+Plus",
+          click: (item, win) => changeZoom(0.1, win),
+        },
+        {
+          label: "Zoom arrière (-10%)",
+          accelerator: "CmdOrCtrl+-",
+          click: (item, win) => changeZoom(-0.1, win),
+        },
+        {
+          label: "Réinitialiser (100%)",
+          accelerator: "CmdOrCtrl+0",
+          click: (item, win) => setZoom(1.0, win),
+        },
+        { type: "separator" },
+        { label: "70%", click: (item, win) => setZoom(0.7, win) },
+        { label: "80%", click: (item, win) => setZoom(0.8, win) },
+        { label: "90%", click: (item, win) => setZoom(0.9, win) },
+        { label: "100% (Normal)", click: (item, win) => setZoom(1.0, win) },
+        { label: "110%", click: (item, win) => setZoom(1.1, win) },
+        { label: "125%", click: (item, win) => setZoom(1.25, win) },
+        { label: "150%", click: (item, win) => setZoom(1.5, win) },
+        { label: "175%", click: (item, win) => setZoom(1.75, win) },
+        { label: "200%", click: (item, win) => setZoom(2.0, win) },
+      ],
+    },
+    {
+      label: "➕ Zoom +",
+      click: (item, win) => changeZoom(0.1, win),
+    },
+    {
+      label: "➖ Zoom -",
+      click: (item, win) => changeZoom(-0.1, win),
+    },
+    {
+      label: "🔄 100%",
+      click: (item, win) => setZoom(1.0, win),
     },
     {
       label: "🚪 Exit",
@@ -313,8 +394,7 @@ function getElectronCabinet(customCab = {}) {
   const cabinetName = cab.cabinetName || "Cabinet Pédiatrique";
   const cabinetNameAr = cab.cabinetNameAr || "عيادة طب الأطفال";
   const address = cab.address || "Rue Frères KAFI logts 38, 1er étage";
-  const addressAr =
-    cab.addressAr || "شارع الإخوة كافي عقار 38 الطابق الأول";
+  const addressAr = cab.addressAr || "شارع الإخوة كافي عقار 38 الطابق الأول";
   const city = cab.city || "El-Harrouch SKIKDA";
   const cityAr = cab.cityAr || "(بزاز لعلاوي) الحروش - سكيكدة";
   const phones = cab.phones || "0652 76 89 72 / 0562 24 40 87";
@@ -1219,7 +1299,11 @@ ipcMain.handle("backup-database", async () => {
 
   try {
     const result = await backupDatabase(filePath);
-    return { success: true, filePath: result.filePath, message: "Base de données exportée avec succès." };
+    return {
+      success: true,
+      filePath: result.filePath,
+      message: "Base de données exportée avec succès.",
+    };
   } catch (err) {
     return { success: false, message: err.message };
   }
@@ -1234,13 +1318,20 @@ ipcMain.handle("restore-database", async () => {
   });
 
   if (canceled || filePaths.length === 0)
-    return { canceled: true, success: false, message: "Aucun fichier sélectionné" };
+    return {
+      canceled: true,
+      success: false,
+      message: "Aucun fichier sélectionné",
+    };
 
   const filePath = filePaths[0];
   console.log("🗂 Selected backup file:", filePath);
   try {
     const result = await restoreDatabase(filePath);
-    return { success: true, message: result.message || "Base de données restaurée avec succès." };
+    return {
+      success: true,
+      message: result.message || "Base de données restaurée avec succès.",
+    };
   } catch (err) {
     return { success: false, message: err.message };
   }
@@ -1250,4 +1341,50 @@ ipcMain.handle("open-file", async (event, filePath) => {
 });
 ipcMain.on("exit", () => {
   app.quit();
+});
+
+// === Zoom Controller IPC Handlers ===
+ipcMain.handle("get-zoom-factor", (event) => {
+  const win = BrowserWindow.fromWebContents(event.sender) || mainWindow;
+  return win && win.webContents ? win.webContents.getZoomFactor() : 1.0;
+});
+
+ipcMain.handle("set-zoom-factor", (event, factor) => {
+  const win = BrowserWindow.fromWebContents(event.sender) || mainWindow;
+  if (win && win.webContents && typeof factor === "number") {
+    win.webContents.setZoomFactor(factor);
+    return win.webContents.getZoomFactor();
+  }
+  return 1.0;
+});
+
+ipcMain.handle("zoom-in", (event) => {
+  const win = BrowserWindow.fromWebContents(event.sender) || mainWindow;
+  if (win && win.webContents) {
+    const current = win.webContents.getZoomFactor();
+    const newFactor = Math.min(current + 0.1, 2.5);
+    win.webContents.setZoomFactor(parseFloat(newFactor.toFixed(2)));
+    return win.webContents.getZoomFactor();
+  }
+  return 1.0;
+});
+
+ipcMain.handle("zoom-out", (event) => {
+  const win = BrowserWindow.fromWebContents(event.sender) || mainWindow;
+  if (win && win.webContents) {
+    const current = win.webContents.getZoomFactor();
+    const newFactor = Math.max(current - 0.1, 0.5);
+    win.webContents.setZoomFactor(parseFloat(newFactor.toFixed(2)));
+    return win.webContents.getZoomFactor();
+  }
+  return 1.0;
+});
+
+ipcMain.handle("reset-zoom", (event) => {
+  const win = BrowserWindow.fromWebContents(event.sender) || mainWindow;
+  if (win && win.webContents) {
+    win.webContents.setZoomFactor(1.0);
+    return 1.0;
+  }
+  return 1.0;
 });

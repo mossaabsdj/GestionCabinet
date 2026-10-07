@@ -49,17 +49,7 @@ export async function GET() {
       consultations: p.consultations.map((c) => ({
         id: c.id,
         note: c.note,
-        taille: c.taille,
-        poids: c.poids,
-        tension: `${c.tensionSystolique ?? ""}/${c.tensionDiastolique ?? ""}`,
-        temperature: c.temperature,
-        frequenceCardiaque: c.frequenceCardiaque,
-        frequenceRespiratoire: c.frequenceRespiratoire,
-        saturationOxygene: c.saturationOxygene,
-        glycemie: c.glycemie,
-        developpementPsychomoteur: c.developpementPsychomoteur || null, // ✅ new field
         motifDeConsultation: c.motifDeConsultation || null, // ✅ new field
-        perimetreCranien: c.perimetreCranien || null, // ✅ new field
         createdAt: c.createdAt,
 
         rendezVous: c.rendezVous

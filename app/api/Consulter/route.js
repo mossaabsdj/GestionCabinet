@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { calculateAge } from "@/lib/age";
 
 export const dynamic = "force-dynamic";
 
@@ -32,7 +31,6 @@ export async function GET(req) {
           },
         },
         justificationRecord: true,
-        courbeInfo: true,
         patient: { select: { id: true, nom: true } },
         rendezVous: { select: { id: true, date: true, description: true } }, // ✅ new relation
       },
@@ -56,42 +54,7 @@ export async function POST(req) {
   try {
     const data = await req.json();
 
-    // Convert numeric types safely
-    const taille = data.taille ? parseFloat(data.taille) : null;
-    const poids = data.poids ? parseFloat(data.poids) : null;
-    const tensionSystolique = data.tensionSystolique
-      ? parseInt(data.tensionSystolique)
-      : null;
-    const tensionDiastolique = data.tensionDiastolique
-      ? parseInt(data.tensionDiastolique)
-      : null;
-    const temperature = data.temperature ? parseFloat(data.temperature) : null;
-    const frequenceCardiaque = data.frequenceCardiaque
-      ? parseInt(data.frequenceCardiaque)
-      : null;
-    const frequenceRespiratoire = data.frequenceRespiratoire
-      ? parseInt(data.frequenceRespiratoire)
-      : null;
-    const saturationOxygene = data.saturationOxygene
-      ? parseInt(data.saturationOxygene)
-      : null;
-    const glycemie = data.glycemie ? parseFloat(data.glycemie) : null;
-    const perimetreCranien = data.perimetreCranien
-      ? parseFloat(data.perimetreCranien)
-      : null;
-
-    // ✅ Fetch patient to calculate age for CourbeInfo
-    const patientRecord = await prisma.patient.findUnique({
-      where: { id: Number(data.patientId) },
-      select: { id: true, dateDeNaissance: true },
-    });
-
     const consultDate = data.createdAt ? new Date(data.createdAt) : new Date();
-    const calculatedAge = patientRecord
-      ? calculateAge(patientRecord.dateDeNaissance, consultDate)
-      : null;
-
-    const hasGrowthData = poids !== null || taille !== null || perimetreCranien !== null;
 
     // ✅ Auto-create RendezVous if not provided
     let rendezVousId = data.rendezVousId ? Number(data.rendezVousId) : null;
@@ -110,55 +73,49 @@ export async function POST(req) {
       data: {
         patientId: data.patientId,
         note: data.note,
-        taille,
-        poids,
         createdAt: consultDate,
-
-        tensionSystolique,
-        tensionDiastolique,
-        temperature,
-        frequenceCardiaque,
-        frequenceRespiratoire,
-        saturationOxygene,
-        glycemie,
-        developpementPsychomoteur: data.developpementPsychomoteur || null,
         motifDeConsultation: data.motifDeConsultation || null,
-        justification: typeof data.justification === "string" ? data.justification : null,
-        perimetreCranien,
+        justification:
+          typeof data.justification === "string" ? data.justification : null,
         rendezVousId, // ✅ now always set if date given
 
-        // ✅ CourbeInfo automatic creation if at least one measurement is provided
-        courbeInfo: hasGrowthData
-          ? {
-              create: {
-                patientId: Number(data.patientId),
-                age: calculatedAge,
-                poids,
-                taille,
-                perimetreCranien,
-                createdAt: consultDate,
-              },
-            }
-          : undefined,
-
         // ✅ Justification
-        justificationRecord: (data.justificationRecord || (typeof data.justification === "object" && data.justification !== null))
-          ? {
-              create: {
-                patientId: Number(data.patientId),
-                createdAt: data.createdAt ? new Date(data.createdAt) : undefined,
-                titre: (data.justificationRecord || data.justification).titre || null,
-                texte: (data.justificationRecord || data.justification).texte || "",
-                duree: (data.justificationRecord || data.justification).duree || null,
-                dateDebut: (data.justificationRecord || data.justification).dateDebut
-                  ? new Date((data.justificationRecord || data.justification).dateDebut)
-                  : undefined,
-                dateFin: (data.justificationRecord || data.justification).dateFin
-                  ? new Date((data.justificationRecord || data.justification).dateFin)
-                  : undefined,
-              },
-            }
-          : undefined,
+        justificationRecord:
+          data.justificationRecord ||
+          (typeof data.justification === "object" &&
+            data.justification !== null)
+            ? {
+                create: {
+                  patientId: Number(data.patientId),
+                  createdAt: data.createdAt
+                    ? new Date(data.createdAt)
+                    : undefined,
+                  titre:
+                    (data.justificationRecord || data.justification).titre ||
+                    null,
+                  texte:
+                    (data.justificationRecord || data.justification).texte ||
+                    "",
+                  duree:
+                    (data.justificationRecord || data.justification).duree ||
+                    null,
+                  dateDebut: (data.justificationRecord || data.justification)
+                    .dateDebut
+                    ? new Date(
+                        (data.justificationRecord || data.justification)
+                          .dateDebut,
+                      )
+                    : undefined,
+                  dateFin: (data.justificationRecord || data.justification)
+                    .dateFin
+                    ? new Date(
+                        (data.justificationRecord || data.justification)
+                          .dateFin,
+                      )
+                    : undefined,
+                },
+              }
+            : undefined,
 
         // ✅ Ordonnance
         ordonnance: data.ordonnance
@@ -201,12 +158,24 @@ export async function POST(req) {
               },
             }
           : undefined,
+
+        // ✅ Radios
+        radios:
+          data.radios && Array.isArray(data.radios) && data.radios.length > 0
+            ? {
+                create: data.radios.map((r) => ({
+                  patientId: Number(data.patientId),
+                  description: r.description || null,
+                  fichier: r.fichier || null,
+                })),
+              }
+            : undefined,
       },
       include: {
         ordonnance: { include: { items: true } },
         bilanRecip: { include: { items: true } },
         justificationRecord: true,
-        courbeInfo: true,
+        radios: true,
         rendezVous: true,
       },
     });
@@ -231,22 +200,10 @@ export async function PUT(req) {
       id,
       patientId,
       note,
-      taille,
       createdAt,
-
-      poids,
-      tensionSystolique,
-      tensionDiastolique,
-      temperature,
-      frequenceCardiaque,
-      frequenceRespiratoire,
-      saturationOxygene,
-      glycemie,
-      developpementPsychomoteur,
       motifDeConsultation,
       justification,
       justificationRecord,
-      perimetreCranien,
       rendezVousId,
       rendezVousDate,
       rendezVousDescription,
@@ -265,51 +222,8 @@ export async function PUT(req) {
         patient: { connect: { id: Number(patientId) } },
       }),
       ...(note !== undefined && { note }),
-      ...(taille !== undefined && {
-        taille: taille ? parseFloat(taille) : null,
-      }),
-      ...(poids !== undefined && { poids: poids ? parseFloat(poids) : null }),
-      ...(tensionSystolique !== undefined && {
-        tensionSystolique: tensionSystolique
-          ? parseInt(tensionSystolique)
-          : null,
-      }),
-      ...(tensionDiastolique !== undefined && {
-        tensionDiastolique: tensionDiastolique
-          ? parseInt(tensionDiastolique)
-          : null,
-      }),
-      ...(temperature !== undefined && {
-        temperature: temperature ? parseFloat(temperature) : null,
-      }),
-      ...(frequenceCardiaque !== undefined && {
-        frequenceCardiaque: frequenceCardiaque
-          ? parseInt(frequenceCardiaque)
-          : null,
-      }),
-      ...(frequenceRespiratoire !== undefined && {
-        frequenceRespiratoire: frequenceRespiratoire
-          ? parseInt(frequenceRespiratoire)
-          : null,
-      }),
-      ...(saturationOxygene !== undefined && {
-        saturationOxygene: saturationOxygene
-          ? parseInt(saturationOxygene)
-          : null,
-      }),
-      ...(glycemie !== undefined && {
-        glycemie: glycemie ? parseFloat(glycemie) : null,
-      }),
-      ...(developpementPsychomoteur !== undefined && {
-        developpementPsychomoteur,
-      }),
       ...(motifDeConsultation !== undefined && { motifDeConsultation }),
       ...(typeof justification === "string" && { justification }),
-      ...(perimetreCranien !== undefined && {
-        perimetreCranien: perimetreCranien
-          ? parseFloat(perimetreCranien)
-          : null,
-      }),
       ...(createdAt && { createdAt: new Date(createdAt) }),
     };
 
@@ -340,10 +254,21 @@ export async function PUT(req) {
     }
 
     // ✅ Handle Justification update / upsert
-    const justifPayload = justificationRecord || (typeof justification === "object" && justification !== null ? justification : undefined);
+    const justifPayload =
+      justificationRecord ||
+      (typeof justification === "object" && justification !== null
+        ? justification
+        : undefined);
     if (justifPayload !== undefined) {
       if (justifPayload && justifPayload.texte) {
-        const resolvedPatientId = patientId ? Number(patientId) : (await prisma.consultation.findUnique({ where: { id: Number(id) }, select: { patientId: true } }))?.patientId;
+        const resolvedPatientId = patientId
+          ? Number(patientId)
+          : (
+              await prisma.consultation.findUnique({
+                where: { id: Number(id) },
+                select: { patientId: true },
+              })
+            )?.patientId;
         await prisma.justification.upsert({
           where: { consultationId: Number(id) },
           create: {
@@ -352,15 +277,23 @@ export async function PUT(req) {
             titre: justifPayload.titre || null,
             texte: justifPayload.texte,
             duree: justifPayload.duree || null,
-            dateDebut: justifPayload.dateDebut ? new Date(justifPayload.dateDebut) : null,
-            dateFin: justifPayload.dateFin ? new Date(justifPayload.dateFin) : null,
+            dateDebut: justifPayload.dateDebut
+              ? new Date(justifPayload.dateDebut)
+              : null,
+            dateFin: justifPayload.dateFin
+              ? new Date(justifPayload.dateFin)
+              : null,
           },
           update: {
             titre: justifPayload.titre || null,
             texte: justifPayload.texte,
             duree: justifPayload.duree || null,
-            dateDebut: justifPayload.dateDebut ? new Date(justifPayload.dateDebut) : null,
-            dateFin: justifPayload.dateFin ? new Date(justifPayload.dateFin) : null,
+            dateDebut: justifPayload.dateDebut
+              ? new Date(justifPayload.dateDebut)
+              : null,
+            dateFin: justifPayload.dateFin
+              ? new Date(justifPayload.dateFin)
+              : null,
           },
         });
       } else if (justifPayload === null) {
@@ -378,7 +311,6 @@ export async function PUT(req) {
         patient: { select: { id: true, dateDeNaissance: true } },
         rendezVous: true,
         justificationRecord: true,
-        courbeInfo: true,
         ordonnance: {
           include: {
             items: {
@@ -393,44 +325,9 @@ export async function PUT(req) {
             },
           },
         },
+        radios: true,
       },
     });
-
-    // ✅ Synchronize CourbeInfo with updated consultation values
-    const hasAnyGrowth =
-      updated.poids !== null ||
-      updated.taille !== null ||
-      updated.perimetreCranien !== null;
-
-    if (hasAnyGrowth) {
-      const birthDate = updated.patient?.dateDeNaissance;
-      const computedAge = calculateAge(birthDate, updated.createdAt);
-
-      await prisma.courbeInfo.upsert({
-        where: { consultationId: Number(id) },
-        create: {
-          patientId: updated.patientId,
-          consultationId: Number(id),
-          age: computedAge,
-          poids: updated.poids,
-          taille: updated.taille,
-          perimetreCranien: updated.perimetreCranien,
-          createdAt: updated.createdAt,
-        },
-        update: {
-          age: computedAge,
-          poids: updated.poids,
-          taille: updated.taille,
-          perimetreCranien: updated.perimetreCranien,
-          createdAt: updated.createdAt,
-        },
-      });
-    } else {
-      // If all growth parameters were removed, remove the associated CourbeInfo
-      await prisma.courbeInfo.deleteMany({
-        where: { consultationId: Number(id) },
-      });
-    }
 
     return NextResponse.json(updated);
   } catch (error) {
@@ -467,8 +364,9 @@ export async function DELETE(req) {
       }),
       prisma.radio.deleteMany({ where: { consultationId: Number(id) } }),
       prisma.bilanFile.deleteMany({ where: { consultationId: Number(id) } }),
-      prisma.justification.deleteMany({ where: { consultationId: Number(id) } }),
-      prisma.courbeInfo.deleteMany({ where: { consultationId: Number(id) } }),
+      prisma.justification.deleteMany({
+        where: { consultationId: Number(id) },
+      }),
       prisma.ordonnance.deleteMany({ where: { consultationId: Number(id) } }),
       prisma.bilanRecip.deleteMany({ where: { consultationId: Number(id) } }),
       prisma.consultation.delete({ where: { id: Number(id) } }),

@@ -7,14 +7,14 @@ import { writeFile, readFile } from "fs/promises";
 export const dynamic = "force-dynamic";
 
 const DEFAULT_CABINET_DATA = {
-  title: param.title || "Professeur",
-  doctorName: param.doctorName || "Professeur",
-  doctorNameAr: param.doctorNameAr || "بروفيسور",
+  title: param.title || "Docteur",
+  doctorName: param.doctorName || "Docteur",
+  doctorNameAr: param.doctorNameAr || "دكتور",
   specialty:
-    param.specialty || "Médecin Spécialiste en Pédiatrie et Néonatologie",
-  specialtyAr: param.specialtyAr || "طبيبة مختصة في طب الأطفال و حديثي الولادة",
-  cabinetName: param.cabinetName || "Cabinet Pédiatrique",
-  cabinetNameAr: param.cabinetNameAr || "عيادة طب الأطفال",
+    param.specialty || "Chirurgien Dentiste",
+  specialtyAr: param.specialtyAr || "جراحة و طب الأسنان",
+  cabinetName: param.cabinetName || "Cabinet Dentaire",
+  cabinetNameAr: param.cabinetNameAr || "عيادة طب الأسنان",
   address: param.address || "Rue Frères KAFI logts 38, 1er étage",
   addressAr: param.addressAr || "شارع الإخوة كافي عقار 38 الطابق الأول",
   city: param.city || "El-Harrouch SKIKDA",

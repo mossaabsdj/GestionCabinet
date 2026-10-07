@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import AjouteModal from "@/app/component/NewPatient/page";
 import DialogPage from "@/app/component/DialogPage/page";
+import AlertModal from "@/app/component/success/page";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -62,6 +63,25 @@ export default function PatientsPage() {
     groupeSanguin: "",
   });
 
+  // === Alert Modal State ===
+  const [alertOpen, setAlertOpen] = useState(false);
+  const [alertConfig, setAlertConfig] = useState({
+    type: "success",
+    title: "",
+    description: "",
+    autoClose: true,
+  });
+
+  const showAlert = (type, title, description, autoClose = true) => {
+    setAlertConfig({
+      type,
+      title,
+      description,
+      autoClose: type === "error" ? false : autoClose,
+    });
+    setAlertOpen(true);
+  };
+
   // ===== Fetch patients from API =====
   async function fetchPatients() {
     try {
@@ -71,7 +91,7 @@ export default function PatientsPage() {
       setPatients(Array.isArray(data) ? data : []);
     } catch (err) {
       console.error(err);
-      alert("Erreur lors du chargement des patients");
+      showAlert("error", "Erreur", "Erreur lors du chargement des patients.");
     } finally {
       setLoading(false);
     }
@@ -217,8 +237,14 @@ export default function PatientsPage() {
 
   // ===== Add new patient API =====
   async function handleAddPatient(data) {
-    console.log(JSON.stringify(data));
-    if (!data.nom) return alert("Le nom est requis");
+    if (!data.nom || !data.nom.trim()) {
+      showAlert(
+        "warning",
+        "Champ requis",
+        "Le nom du patient est obligatoire."
+      );
+      return { success: false, error: "Nom requis" };
+    }
 
     try {
       const res = await fetch("/api/patients", {
@@ -226,9 +252,13 @@ export default function PatientsPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
       });
-      if (!res.ok) throw new Error("Erreur lors de la création");
-      const created = await res.json();
-      setPatients((prev) => [created, ...prev]);
+
+      const resData = await res.json();
+      if (!res.ok) {
+        throw new Error(resData.error || "Erreur lors de la création du patient.");
+      }
+
+      setPatients((prev) => [resData, ...prev]);
       setNewPatient({
         nom: "",
         telephone: "",
@@ -237,9 +267,20 @@ export default function PatientsPage() {
         groupeSanguin: "",
       });
       setIsAddOpen(false);
+      showAlert(
+        "success",
+        "Succès !",
+        `Le patient "${resData.nom}" a été ajouté avec succès.`
+      );
+      return { success: true, data: resData };
     } catch (err) {
       console.error(err);
-      alert("Erreur lors de la création du patient");
+      showAlert(
+        "error",
+        "Erreur d'ajout",
+        err.message || "Impossible d’ajouter le patient."
+      );
+      return { success: false, error: err.message };
     }
   }
 
@@ -247,11 +288,19 @@ export default function PatientsPage() {
   async function handleDelete(id) {
     try {
       const res = await fetch(`/api/patients?id=${id}`, { method: "DELETE" });
-      if (!res.ok) throw new Error("Erreur suppression");
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        throw new Error(errData.error || "Erreur lors de la suppression.");
+      }
       setPatients((prev) => prev.filter((p) => p.id !== id));
+      showAlert("success", "Supprimé", "Le patient a été supprimé.");
     } catch (err) {
       console.error(err);
-      alert("Erreur lors de la suppression du patient");
+      showAlert(
+        "error",
+        "Erreur de suppression",
+        err.message || "Erreur lors de la suppression du patient."
+      );
     }
   }
 
@@ -264,6 +313,12 @@ export default function PatientsPage() {
 
   return (
     <div className="overflow-y-hidden min-h-screen bg-gradient-to-br from-[var(--color-50)] via-white to-[var(--color-100)] p-6">
+      {/* Centered Alert Modal */}
+      <AlertModal
+        config={alertConfig}
+        dialogOpen={alertOpen}
+        setDialogOpen={setAlertOpen}
+      />
       <AjouteModal
         onAdd={handleAddPatient}
         open={isAddOpen}

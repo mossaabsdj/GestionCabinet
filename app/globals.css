@@ -157,7 +157,7 @@
   --secondary-foreground: var(--mycolor-800);
 }
 
-/* Theme: Pediatric Violet / Purple */
+/* Theme: Violet / Purple */
 [data-theme="purple"] {
   --mycolor-900: oklch(0.20 0.09 300);
   --mycolor-800: oklch(0.30 0.12 300);

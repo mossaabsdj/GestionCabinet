@@ -1,7 +1,7 @@
 {
-  "name": "pediatre",
+  "name": "cabinet-dentaire",
   "version": "4.0.2",
-  "description": "Application de gestion médicale pour le cabinet  (Pédiatre).",
+  "description": "Application de gestion pour cabinet dentaire.",
   "author": "Mossaab Saad Djaballahe",
   "private": true,
   "main": "main.js",
@@ -17,8 +17,8 @@
     "lint": "next lint"
   },
   "build": {
-    "appId": "com.mossaabsdj.dr-amel-pediatre",
-    "productName": "Dr_Pediatre",
+    "appId": "com.mossaabsdj.cabinet-dentaire",
+    "productName": "Cabinet_Dentaire",
     "files": [
       ".next/**",
       "main.js",
@@ -65,7 +65,7 @@
       "perMachine": false,
       "allowToChangeInstallationDirectory": true,
       "createDesktopShortcut": true,
-      "shortcutName": "Dr Amel Pediatre"
+      "shortcutName": "Cabinet Dentaire"
     },
     "publish": {
       "provider": "github",

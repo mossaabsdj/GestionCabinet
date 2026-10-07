@@ -74,8 +74,8 @@ const CAROUSEL_SLIDES = [
   {
     id: 2,
     title: "Gestion Complète des Consultations",
-    subtitle: "Dossier patient pédiatrique & Constantes vitales",
-    desc: "Enregistrement rapide des paramètres vitaux (taille, poids, saturation O2, glycémie, périmètre crânien) et historique médical.",
+    subtitle: "Dossier patient & Suivi clinique",
+    desc: "Enregistrement rapide des motifs de consultation, observations cliniques et historique médical.",
     badge: "Consultation Pro",
     icon: Stethoscope,
     color: "from-emerald-600 to-teal-500",
@@ -100,9 +100,9 @@ const CAROUSEL_SLIDES = [
   },
   {
     id: 5,
-    title: "Calendrier Vaccinal & Rappels Pédiatriques",
-    subtitle: "Suivi rigoureux du carnet de santé infantile",
-    desc: "Enregistrement des doses vaccinales administrées, dates de rappel et historique vaccinal complet par enfant.",
+    title: "Calendrier Vaccinal & Rappels",
+    subtitle: "Suivi rigoureux du carnet de vaccination",
+    desc: "Enregistrement des doses vaccinales administrées, dates de rappel et historique vaccinal complet par patient.",
     badge: "Vaccination & Prévention",
     icon: Syringe,
     color: "from-rose-600 to-pink-500",
@@ -113,8 +113,8 @@ const CAROUSEL_SLIDES = [
 const FEATURES = [
   {
     icon: Stethoscope,
-    title: "Dossier Médical Pédiatrique",
-    desc: "Suivi de croissance infantile, constantes cliniques et antécédents médicaux complets.",
+    title: "Dossier Médical Patient",
+    desc: "Suivi des consultations, constantes cliniques et antécédents médicaux complets.",
   },
   {
     icon: Pill,
@@ -148,12 +148,12 @@ const INITIAL_REVIEWS = [
   {
     id: 1,
     name: "Professeur",
-    role: "Chef de Service & Spécialiste en Pédiatrie",
-    avatar: "PR",
+    role: "Chirurgien Dentiste",
+    avatar: "CD",
     rating: 5,
     date: "28 Août 2026",
     comment:
-      "Une solution logicielle sur-mesure d'une efficacité remarquable. Le gain de temps lors des consultations est énorme, notamment pour l'édition des ordonnances et le suivi des courbes pédiatriques.",
+      "Une solution logicielle sur-mesure d'une efficacité remarquable. Le gain de temps lors des consultations est énorme, notamment pour l'édition des ordonnances et la gestion des dossiers patients.",
     verified: true,
   },
   {
@@ -292,10 +292,10 @@ export default function AproposPage() {
           </div>
           <div>
             <h2 className="text-base sm:text-lg font-bold text-gray-900 leading-tight">
-              {param.cabinetName || "Cabinet Pédiatrique"}
+              {param.cabinetName || "Cabinet Dentaire"}
             </h2>
             <p className="text-xs text-[var(--color-600)] font-semibold">
-              {param.doctorName || "Professeur"}
+              {param.doctorName || "Docteur"}
             </p>
           </div>
         </div>
@@ -325,20 +325,20 @@ export default function AproposPage() {
         >
           <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-[var(--color-100)] border border-[var(--color-300)] text-[var(--color-700)] text-sm font-semibold shadow-sm">
             <Sparkles className="w-4 h-4 text-[var(--color-600)] animate-spin-slow" />
-            <span>Plateforme Médicale Pédiatrique & Système de Gestion</span>
+            <span>Plateforme Médicale Dentaire & Système de Gestion</span>
           </div>
 
           <h1 className="text-3xl sm:text-4xl md:text-5xl font-extrabold text-gray-900 tracking-tight max-w-4xl mx-auto leading-tight">
-            {param.cabinetName || "Cabinet Pédiatrique"}{" "}
+            {param.cabinetName || "Cabinet Dentaire"}{" "}
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-[var(--color-600)] to-[var(--color-400)]">
-              {param.doctorName || "Professeur"}
+              {param.doctorName || "Docteur"}
             </span>
           </h1>
 
           <p className="text-base sm:text-lg text-gray-600 max-w-3xl mx-auto leading-relaxed">
             Application médicale complète conçue pour digitaliser l'ensemble des
-            processus cliniques du cabinet pédiatrique : consultations,
-            constantes vitales, ordonnances normalisées, examens
+            processus cliniques du cabinet dentaire : consultations,
+            ordonnances normalisées, examens
             complémentaires, bilans de laboratoire, suivi vaccinal et
             statistiques prédictives.
           </p>
@@ -509,7 +509,7 @@ export default function AproposPage() {
                               <div className="w-3 h-3 rounded-full bg-emerald-500" />
                             </div>
                             <span className="text-xs font-semibold text-gray-500">
-                              Cabinet Pédiatrique v4.0
+                              Cabinet Dentaire v4.0
                             </span>
                           </div>
 
@@ -1007,7 +1007,7 @@ export default function AproposPage() {
                   Votre Rôle ou Titre
                 </label>
                 <Input
-                  placeholder="Ex: Médecin Pédiatre / Secrétaire / Visiteur"
+                  placeholder="Ex: Chirurgien Dentiste / Secrétaire / Visiteur"
                   value={newReview.role}
                   onChange={(e) =>
                     setNewReview({ ...newReview, role: e.target.value })

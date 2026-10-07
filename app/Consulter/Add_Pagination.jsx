@@ -11,12 +11,6 @@ import {
   ClipboardList,
   FileText,
   Stethoscope,
-  Ruler,
-  Weight,
-  Activity,
-  Thermometer,
-  HeartPulse,
-  Gauge,
   Droplets,
   FilePlus,
   UserCircle,
@@ -44,7 +38,6 @@ import VaccinationsPage from "@/app/component/Vaccination/page";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import AjouteModal from "@/app/component/NewPatient/page";
-import CourbePage from "@/app/component/Courbe/page";
 import NewConsultationPage from "../component/NewConsultation/page";
 import Analyses from "../component/Analyses/page";
 import PatientVisits from "../component/Visites/page";
@@ -82,6 +75,7 @@ export default function PatientDashboard() {
   const [successopen, setsuccessopen] = useState(false);
   const [DateTimeModal, setDataTimeModel] = useState(false);
   const [viderForm, setViderForm] = useState(false);
+  const [openAddElementModal, setOpenAddElementModal] = useState(false);
   const [currentConsultationIndex, setCurrentConsultationIndex] = useState(0);
 
   const [date, setDate] = useState(
@@ -122,16 +116,6 @@ export default function PatientDashboard() {
       note: "",
       ordonnance: data.ordonnance,
       bilanRecip: data.bilanRecip,
-      taille: "",
-      poids: "",
-      tensionSystolique: "",
-      tensionDiastolique: "",
-      temperature: "",
-      frequenceCardiaque: "",
-      frequenceRespiratoire: "",
-      saturationOxygene: "",
-      glycemie: "",
-      developpementPsychomoteur: "",
     });
   };
 
@@ -160,21 +144,12 @@ export default function PatientDashboard() {
     // ✅ Check if at least one field has data
     const hasData =
       formData.note?.trim() ||
-      formData.taille ||
-      formData.poids ||
-      formData.tensionSystolique ||
-      formData.tensionDiastolique ||
-      formData.temperature ||
-      formData.frequenceCardiaque ||
-      formData.frequenceRespiratoire ||
-      formData.saturationOxygene ||
-      formData.glycemie ||
-      formData.developpementPsychomoteur?.trim() ||
       formData.motifDeConsultation?.trim() || // ✅ new
-      formData.perimetreCranien || // ✅ new
       formData.rendezVousDate || // ✅ new
       formData?.ordonnance?.items?.length > 0 ||
-      formData?.bilanRecip?.items?.length > 0;
+      formData?.bilanRecip?.items?.length > 0 ||
+      formData?.justification ||
+      formData?.radios?.length > 0;
 
     if (!hasData) {
       // ❌ Replace alert with SweetAlert
@@ -207,23 +182,22 @@ export default function PatientDashboard() {
 
           patientId: selectedPatient?.id,
           note: formData.note?.trim() || "",
-          taille: formData.taille || null,
-          poids: formData.poids || null,
-          tensionSystolique: formData.tensionSystolique || null,
-          tensionDiastolique: formData.tensionDiastolique || null,
-          temperature: formData.temperature || null,
-          frequenceCardiaque: formData.frequenceCardiaque || null,
-          frequenceRespiratoire: formData.frequenceRespiratoire || null,
-          saturationOxygene: formData.saturationOxygene || null,
-          glycemie: formData.glycemie || null,
-          developpementPsychomoteur:
-            formData.developpementPsychomoteur?.trim() || null,
 
           // ✅ New fields
           motifDeConsultation: formData.motifDeConsultation?.trim() || null,
-          perimetreCranien: formData.perimetreCranien || null,
+          justification:
+            typeof formData.justification === "string"
+              ? formData.justification
+              : formData.justification?.texte || null,
+          justificationRecord:
+            typeof formData.justification === "object"
+              ? formData.justification
+              : null,
           rendezVousDate: formData.rendezVousDate || null,
           rendezVousDescription: formData.rendezVousDescription?.trim() || null,
+
+          // ✅ Radios
+          radios: formData.radios || [],
 
           // ✅ Ordonnance
           ordonnance:
@@ -294,21 +268,20 @@ export default function PatientDashboard() {
     addconsultationfunction(NewConsultationData);
   }, [NewConsultationData]);
 
-  async function fetchPatients() {
-    console.log("lastid" + lastid);
+  async function fetchPatients(selectPatientId = null) {
     try {
       const res = await fetch("/api/patients");
       if (!res.ok) throw new Error("Failed to fetch patients");
       const data = await res.json();
-      console.log(JSON.stringify(data[0]));
       setPatients(data);
-      setSelectedPatient(data[0]);
 
-      if (lastid != null && lastid != "") {
-        const updatedPatient = data.find((p) => p.id === lastid) || null;
+      const targetId = selectPatientId || lastid;
+      if (targetId) {
+        const updatedPatient = data.find((p) => p.id === targetId) || data[0];
         setSelectedPatient(updatedPatient);
+      } else if (data.length > 0) {
+        setSelectedPatient(data[0]);
       }
-      console.log(JSON.stringify(selectedPatient));
     } catch (error) {
       console.error("❌ Error fetching patients:", error);
     } finally {
@@ -393,13 +366,6 @@ export default function PatientDashboard() {
         : "Non spécifiée",
     },
     {
-      icon: Weight,
-      label: "Poids de naissance",
-      value: selectedPatient?.poidsDeNaissance
-        ? `${selectedPatient?.poidsDeNaissance} kg`
-        : "Non spécifié",
-    },
-    {
       icon: ClipboardList,
       label: "Antécédents",
       value: selectedPatient?.antecedents || "Non spécifié",
@@ -457,83 +423,6 @@ export default function PatientDashboard() {
         type: "textarea",
         unite: "",
       },
-      {
-        icon: Sparkles,
-        label: "Développement Psychomoteur",
-        value: getInfo("developpementPsychomoteur", index),
-        type: "textarea",
-        unite: "",
-      },
-      {
-        icon: Ruler,
-        label: "Taille",
-        value: getInfo("taille", index),
-        type: "text",
-        unite: "cm",
-      },
-      {
-        icon: Weight,
-        label: "Poids",
-        value: getInfo("poids", index),
-        type: "text",
-        unite: "kg",
-      },
-      {
-        icon: Ruler,
-        label: "Périmètre crânien",
-        value: getInfo("perimetreCranien", index),
-        type: "text",
-        unite: "cm",
-      },
-      {
-        icon: Activity,
-        label: "TA systolique",
-        value: getInfo("tensionSystolique", index),
-        type: "text",
-        unite: "mmHg",
-      },
-      {
-        icon: Activity,
-        label: "TA diastolique",
-        value: getInfo("tensionDiastolique", index),
-        type: "text",
-        unite: "mmHg",
-      },
-      {
-        icon: Thermometer,
-        label: "Température",
-        value: getInfo("temperature", index),
-        type: "text",
-        unite: "°C",
-      },
-      {
-        icon: HeartPulse,
-        label: "Fréquence cardiaque",
-        value: getInfo("frequenceCardiaque", index),
-        type: "text",
-        unite: "bpm",
-      },
-      {
-        icon: Gauge,
-        label: "Fréquence respiratoire",
-        value: getInfo("frequenceRespiratoire", index),
-        type: "text",
-        unite: "cpm",
-      },
-      {
-        icon: Droplets,
-        label: "Saturation en oxygène",
-        value: getInfo("saturationOxygene", index),
-        type: "text",
-        unite: "%",
-      },
-      {
-        icon: ClipboardList,
-        label: "Glycémie",
-        value: getInfo("glycemie", index),
-        type: "text",
-        unite: "g/L",
-      },
       c?.rendezVous
         ? {
             icon: Calendar,
@@ -552,24 +441,17 @@ export default function PatientDashboard() {
   };
 
   async function handleAddPatient(data) {
-    console.log(JSON.stringify(data));
-
-    // ❌ Replace alert with SweetAlert
-    if (!data.nom) {
-      Swal.fire({
-        icon: "warning",
+    if (!data.nom || !data.nom.trim()) {
+      setConfig({
+        type: "warning",
         title: "Champ requis",
-        text: "Le nom du patient est obligatoire.",
+        description: "Le nom du patient est obligatoire.",
+        autoClose: true,
       });
+      setsuccessopen(true);
       return { success: false, error: "Nom requis" };
     }
 
-    setConfig({
-      title: "Nouveau patient ajouté !",
-      description: "Le patient a été enregistré avec succès.",
-    });
-
-    setsuccessopen(true);
     setload(true);
 
     try {
@@ -579,29 +461,41 @@ export default function PatientDashboard() {
         body: JSON.stringify(data),
       });
 
+      const resData = await res.json();
+
       if (!res.ok) {
-        setsuccessopen(false);
-        throw new Error("Erreur lors de la création du patient");
+        throw new Error(resData.error || "Erreur lors de la création du patient.");
       }
 
-      const created = await res.json();
       setload(false);
-
       setIsAddOpen(false);
-      await fetchPatients();
+      setSearch("");
+      setlastid(resData.id);
 
-      return { success: true, data: created }; // ✅ return success
+      await fetchPatients(resData.id);
+
+      setConfig({
+        type: "success",
+        title: "Succès !",
+        description: `Le patient "${resData.nom}" a été ajouté avec succès.`,
+        autoClose: true,
+      });
+      setsuccessopen(true);
+
+      return { success: true, data: resData };
     } catch (err) {
       console.error(err);
+      setload(false);
 
-      Swal.fire({
-        icon: "error",
-        title: "Erreur",
-        text: "Erreur lors de la création du patient.",
-        confirmButtonColor: "#d33",
+      setConfig({
+        type: "error",
+        title: "Erreur d'ajout",
+        description: err.message || "Impossible d’ajouter le patient.",
+        autoClose: false,
       });
+      setsuccessopen(true);
 
-      return { success: false, error: err.message }; // ✅ return error
+      return { success: false, error: err.message };
     }
   }
 
@@ -881,8 +775,15 @@ export default function PatientDashboard() {
               >
                 <Plus size={18} />
                 Nouvelle Consultation
+            ) : selectedtab === "+ Nouvelle Consultation" ? (
+              <Button
+                onClick={() => setOpenAddElementModal(true)}
+                className="bg-[var(--color-600)] hover:bg-[var(--color-700)] text-white px-5 py-2.5 rounded-xl font-medium shadow-md hover:shadow-lg transition-all flex items-center gap-2"
+              >
+                <Plus size={18} />
+                Ajouter
               </Button>
-            ) : selectedtab === "+ Nouvelle Consultation" ? null : null}
+            ) : null}
           </motion.div>
         </motion.div>
 
@@ -897,7 +798,6 @@ export default function PatientDashboard() {
             "Informations Patient",
             "Analyses et Résultats",
             "Vaccinations",
-            "Courbe",
             "Visites",
             "Prescriptions et Bilans",
             "+ Nouvelle Consultation",
@@ -1092,15 +992,14 @@ export default function PatientDashboard() {
                   ))}
                 </>
               )}
-              {selectedtab === "Courbe" && (
-                <CourbePage patientID={selectedPatient?.id} />
-              )}
               {selectedtab === "+ Nouvelle Consultation" && (
                 <NewConsultationPage
                   onSave={setNewConsultationData}
                   selectedPatient={selectedPatient}
                   setViderForm={setViderForm}
                   viderForm={viderForm}
+                  openAddModal={openAddElementModal}
+                  setOpenAddModal={setOpenAddElementModal}
                 />
               )}
               {selectedtab === "Analyses et Résultats" && (

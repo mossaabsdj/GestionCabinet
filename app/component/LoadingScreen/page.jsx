@@ -14,18 +14,18 @@ export default function LoadingScreen() {
         transition={{ repeat: Infinity, duration: 3, ease: "easeInOut" }}
         className="mb-6"
       >
-        <HeartPulse
-          size={60}
-          className="text-[var(--color-300)] drop-shadow-lg"
-        />
+        <Image src="/amel.png" alt="Cabinet Logo" width={60} height={60} />
       </motion.div>
 
       {/* Logo + Title */}
       <div className="flex items-center gap-3">
-        <Image src="/amel.png" alt="Cabinet Logo" width={60} height={60} />
         <h1 className="text-3xl font-extrabold tracking-wide">
           {param.title || param.doctorName || "Professeur"}
         </h1>
+        <HeartPulse
+          size={30}
+          className="text-[var(--color-300)] drop-shadow-lg"
+        />
       </div>
 
       {/* Animated Loading Text */}

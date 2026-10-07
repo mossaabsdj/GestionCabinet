@@ -30,7 +30,6 @@ export default function AddPatientModal({ open, onClose, onAdd }) {
     antecedents: "",
     sexe: "",
     groupeSanguin: "",
-    poidsDeNaissance: "",
     dateDeNaissance: "",
   });
 
@@ -41,16 +40,13 @@ export default function AddPatientModal({ open, onClose, onAdd }) {
     try {
       const result = await onAdd({
         ...form,
-        poidsDeNaissance: form.poidsDeNaissance
-          ? parseFloat(form.poidsDeNaissance)
-          : null,
         age: form.age ? Number(form.age) : null,
         dateDeNaissance: form.dateDeNaissance
           ? new Date(form.dateDeNaissance)
           : null,
         createdAt: new Date().toISOString(),
       });
-      if (result && result.success) {
+      if (result !== false && (!result || result.success !== false)) {
         setForm({
           nom: "",
           sexe: "",
@@ -59,11 +55,10 @@ export default function AddPatientModal({ open, onClose, onAdd }) {
           adresse: "",
           antecedents: "",
           groupeSanguin: "",
-          poidsDeNaissance: "",
           dateDeNaissance: "",
         });
+        onClose();
       }
-      onClose();
     } catch (err) {
       console.error(err);
     } finally {
@@ -113,7 +108,7 @@ export default function AddPatientModal({ open, onClose, onAdd }) {
             </div>
             <div>
               <Label className="text-[var(--color-700)] font-medium">
-                Sexe de l'enfant
+                Sexe
               </Label>
               <Select
                 value={form.sexe}
@@ -126,50 +121,36 @@ export default function AddPatientModal({ open, onClose, onAdd }) {
                 </SelectTrigger>
 
                 <SelectContent>
-                  <SelectItem value="garçon">Garçon</SelectItem>
-                  <SelectItem value="fille">Fille</SelectItem>
+                  <SelectItem value="Homme">Homme</SelectItem>
+                  <SelectItem value="Femme">Femme</SelectItem>
+                  <SelectItem value="Garçon">Garçon</SelectItem>
+                  <SelectItem value="Fille">Fille</SelectItem>
                 </SelectContent>
               </Select>
             </div>
           </div>
 
-          {/* Poids de naissance + Groupe Sanguin */}
-          <div className="grid grid-cols-2 gap-6">
-            <div>
-              <Label className="text-gray-500">Poids de naissance (kg)</Label>
-              <Input
-                type="number"
-                placeholder="Ex: 3.2"
-                value={form.poidsDeNaissance}
-                onChange={(e) =>
-                  setForm({ ...form, poidsDeNaissance: e.target.value })
-                }
-                className="h-12 px-4 mt-1 rounded-xl bg-gray-50 text-gray-600 placeholder-gray-400"
-              />
-            </div>
-            <div>
-              <Label className="text-gray-500">Groupe sanguin</Label>
-              <Select
-                value={form.groupeSanguin}
-                onValueChange={(val) =>
-                  setForm({ ...form, groupeSanguin: val })
-                }
-              >
-                <SelectTrigger className="h-12 px-4 mt-1 rounded-xl bg-gray-50 text-gray-600">
-                  <SelectValue placeholder="---" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="A_POS">A+</SelectItem>
-                  <SelectItem value="A_NEG">A-</SelectItem>
-                  <SelectItem value="B_POS">B+</SelectItem>
-                  <SelectItem value="B_NEG">B-</SelectItem>
-                  <SelectItem value="AB_POS">AB+</SelectItem>
-                  <SelectItem value="AB_NEG">AB-</SelectItem>
-                  <SelectItem value="O_POS">O+</SelectItem>
-                  <SelectItem value="O_NEG">O-</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+          {/* Groupe Sanguin */}
+          <div>
+            <Label className="text-gray-500">Groupe sanguin</Label>
+            <Select
+              value={form.groupeSanguin}
+              onValueChange={(val) => setForm({ ...form, groupeSanguin: val })}
+            >
+              <SelectTrigger className="h-12 px-4 mt-1 rounded-xl bg-gray-50 text-gray-600">
+                <SelectValue placeholder="---" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="A_POS">A+</SelectItem>
+                <SelectItem value="A_NEG">A-</SelectItem>
+                <SelectItem value="B_POS">B+</SelectItem>
+                <SelectItem value="B_NEG">B-</SelectItem>
+                <SelectItem value="AB_POS">AB+</SelectItem>
+                <SelectItem value="AB_NEG">AB-</SelectItem>
+                <SelectItem value="O_POS">O+</SelectItem>
+                <SelectItem value="O_NEG">O-</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
 
           {/* Adresse + Téléphone */}

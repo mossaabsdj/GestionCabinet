@@ -22,13 +22,9 @@ import {
   FileText,
   Edit3,
   Save,
-  Ruler,
   ChevronLeft,
   ChevronRight,
-  Thermometer,
   Droplets,
-  Gauge,
-  HeartPulse,
   Stethoscope,
   ClipboardList,
   Sparkles,
@@ -250,30 +246,6 @@ export default function PatientVisits({
     try {
       const formattedData = {
         ...editedData,
-        taille: editedData.taille ? parseFloat(editedData.taille) : null,
-        poids: editedData.poids ? parseFloat(editedData.poids) : null,
-        perimetreCranien: editedData.perimetreCranien
-          ? parseFloat(editedData.perimetreCranien)
-          : null,
-        tensionSystolique: editedData.tensionSystolique
-          ? parseInt(editedData.tensionSystolique)
-          : null,
-        tensionDiastolique: editedData.tensionDiastolique
-          ? parseInt(editedData.tensionDiastolique)
-          : null,
-        temperature: editedData.temperature
-          ? parseFloat(editedData.temperature)
-          : null,
-        frequenceCardiaque: editedData.frequenceCardiaque
-          ? parseInt(editedData.frequenceCardiaque)
-          : null,
-        frequenceRespiratoire: editedData.frequenceRespiratoire
-          ? parseInt(editedData.frequenceRespiratoire)
-          : null,
-        saturationOxygene: editedData.saturationOxygene
-          ? parseInt(editedData.saturationOxygene)
-          : null,
-        glycemie: editedData.glycemie ? parseFloat(editedData.glycemie) : null,
         createdAt: editedData.createdAt
           ? new Date(editedData.createdAt).toISOString()
           : selectedVisit.createdAt,
@@ -359,93 +331,6 @@ export default function PatientVisits({
         value: visit.justification,
         field: "justification",
         type: "textarea",
-      },
-      {
-        icon: Sparkles,
-        label: "Développement psychomoteur",
-        value: visit.developpementPsychomoteur,
-        field: "developpementPsychomoteur",
-        type: "textarea",
-      },
-      {
-        icon: Ruler,
-        label: "Périmètre crânien",
-        value: visit.perimetreCranien,
-        unite: "cm",
-        field: "perimetreCranien",
-        type: "number",
-      },
-      {
-        icon: Ruler,
-        label: "Taille",
-        value: visit.taille,
-        unite: "cm",
-        field: "taille",
-        type: "number",
-      },
-      {
-        icon: User,
-        label: "Poids",
-        value: visit.poids,
-        unite: "kg",
-        field: "poids",
-        type: "number",
-      },
-      {
-        icon: Activity,
-        label: "TA Systolique",
-        value: visit.tensionSystolique,
-        unite: "mmHg",
-        field: "tensionSystolique",
-        type: "number",
-      },
-      {
-        icon: Activity,
-        label: "TA Diastolique",
-        value: visit.tensionDiastolique,
-        unite: "mmHg",
-        field: "tensionDiastolique",
-        type: "number",
-      },
-      {
-        icon: Thermometer,
-        label: "Température",
-        value: visit.temperature,
-        unite: "°C",
-        field: "temperature",
-        type: "number",
-      },
-      {
-        icon: HeartPulse,
-        label: "Fréquence cardiaque",
-        value: visit.frequenceCardiaque,
-        unite: "bpm",
-        field: "frequenceCardiaque",
-        type: "number",
-      },
-      {
-        icon: Gauge,
-        label: "Fréquence respiratoire",
-        value: visit.frequenceRespiratoire,
-        unite: "cpm",
-        field: "frequenceRespiratoire",
-        type: "number",
-      },
-      {
-        icon: Droplets,
-        label: "Saturation O₂",
-        value: visit.saturationOxygene,
-        unite: "%",
-        field: "saturationOxygene",
-        type: "number",
-      },
-      {
-        icon: ClipboardList,
-        label: "Glycémie",
-        value: visit.glycemie,
-        unite: "g/L",
-        field: "glycemie",
-        type: "number",
       },
     ];
 

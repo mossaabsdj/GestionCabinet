@@ -56,7 +56,7 @@ export async function GET() {
     ]);
 
     const backupPayload = {
-      app: "pediatre",
+      app: "dentaire",
       version: "4.0.2",
       exportedAt: new Date().toISOString(),
       counts: {

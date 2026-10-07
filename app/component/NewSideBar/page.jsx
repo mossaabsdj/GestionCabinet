@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import param from "@/param.json";
+import Image from "next/image";
 
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -66,9 +67,12 @@ const Sidebar = ({
                 transition={{ duration: 0.2 }}
                 className="flex items-center gap-3"
               >
-                <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-[var(--color-400)] to-[var(--color-600)] flex items-center justify-center shadow-lg">
-                  <Stethoscope className="w-6 h-6" />
-                </div>
+                <Image
+                  src="/amel.png"
+                  alt="Cabinet Logo"
+                  width={45}
+                  height={45}
+                />
                 <div>
                   <h1 className="text-xl font-bold">{param.title}</h1>
                   <p className="text-xs text-[var(--color-300)]">
@@ -231,7 +235,10 @@ export default function App() {
         onToggleCollapse={() => setCollapsed(!collapsed)}
         onNavigate={handleNavigate}
         handleparam={handleParam}
-        userInfo={{ name: param.title, role: "Médecin Pédiatre" }}
+        userInfo={{
+          name: param.title,
+          role: param.specialty || "Chirurgien Dentiste",
+        }}
       />
     </div>
   );

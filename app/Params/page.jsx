@@ -49,13 +49,13 @@ const fadeIn = {
 };
 
 const DEFAULT_CABINET_DATA = {
-  title: "Professeur",
-  doctorName: "Professeur",
-  doctorNameAr: "بروفيسور",
-  specialty: "Médecin Spécialiste en Pédiatrie et Néonatologie",
-  specialtyAr: "طبيبة مختصة في طب الأطفال و حديثي الولادة",
-  cabinetName: "Cabinet Pédiatrique",
-  cabinetNameAr: "عيادة طب الأطفال",
+  title: "Docteur",
+  doctorName: "Docteur",
+  doctorNameAr: "دكتور",
+  specialty: "Chirurgien Dentiste",
+  specialtyAr: "جراحة و طب الأسنان",
+  cabinetName: "Cabinet Dentaire",
+  cabinetNameAr: "عيادة طب الأسنان",
   address: "Rue Frères KAFI logts 38, 1er étage",
   addressAr: "شارع الإخوة كافي عقار 38 الطابق الأول",
   city: "El-Harrouch SKIKDA",
@@ -404,11 +404,11 @@ export default function ParametrePage() {
       <div className="flex justify-between items-start gap-3 pb-3 border-b-2 border-[#2c3e50]">
         <div className="flex-1 text-[11px] text-gray-800 leading-relaxed">
           <strong className="text-xs text-[#2c3e50] font-bold block mb-0.5">
-            {cabinet.doctorName || "Professeur"}
+            {cabinet.doctorName || "Docteur"}
           </strong>
           <div className="text-gray-700 mb-1">
             {cabinet.specialty ||
-              "Médecin Spécialiste en Pédiatrie et Néonatologie"}
+              "Chirurgien Dentiste"}
           </div>
           <div className="text-gray-600">
             <strong>Adresse :</strong>{" "}
@@ -436,10 +436,10 @@ export default function ParametrePage() {
           dir="rtl"
         >
           <strong className="text-xs text-[#2c3e50] font-bold block mb-0.5">
-            {cabinet.doctorNameAr || "بروفيسور"}
+            {cabinet.doctorNameAr || "طبيب"}
           </strong>
           <div className="text-gray-700 mb-1">
-            {cabinet.specialtyAr || "طبيبة مختصة في طب الأطفال و حديثي الولادة"}
+            {cabinet.specialtyAr || "جراحة الأسنان"}
           </div>
           <div className="text-gray-600">
             <strong>العنوان :</strong>{" "}
@@ -649,7 +649,7 @@ export default function ParametrePage() {
                           onChange={(e) =>
                             handleCabinetChange("specialty", e.target.value)
                           }
-                          placeholder="Ex: Médecin Spécialiste en Pédiatrie"
+                          placeholder="Ex: Chirurgien Dentiste"
                         />
                         <Field
                           rtl
@@ -659,7 +659,7 @@ export default function ParametrePage() {
                           onChange={(e) =>
                             handleCabinetChange("specialtyAr", e.target.value)
                           }
-                          placeholder="مثال: طبيبة مختصة في طب الأطفال"
+                          placeholder="مثال: جراحة الأسنان"
                         />
                         <Field
                           icon={Building2}
@@ -668,7 +668,7 @@ export default function ParametrePage() {
                           onChange={(e) =>
                             handleCabinetChange("cabinetName", e.target.value)
                           }
-                          placeholder="Ex: Cabinet Médical de Pédiatrie"
+                          placeholder="Ex: Cabinet Dentaire"
                         />
                         <Field
                           rtl
@@ -678,7 +678,7 @@ export default function ParametrePage() {
                           onChange={(e) =>
                             handleCabinetChange("cabinetNameAr", e.target.value)
                           }
-                          placeholder="مثال: عيادة طب الأطفال"
+                          placeholder="مثال: عيادة طب الأسنان"
                         />
                       </div>
                     </div>
